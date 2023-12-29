@@ -1,5 +1,8 @@
 # ᝎ
 
+| FYI       | Lexicon still being determined       |
+|---------------|:------------------------|
+
 **ᝎ** (sometimes called Multi) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
 
 In ᝎ:

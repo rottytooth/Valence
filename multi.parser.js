@@ -4,15 +4,11 @@ if (typeof module !== 'undefined' && module.exports) {
     ᝎ.lexicon = require('./multi.lexicon');
 }
 
-parser = (function() {
-    
-    var program = [];
-
-    var built_programs = [];
-
-    const scan = (line) => {
+class scanner {
+    static scan(line) {
         let instructions = [];
         for (let i = 0; i < line.length; i++) {
+            // string handling
             if (line.charAt(i) == '"' || line.charAt(i) == '\'') {
                 let quote_symbol = line.charAt(i);
                 let stringval = "";
@@ -30,6 +26,7 @@ parser = (function() {
                 i++;
                 if (i >= line.length) break;
             }
+            // everything else is a single character
             let k = ᝎ.lexicon[line.charAt(i)];
             if (k !== undefined) {
                 let augmented_list = k.map( x => {x.symbol = line.charAt(i); return x;});
@@ -39,16 +36,24 @@ parser = (function() {
         return instructions;
     };
 
-    const evaluate_line = (line) => {
+    static evaluate_line(line) {
         line = line.trim();
         return {
             line: line,
-            tokens: scan(line),
+            tokens: scanner.scan(line),
             built: false
         }
     };
+}
 
-    const find_unpopulated_expression = (node, type="exp") => {
+parser = (function() {
+    
+    var program = [];
+
+    var built_programs = [];
+
+    const next_unpopulated_expression = (node, type="var") => {
+        // defaults to "var" as that is the widest set of options
 
         if (!("children" in node)) {
             // no children to process
@@ -56,7 +61,7 @@ parser = (function() {
         }
 
         for (let i = 0; i < node.children.length; i++) {
-            if (!("symbol" in node.children[i]) && 
+            if (!("name" in node.children[i]) && 
                 (node.children[i].type == "exp" || 
                 (node.children[i].type == "var" && type == "var"))) {
                 // A var or an exp can both be exps, but only a var is a var
@@ -64,7 +69,7 @@ parser = (function() {
                 // child is unassigned
                 return node.children[i];
             } else {
-                let exp_match = find_unpopulated_expression(node.children[i]);
+                let exp_match = next_unpopulated_expression(node.children[i]);
                 if (exp_match !== undefined && exp_match !== null) {
                     return exp_match;
                 }
@@ -74,25 +79,31 @@ parser = (function() {
 
     const populate_tree_with_expressions = (cmdtree, built_lines) => {
         // check if completely populated
-
-        if (!find_unpopulated_expression(cmdtree.command)) {
-            // check if all tokens are used -- if so, add to built_lines
+        if (!next_unpopulated_expression(cmdtree.command)) {
+            // check if all tokens are used -- if so, keep as completed
             if (cmdtree.tokens.length == 0)
                 built_lines.push(cmdtree);
             return;
         }
-
         // run through each possible expression to use
         for (let i = 0; i < cmdtree.tokens.length; i++) {
+
+            // if (cmdtree.command.children.length == 0) continue;
+
             for(let j = 0; j < cmdtree.tokens[i].length; j++) {
                 if (cmdtree.tokens[i][j].type == "cmd") {
                     continue;
                 }
-
+                // cmdtree.tokens[i][j].type == "var" && 
+                // if (cmdtree.command.name == "goto") {
+                //     console.log("stop here");
+                // }
                 let newtree = JSON.parse(JSON.stringify(cmdtree));
 
                 // find first unpopulated expression in the tree
-                let exp_match = find_unpopulated_expression(newtree.command, cmdtree.tokens[i][j].type);
+                let exp_match = next_unpopulated_expression(newtree.command, newtree.tokens[i][j].type);
+
+                if (!exp_match) continue; // could not match (happens if we are placing an exp and only vars are left)
 
                 // populate the expression
                 for(const prop in newtree.tokens[i][j]) {
@@ -199,9 +210,9 @@ parser = (function() {
         this.parse = (input, complete) => {
             if (complete) {
                 let lines = input.split(/\r?\n/);
-                program = lines.map(s => evaluate_line(s));
+                program = lines.map(s => scanner.evaluate_line(s));
             } else {
-                program.push(evaluate_line(input));
+                program.push(scanner.evaluate_line(input));
             }
 
             for (let i = 0; i < program.length; i++) {
@@ -231,5 +242,15 @@ parser = (function() {
 
 ᝎ.parser = new parser();
 
-ᝎ.parser.parse("ᝊᝌᝐ",false);
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ᝎ.parser;
+}
+
+
+// entry point for testing for the moment
+
+// ᝎ.parser.parse("ᝊᝌᝐ",false);
+
+ᝎ.parser.parse("ᝊᝌ",false);
+
 //ᝎ.parser.parse("ᝈᝊᝀᝂᝀᝄ",false);

@@ -220,7 +220,7 @@ if (!ᝎ) var ᝎ = {};
         {
             name: "goto",
             type: "cmd",
-            children: [{type: "exp"}],
+            children: [{type: "var"}],
             js: "goto {var}"
         },
         {

@@ -52,7 +52,7 @@ if (!ᝎ) var ᝎ = {};
             alternate: "stepwise",
             type: "cmd",
             children: [{type: "var"},{type: "exp"},{type: "exp"}],
-            js: "for ({var} = {exp}; while {var} < {exp2}; {var}++) {"
+            js: "for ({var} = {exp}; {var} < {exp2}; {var}++) {"
         },
         {
             name: "offset",
@@ -98,7 +98,7 @@ if (!ᝎ) var ᝎ = {};
             name: "/4",
             type: "exp",
             children: [{type: "exp"}],
-            js: "/4"
+            js: "{exp}/4"
         },
         {
             name: "*",

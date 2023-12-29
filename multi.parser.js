@@ -1,3 +1,5 @@
+const fs = require('node:fs');
+
 if (!ᝎ) var ᝎ = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
@@ -61,12 +63,14 @@ parser = (function() {
         }
 
         for (let i = 0; i < node.children.length; i++) {
+            // A var or an exp can both be exps, but only a var is a var
             if (!("name" in node.children[i]) && 
                 (node.children[i].type == "exp" || 
                 (node.children[i].type == "var" && type == "var"))) {
-                // A var or an exp can both be exps, but only a var is a var
-
                 // child is unassigned
+
+                // mark what the child was originally (its type), so we know when a var is being used as an exp
+                node.children[i].role = node.children[i].type; 
                 return node.children[i];
             } else {
                 let exp_match = next_unpopulated_expression(node.children[i]);
@@ -82,6 +86,7 @@ parser = (function() {
         if (!next_unpopulated_expression(cmdtree.command)) {
             // check if all tokens are used -- if so, keep as completed
             if (cmdtree.tokens.length == 0)
+
                 built_lines.push(cmdtree);
             return;
         }
@@ -94,10 +99,7 @@ parser = (function() {
                 if (cmdtree.tokens[i][j].type == "cmd") {
                     continue;
                 }
-                // cmdtree.tokens[i][j].type == "var" && 
-                // if (cmdtree.command.name == "goto") {
-                //     console.log("stop here");
-                // }
+
                 let newtree = JSON.parse(JSON.stringify(cmdtree));
 
                 // find first unpopulated expression in the tree
@@ -153,7 +155,8 @@ parser = (function() {
             linenode.tokens[i].push({
                 name: linenode.line[i],
                 type: "var",
-                children: []
+                children: [],
+                js: linenode.line[i]
             });
         }
     }
@@ -177,30 +180,33 @@ parser = (function() {
         return built_lines;
     }
 
+    const find_child = (node, role, which) => {
+        // which = which instance: first, second, third, etc
+
+        let found = 0;
+        for (let i = 0; i < node.children.length; i++) 
+            if (node.children[i].role == role) 
+                if (++found == which) return node.children[i];
+    }
+
     const transpile_js = (line_tree) => {
 
         let retstr = line_tree.js;
 
-        let varloc = line_tree.children.findIndex(x => x.type == "var");
-        if (varloc > -1) {
-            if (retstr.indexOf("{var}") > -1)
-                retstr = retstr.replace('{var}', line_tree.children.find(x => x.type == "var").name);
-            else if (retstr.indexOf("{exp}") > -1)
-                retstr = retstr.replace('{exp}', line_tree.children.find(x => x.type == "var").name);
-            else if (retstr.indexOf("{exp2}") > -1)
-                retstr = retstr.replace('{exp2}', line_tree.children.find(x => x.type == "var").name);
+        let expnode = find_child(line_tree, "exp", 1);
+        if (expnode) {
+            retstr = retstr.replaceAll('{exp}', transpile_js(expnode));
         }
 
-        let exploc = line_tree.children.findIndex(x => x.type == "exp");
-        if (exploc > -1) {
-            retstr = retstr.replace('{exp}', transpile_js(line_tree.children[exploc]));
+        let exp2node = find_child(line_tree, "exp", 2);
+        if (exp2node) {
+            retstr = retstr.replaceAll('{exp2}', transpile_js(exp2node));
         }
 
-        let exp2loc = line_tree.children.indexOf(x => x.type == "exp", exploc);
-        if (exp2loc > -1) {
-            retstr = retstr.replace('{exp2}', transpile_js(line_tree.children[exp2loc]));
+        let varnode = find_child(line_tree, "var", 1);
+        if (varnode) {
+            retstr = retstr.replaceAll('{var}', varnode.name);
         }
-
         return retstr;
     }
 
@@ -228,8 +234,16 @@ parser = (function() {
                     //     console.log(JSON.stringify(line_trees[j]));
 
                     // DEBUG: print all matched combinations as javascript / psuedocode
+                    let outstr = program[i].line + "\n\n";
                     for(let j = 0; j < line_trees.length; j++)
-                        console.log(transpile_js(line_trees[j].command));
+                        outstr += transpile_js(line_trees[j].command) + "\n";
+
+                    fs.writeFile('outtest.txt', outstr, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                    });
+                    console.log(outstr);
                 }
             }
         }
@@ -249,8 +263,10 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // entry point for testing for the moment
 
-// ᝎ.parser.parse("ᝊᝌᝐ",false);
+//ᝎ.parser.parse("ᝊᝌᝂᝐ",false);
 
-ᝎ.parser.parse("ᝊᝌ",false);
+//ᝎ.parser.parse("ᝊᝌᝐ",false);
 
-//ᝎ.parser.parse("ᝈᝊᝀᝂᝀᝄ",false);
+//ᝎ.parser.parse("ᝊᝌ",false); // goto and while
+
+ᝎ.parser.parse("ᝊᝌᝊᝐᝑᝎᝑᝐ",false);

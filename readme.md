@@ -3,21 +3,21 @@
 | FYI       | Lexicon still being determined       |
 |---------------|:------------------------|
 
-**ᝎ** (sometimes called Multi) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
+**ᝎ** (read as *Multi*) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
 
 In ᝎ:
 * Any symbol can alternately be a variable name or an instruction
 * All instructions have multiple meanings, as listed below
 * Instructions can be combined in any order in a line of code
-* Every possible reading of that line of code plays out, resulting in many parallel executions for a multi-line program. Some programs get stuck in infinite loops or can't be executed because of syntax errors. The others are treated equally.
+* Every possible reading of that line of code plays out, resulting in many parallel executions of any program. Some programs get stuck in infinite loops or can't be executed because of syntax errors; if detectable, these programs are not built. The others are treated equally, and run in parallel.
 
 ## Instructions
 
-Characters are borrowed from the *Buhid* alphabet, but there is no connection with languages that use that alphabet; they are selected as Unicode symbols resembling the drawn ᝎ symbols. They can also be represented by Roman characters as marked below. The keys corresponding to those letters are used to type the ᝎ characters on a Western keyboard.
+Each instruction is a single letter, borrowed from several alphabets (TBD).
 
 symbol | typed as | pronunciation | meanings |
 ---|---|---|---
-ᝈ |q | | binary, twoness, a doubling, conditional (two branches), second branch
+ᝈ | q | | binary, twoness, a doubling, conditional (two branches), second branch
 ᝂ | w | | factors, dividing, stepwise, a movement toward entropy
 ᝀ | e | | threeness, ternary conditional, a ternary value, else if 
 ᝎ | r | | fourness, quarter, multiplying, coming to fruition, a float
@@ -49,6 +49,7 @@ Even a simple loop adds much ambiguity. Since Ints and Floats are formed using t
 
 A few readings of this program:
 
-## Notes
+
+## Other Notes
 
 * ᝎ was inspired in part by the Oou conlang

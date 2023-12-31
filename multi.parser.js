@@ -14,19 +14,32 @@ class scanner {
             if (line.charAt(i) == '"' || line.charAt(i) == '\'') {
                 let quote_symbol = line.charAt(i);
                 let stringval = "";
-                i++;
-                while (line.charAt(i) != quote_symbol) {
+                i++; // past the opening quote
+                for ( ; line.charAt(i) != quote_symbol; i++) {
                     stringval += line.charAt(i);
-                    i++;
                     //FIXME: deal with strings that don't close
                     //FIXME: also deal with escaped quotes
                 }
-                instructions.push({
+                instructions.push([{
                     symbol: '"' + stringval + '"',
-                    type: "string",
-                    val: stringval});
-                i++;
+                    type: "exp",
+                    val: stringval,
+                    js: '"' + stringval + '"'}]);
+                i++; // past the closing quote
                 if (i >= line.length) break;
+            }
+            //FIXME: this only deals with ints!
+            if (line.charAt(i) >= '0' && line.charAt(i) <= '9') {
+                let number = "";
+                for( ;(line.charAt(i) >= '0' && line.charAt(i) <= '9'); i++) {
+                    number += line.charAt(i);
+                }
+                instructions.push([{
+                    symbol: parseInt(number),
+                    type: "exp",
+                    val: parseInt(number),
+                    js: number
+                }]);
             }
             // everything else is a single character
             let k = ᝎ.lexicon[line.charAt(i)];
@@ -53,6 +66,21 @@ parser = (function() {
     var program = [];
 
     var built_programs = [];
+
+    const prime_factors = (n) => {
+        const factors = [];
+        let divisor = 2;
+      
+        while (n >= 2) {
+          if (n % divisor == 0) {
+            factors.push(divisor);
+            n = n / divisor;
+          } else {
+            divisor++;
+          }
+        }
+        return factors;
+      }
 
     const next_unpopulated_expression = (node, type="var") => {
         // defaults to "var" as that is the widest set of options
@@ -86,8 +114,11 @@ parser = (function() {
         if (!next_unpopulated_expression(cmdtree.command)) {
             // check if all tokens are used -- if so, keep as completed
             if (cmdtree.tokens.length == 0)
+                cmdtree.full_js = transpile_js(cmdtree.command);
+                cmdtree.built = true;
 
-                built_lines.push(cmdtree);
+                if (!built_lines.find(x => x.full_js == cmdtree.full_js))
+                    built_lines.push(cmdtree);
             return;
         }
         // run through each possible expression to use
@@ -236,7 +267,7 @@ parser = (function() {
                     // DEBUG: print all matched combinations as javascript / psuedocode
                     let outstr = program[i].line + "\n\n";
                     for(let j = 0; j < line_trees.length; j++)
-                        outstr += transpile_js(line_trees[j].command) + "\n";
+                        outstr += line_trees[j].full_js + "\n";
 
                     fs.writeFile('outtest.txt', outstr, err => {
                         if (err) {
@@ -267,6 +298,8 @@ if (typeof module !== 'undefined' && module.exports) {
 
 //ᝎ.parser.parse("ᝊᝌᝐ",false);
 
-//ᝎ.parser.parse("ᝊᝌ",false); // goto and while
+//ᝎ.parser.parse("ᝊ1",false);
+
+// ᝎ.parser.parse("ᝊᝌ",false); // goto and while
 
 ᝎ.parser.parse("ᝊᝌᝊᝐᝑᝎᝑᝐ",false);

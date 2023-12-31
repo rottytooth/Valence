@@ -1,6 +1,73 @@
 
 if (!ᝎ) var ᝎ = {};
 
+const alphabet = "ᝈ ᝂ ᝀ ᝎ ᝄ ᝐ ᝏ ᝌ ᝃ ᝑ ᝊ";
+
+const alphabet2 = "q w e r a s d f z x c";
+
+const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
+
+
+ᝎ.lexicon.descriptions = {
+    'ᝏ': {
+        key: 'q',
+        theme: "the void",
+        meanings: "0, empty the bucket"
+    },
+    'ꕃ': {
+        key: 'w',
+        theme: "unity",
+        meanings: "no-op, 1"
+    },
+    'ᝃ': {
+        key: 'e',
+        theme: "dual",
+        meanings: "binary, twoness, a doubling, the opposite, branching",
+        interpretations: ["2","*2","2","0-{exp}","else"]
+    },
+    'ᝄ': {
+        key: 'r',
+        theme: "three",
+        meanings: "3, threeness, ternary conditional, a ternary value, else"
+    },
+    'ᝊ': {
+        key: 'a',
+        theme: "unneveness, more than easily recognized, a movement toward entropy",
+        meanings: "5, multiplying, a complication, floating point number"
+    },
+    'ꘫ': {
+        key: 's',
+        theme: "harmony, recovening, solidity",
+        meanings: "7, a string"
+    },
+    'ᝌ' :{
+        key: 'd',
+        theme: "many",
+        meanings: "11, {exp} ^ {exp}"
+    },
+    'ᝎ': {
+        key: 'f',
+        theme: "reveal",
+        meanings: "print to the screen, invoke immediate calculation, print to file"
+    },
+    'ꖴ': {
+        key: 'z',
+        theme: "decline, decay, close",
+        meanings: "counting down, subtracting"
+    },
+    'ᝀ': {
+        key: 'x',
+        theme: "divide",
+        meanings: "factors, dividing, stepwise down",
+        interpretations: ["prime_factors({exp})","/"]
+    },
+    'ᝐ': {
+        key: 'c',
+        theme: "",
+        meanings: "while, a range"
+    }
+}
+
 ᝎ.lexicon = {
     'ᝈ': [
         {
@@ -8,12 +75,6 @@ if (!ᝎ) var ᝎ = {};
             type: "exp",
             children: [{type: "exp"}],
             js: "({exp}%2==0)"
-        },
-        {
-            name: "2",
-            type: "exp",
-            children: [],
-            js: "2"
         },
         {
             name: "*2",
@@ -69,12 +130,6 @@ if (!ᝎ) var ᝎ = {};
     ],
     'ᝀ': [
         {
-            name: "3",
-            type: "exp",
-            children: [],
-            js: "3"
-        },
-        {
             name: "else if",
             type: "cmd",
             children: [{type: "exp"}],
@@ -88,12 +143,6 @@ if (!ᝎ) var ᝎ = {};
         }
     ],
     'ᝎ': [
-        {
-            name: "4",
-            type: "exp",
-            children: [],
-            js: "4"
-        },
         {
             name: "/4",
             type: "exp",
@@ -123,23 +172,17 @@ if (!ᝎ) var ᝎ = {};
     ],
     'ᝐ': [
         {
-            name: "5",
-            type: "exp",
-            children: [],
-            js: "5"
-        },
-        {
             name: "decrement",
             type: "cmd",
             children: [{type: "var"}],
-            js: "{var}--;"
+            js: "{var}-=1;"
         },
-        // as an expression, x-- + ...        
-        // {
-        //     name: "decrement",
-        //     type: "exp",
-        //     requires: []
-        // },
+        {
+            name: "decrement",
+            type: "exp",
+            children:[{type: "exp"}], // must be of type int
+            js: "{exp}--"
+        },
         {
             name: "parseInt",
             type: "exp",
@@ -154,7 +197,6 @@ if (!ᝎ) var ᝎ = {};
         },
     ],
     'ᝏ': [
-        //"const", 
         {
             name: "assign",
             type: "cmd",

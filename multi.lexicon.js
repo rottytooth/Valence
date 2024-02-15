@@ -1,15 +1,10 @@
 
-if (!ᝎ) var ᝎ = {};
+if (!𐅘) var 𐅘 = {};
 
-const alphabet = "ᝈ ᝂ ᝀ ᝎ ᝄ ᝐ ᝏ ᝌ ᝃ ᝑ ᝊ";
+const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
 
-const alphabet2 = "q w e r a s d f z x c";
-
-const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
-
-
-ᝎ.lexicon.descriptions = {
-    'ᝏ': {
+𐅘.lexicon.descriptions = {
+    '𐆌': {
         key: 'q',
         theme: "the void",
         meanings: "0, empty the bucket"
@@ -19,18 +14,18 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
         theme: "unity",
         meanings: "no-op, 1"
     },
-    'ᝃ': {
+    '𐆁': {
         key: 'e',
         theme: "dual",
         meanings: "binary, twoness, a doubling, the opposite, branching",
         interpretations: ["2","*2","2","0-{exp}","else"]
     },
-    'ᝄ': {
+    '𐆉': {
         key: 'r',
         theme: "three",
         meanings: "3, threeness, ternary conditional, a ternary value, else"
     },
-    'ᝊ': {
+    '𐅘': {
         key: 'a',
         theme: "unneveness, more than easily recognized, a movement toward entropy",
         meanings: "5, multiplying, a complication, floating point number"
@@ -40,12 +35,12 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
         theme: "harmony, recovening, solidity",
         meanings: "7, a string"
     },
-    'ᝌ' :{
+    '𐆊' :{
         key: 'd',
         theme: "many",
         meanings: "11, {exp} ^ {exp}"
     },
-    'ᝎ': {
+    '𐆋': {
         key: 'f',
         theme: "reveal",
         meanings: "print to the screen, invoke immediate calculation, print to file"
@@ -55,21 +50,21 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
         theme: "decline, decay, close",
         meanings: "counting down, subtracting"
     },
-    'ᝀ': {
+    '𐅾': {
         key: 'x',
         theme: "divide",
         meanings: "factors, dividing, stepwise down",
         interpretations: ["prime_factors({exp})","/"]
     },
-    'ᝐ': {
+    '𐅻': {
         key: 'c',
         theme: "",
         meanings: "while, a range"
     }
 }
 
-ᝎ.lexicon = {
-    'ᝈ': [
+𐅘.lexicon = {
+    '𐅶': [
         {
             name: "%2==0",
             type: "exp",
@@ -95,7 +90,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "} else {"
         }
     ],
-    'ᝂ': [ 
+    '𐆇': [ 
         {
             name: "factor",
             type: "exp",
@@ -128,7 +123,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "dunno"
         }
     ],
-    'ᝀ': [
+    '𐅾': [
         {
             name: "else if",
             type: "cmd",
@@ -142,7 +137,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "dunno"
         }
     ],
-    'ᝎ': [
+    '𐆋': [
         {
             name: "/4",
             type: "exp",
@@ -162,7 +157,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "parseFloat({exp})"
         }
     ],
-    'ᝄ': [
+    '𐆉': [
         {
             name: "print",
             type: "cmd",
@@ -170,7 +165,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "print({exp});"
         }
     ],
-    'ᝐ': [
+    '𐅻': [
         {
             name: "decrement",
             type: "cmd",
@@ -196,7 +191,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "({exp}-{exp2})"
         },
     ],
-    'ᝏ': [
+    '𐆌': [
         {
             name: "assign",
             type: "cmd",
@@ -216,7 +211,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "} else {"
         },
     ],
-    'ᝌ': [
+    '𐆊': [
         {
             name: "0",
             type: "exp",
@@ -230,7 +225,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "}"
         }
     ],
-    'ᝃ': [
+    '𐆁': [
         {
             name: "label",
             type: "cmd",
@@ -238,7 +233,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "{var}:"
         }
     ],
-    'ᝑ': [
+    '𐆃': [
         {
             name: "+",
             type: "exp",
@@ -252,7 +247,7 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
             js: "({exp}^{exp2})"
         }
     ],
-    'ᝊ': [
+    '𐅘': [
         {
             name: "while",
             type: "cmd",
@@ -275,5 +270,5 @@ const alphabet3 = "ᝏ ꕃ ᝃ ᝄ ᝊ ꘫ ᝌ ᝎ ꖴ ᝀ ᝐ"
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ᝎ.lexicon;
+    module.exports = 𐅘.lexicon;
 }

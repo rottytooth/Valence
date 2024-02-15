@@ -1,9 +1,9 @@
 const fs = require('node:fs');
 
-if (!ᝎ) var ᝎ = {};
+if (!𐅘) var 𐅘 = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
-    ᝎ.lexicon = require('./multi.lexicon');
+    𐅘.lexicon = require('./multi.lexicon');
 }
 
 class scanner {
@@ -42,7 +42,7 @@ class scanner {
                 }]);
             }
             // everything else is a single character
-            let k = ᝎ.lexicon[line.charAt(i)];
+            let k = 𐅘.lexicon[line.charAt(i)];
             if (k !== undefined) {
                 let augmented_list = k.map( x => {x.symbol = line.charAt(i); return x;});
                 instructions.push(augmented_list);
@@ -285,21 +285,21 @@ parser = (function() {
     });
 })();
 
-ᝎ.parser = new parser();
+𐅘.parser = new parser();
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ᝎ.parser;
+    module.exports = 𐅘.parser;
 }
 
 
 // entry point for testing for the moment
 
-//ᝎ.parser.parse("ᝊᝌᝂᝐ",false);
+//𐅘.parser.parse("ᝊᝌᝂᝐ",false);
 
-//ᝎ.parser.parse("ᝊᝌᝐ",false);
+//𐅘.parser.parse("ᝊᝌᝐ",false);
 
-//ᝎ.parser.parse("ᝊ1",false);
+//𐅘.parser.parse("ᝊ1",false);
 
-// ᝎ.parser.parse("ᝊᝌ",false); // goto and while
+// 𐅘.parser.parse("ᝊᝌ",false); // goto and while
 
-ᝎ.parser.parse("ᝊᝌᝊᝐᝑᝎᝑᝐ",false);
+𐅘.parser.parse("ᝊᝌᝊᝐᝑ𐅘ᝑᝐ",false);

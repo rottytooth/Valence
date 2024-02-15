@@ -1,4 +1,4 @@
-# Valence
+# 𐅘 (Valence)
 
 **𐅘** (read as *Valence*) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
 
@@ -13,7 +13,7 @@ In 𐅘:
 Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between the borrowed sign and its usage (𐆋 for fourness, is the sign for a quarter), they all mean something significantly different in Valence.
 
 symbol | typed as | meanings |
----|---|---|---
+---|---|---|
 𐅶 | q | binary, twoness, a doubling, conditional (two branches), second branch
 𐆇 | w | factors, dividing, stepwise, a movement toward entropy
 𐅾 | e | threeness, ternary conditional, a ternary value, else if 

@@ -18,13 +18,13 @@ symbol | typed as | meanings |
 𐆇 | w | factors, dividing, stepwise, a movement toward entropy
 𐅾 | e | threeness, ternary conditional, a ternary value, else if 
 𐆋 | r | fourness, quarter, multiplying, coming to fruition, a float
-𐆉 | e | revealing, printing to the screen, or invoking immediate calculation
+𐆉 | a | revealing, printing to the screen, or invoking immediate calculation
 𐅻 | s | fiveness, a decline, counting down, an integer, subtracting
 𐆌 | d | a const value, assignment, a string, else
 𐆊 | f | zero, end loop, end if, elimination
-𐆁 | a | while loop, goto, ???
-𐆃 | s | adding, exponential
-𐅘 | d | valence, unifying, a character, oneness, first branch 
+𐆁 | z | while loop, goto, ???
+𐆃 | x | adding, exponential
+𐅘 | c | valence, unifying, a character, oneness, first branch 
 
 ## Example Programs
 

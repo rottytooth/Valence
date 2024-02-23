@@ -1,17 +1,5 @@
-→ᝎ:ᝌᝌᝃ        11 to the 2nd power
-→ꕃ:ꕃ            The value of 1
-→ᝄ:ᝐᝎꕃ         Range of those two values (by val, not reference)
-→ᝊ:
-→𐠡:for a ᝎ:
-	ᝊᝎ3?"fizz"
-	ᝊᝎ5?"buzz"
-	((!ᝊᝎ3)&&(!ᝊ5))?ᝎ
-𐠡↠ᝄ→ꖴ
-
-
-
-ᝊᝌꕃᝊᝐᝑꖴᝎᝑᝐ
-ᝈᝊᝀᝂᝀᝄ"fizz"
-ᝈᝊᝀᝂᝐᝄ"buzz"
-ᝏᝄᝊ
-ᝌ
+𐅘𐆊𐅘𐅻𐆃𐆋𐆃𐅻
+𐅶𐅘𐅾𐆇𐅾𐆉fizz
+𐅶𐅘𐅾𐆇𐅻𐆉buzz
+𐆌𐆉𐅘
+𐆊

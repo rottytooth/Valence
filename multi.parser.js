@@ -1,4 +1,5 @@
-const fs = require('node:fs');
+const { start } = require('node:repl');
+const fs = require('node:fs'); // temporary, for testing
 
 if (!𐅘) var 𐅘 = {};
 
@@ -9,30 +10,13 @@ if (typeof module !== 'undefined' && module.exports) {
 class scanner {
     static scan(line) {
         let instructions = [];
+        line = [...line];
         for (let i = 0; i < line.length; i++) {
-            // string handling
-            if (line.charAt(i) == '"' || line.charAt(i) == '\'') {
-                let quote_symbol = line.charAt(i);
-                let stringval = "";
-                i++; // past the opening quote
-                for ( ; line.charAt(i) != quote_symbol; i++) {
-                    stringval += line.charAt(i);
-                    //FIXME: deal with strings that don't close
-                    //FIXME: also deal with escaped quotes
-                }
-                instructions.push([{
-                    symbol: '"' + stringval + '"',
-                    type: "exp",
-                    val: stringval,
-                    js: '"' + stringval + '"'}]);
-                i++; // past the closing quote
-                if (i >= line.length) break;
-            }
             //FIXME: this only deals with ints!
-            if (line.charAt(i) >= '0' && line.charAt(i) <= '9') {
+            if (line[i] >= '0' && line[i] <= '9') {
                 let number = "";
-                for( ;(line.charAt(i) >= '0' && line.charAt(i) <= '9'); i++) {
-                    number += line.charAt(i);
+                for( ; line[i] >= '0' && line[i] <= '9'; i++) {
+                    number += line[i];
                 }
                 instructions.push([{
                     symbol: parseInt(number),
@@ -40,12 +24,25 @@ class scanner {
                     val: parseInt(number),
                     js: number
                 }]);
-            }
-            // everything else is a single character
-            let k = 𐅘.lexicon[line.charAt(i)];
-            if (k !== undefined) {
-                let augmented_list = k.map( x => {x.symbol = line.charAt(i); return x;});
-                instructions.push(augmented_list);
+            } else {
+                // everything else is a single character
+                let curr_char = line[i]
+                let k = 𐅘.lexicon[curr_char];
+                if (k !== undefined) {
+                    let augmented_list = k.map( x => {x.symbol = curr_char; return x;});
+                    instructions.push(augmented_list);
+                } else {
+                    // consider it a string
+                    let stringval = "";
+                    for ( ; 𐅘.lexicon[line[i]] == undefined && i < line.length; i++) {
+                        stringval += line[i];
+                    }
+                    instructions.push([{
+                        symbol: '"' + stringval + '"',
+                        type: "exp",
+                        val: stringval,
+                        js: '"' + stringval + '"'}]);
+                }
             }
         }
         return instructions;
@@ -80,9 +77,9 @@ parser = (function() {
           }
         }
         return factors;
-      }
+    }
 
-    const next_unpopulated_expression = (node, type="var") => {
+    const   next_unpopulated_expression = (node, type="var") => {
         // defaults to "var" as that is the widest set of options
 
         if (!("children" in node)) {
@@ -91,10 +88,13 @@ parser = (function() {
         }
 
         for (let i = 0; i < node.children.length; i++) {
-            // A var or an exp can both be exps, but only a var is a var
-            if (!("name" in node.children[i]) && 
+            // A var or an exp can both be {exp}s, but only a var is a {var}
+            if (!("name" in node.children[i]) &&
+                !("val" in node.children[i]) // must have name or val to be populated
+                && 
                 (node.children[i].type == "exp" || 
                 (node.children[i].type == "var" && type == "var"))) {
+
                 // child is unassigned
 
                 // mark what the child was originally (its type), so we know when a var is being used as an exp
@@ -113,12 +113,13 @@ parser = (function() {
         // check if completely populated
         if (!next_unpopulated_expression(cmdtree.command)) {
             // check if all tokens are used -- if so, keep as completed
-            if (cmdtree.tokens.length == 0)
+            if (cmdtree.tokens.length == 0) {
                 cmdtree.full_js = transpile_js(cmdtree.command);
                 cmdtree.built = true;
 
                 if (!built_lines.find(x => x.full_js == cmdtree.full_js))
                     built_lines.push(cmdtree);
+            }
             return;
         }
         // run through each possible expression to use
@@ -149,15 +150,22 @@ parser = (function() {
     }
 
     const create_tree_for_each_cmd = (linenode) => {
+        /*
+         * Returns an array of objects. Each obj has:
+         * * param property: the cmd with all possible interpretations
+         * * tokens property: all tokens that are not part of that command
+         */
 
         let cmd_trees = [];
 
         // first, construct one with each possible command
         for (let i = 0; i < linenode.tokens.length; i++) {
-            // let cmds = linenode.tokens[i].find(t => t.type == "cmd");
+
+            // new_tree, like linenode, is an array of tokens with each token 
+            // containing ALL POSSIBLE interpretations of that token
             let new_tree = JSON.parse(JSON.stringify(linenode));
 
-            // find index of all commands
+            // loop through new_tree and consider each token as a command
             while (new_tree.tokens[i].findIndex(t => t.type == "cmd") !== -1) {
                 let cmd_loc = new_tree.tokens[i].findIndex(t => t.type == "cmd");
 
@@ -168,7 +176,7 @@ parser = (function() {
                 // make a copy to save to the cmd_tree list (this is is necessary in case the symbol has more than one command)
                 let cmd_tree = JSON.parse(JSON.stringify(new_tree));
 
-                // in the copy, we clear all other possible interpretations of the command symbol
+                // in the copy, we clear all other possible interpretations of the command symbol, so token list is ONLY expressions, and cmd moved to its own property
                 cmd_tree.tokens.splice(i, 1);
 
                 // DEBUG
@@ -177,18 +185,20 @@ parser = (function() {
                 cmd_trees.push(cmd_tree);
             }
         }
-
         return cmd_trees;
     };
 
     const add_variables = (linenode) => {
-        for(let i = 0; i < linenode.line.length; i++) {
-            linenode.tokens[i].push({
-                name: linenode.line[i],
-                type: "var",
-                children: [],
-                js: linenode.line[i]
-            });
+        let line = [...linenode.line];
+        for(let i = 0; i < line.length; i++) {
+            let sym = line[i];
+            if (sym in 𐅘.lexicon.descriptions)
+                linenode.tokens[i].push({
+                    name: sym,
+                    type: "var",
+                    children: [],
+                    js: 𐅘.lexicon.descriptions[sym].key
+                });
         }
     }
 
@@ -215,23 +225,24 @@ parser = (function() {
         // which = which instance: first, second, third, etc
 
         let found = 0;
-        for (let i = 0; i < node.children.length; i++) 
-            if (node.children[i].role == role) 
-                if (++found == which) return node.children[i];
+        if (node.children) {
+            for (let i = 0; i < node.children.length; i++) 
+                if (node.children[i].role == role) 
+                    if (++found == which) return node.children[i];
+        }
     }
 
     const transpile_js = (line_tree) => {
 
         let retstr = line_tree.js;
 
-        let expnode = find_child(line_tree, "exp", 1);
-        if (expnode) {
-            retstr = retstr.replaceAll('{exp}', transpile_js(expnode));
-        }
+        let max_expressions = 10;
 
-        let exp2node = find_child(line_tree, "exp", 2);
-        if (exp2node) {
-            retstr = retstr.replaceAll('{exp2}', transpile_js(exp2node));
+        for (let i = 1; i <= max_expressions; i++) {
+            let expnode = find_child(line_tree, "exp", i);
+            if (expnode) {
+                retstr = retstr.replaceAll(`{exp${i > 1 ? i : ''}}`, transpile_js(expnode));
+            }
         }
 
         let varnode = find_child(line_tree, "var", 1);
@@ -245,6 +256,9 @@ parser = (function() {
         // public functions
 
         this.parse = (input, complete) => {
+
+            let start_time = Math.floor(Date.now() / 1000);
+
             if (complete) {
                 let lines = input.split(/\r?\n/);
                 program = lines.map(s => scanner.evaluate_line(s));
@@ -268,12 +282,17 @@ parser = (function() {
                     let outstr = program[i].line + "\n\n";
                     for(let j = 0; j < line_trees.length; j++)
                         outstr += line_trees[j].full_js + "\n";
+                    
+                    complete_time = Math.floor(Date.now() / 1000)
+                    outstr += `\ncompleted in ${complete_time - start_time} seconds`;
 
-                    fs.writeFile('outtest.txt', outstr, err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                    });
+                    if (typeof module !== 'undefined' && fs) {
+                        fs.writeFile('outtest.txt', outstr, err => {
+                            if (err) {
+                                console.error(err);
+                            }
+                        });
+                    }
                     console.log(outstr);
                 }
             }
@@ -294,12 +313,4 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // entry point for testing for the moment
 
-//𐅘.parser.parse("ᝊᝌᝂᝐ",false);
-
-//𐅘.parser.parse("ᝊᝌᝐ",false);
-
-//𐅘.parser.parse("ᝊ1",false);
-
-// 𐅘.parser.parse("ᝊᝌ",false); // goto and while
-
-𐅘.parser.parse("ᝊᝌᝊᝐᝑ𐅘ᝑᝐ",false);
+𐅘.parser.parse("𐆌𐆌1",false);

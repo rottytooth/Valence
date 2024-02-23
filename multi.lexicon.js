@@ -3,79 +3,19 @@ if (!𐅘) var 𐅘 = {};
 
 const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
 
-𐅘.lexicon.descriptions = {
-    '𐆌': {
-        key: 'q',
-        theme: "the void",
-        meanings: "0, empty the bucket"
-    },
-    'ꕃ': {
-        key: 'w',
-        theme: "unity",
-        meanings: "no-op, 1"
-    },
-    '𐆁': {
-        key: 'e',
-        theme: "dual",
-        meanings: "binary, twoness, a doubling, the opposite, branching",
-        interpretations: ["2","*2","2","0-{exp}","else"]
-    },
-    '𐆉': {
-        key: 'r',
-        theme: "three",
-        meanings: "3, threeness, ternary conditional, a ternary value, else"
-    },
-    '𐅘': {
-        key: 'a',
-        theme: "unneveness, more than easily recognized, a movement toward entropy",
-        meanings: "5, multiplying, a complication, floating point number"
-    },
-    'ꘫ': {
-        key: 's',
-        theme: "harmony, recovening, solidity",
-        meanings: "7, a string"
-    },
-    '𐆊' :{
-        key: 'd',
-        theme: "many",
-        meanings: "11, {exp} ^ {exp}"
-    },
-    '𐆋': {
-        key: 'f',
-        theme: "reveal",
-        meanings: "print to the screen, invoke immediate calculation, print to file"
-    },
-    'ꖴ': {
-        key: 'z',
-        theme: "decline, decay, close",
-        meanings: "counting down, subtracting"
-    },
-    '𐅾': {
-        key: 'x',
-        theme: "divide",
-        meanings: "factors, dividing, stepwise down",
-        interpretations: ["prime_factors({exp})","/"]
-    },
-    '𐅻': {
-        key: 'c',
-        theme: "",
-        meanings: "while, a range"
-    }
-}
-
 𐅘.lexicon = {
     '𐅶': [
         {
-            name: "%2==0",
+            name: "%2",
             type: "exp",
-            children: [{type: "exp"}],
-            js: "({exp}%2==0)"
+            children: [{type: "exp"},{type:"exp"}],
+            js: "({exp}%2=={exp})"
         },
         {
             name: "*2",
             type: "exp",
             children: [{type: "exp"}],
-            js: "({exp}*2"
+            js: "({exp}*2)"
         },
         {
             name: "if",
@@ -95,7 +35,7 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             name: "factor",
             type: "exp",
             children: [{type: "exp"}],
-            js: "dunno"
+            js: "factor({exp})"
         },
         {
             name: "/",
@@ -107,21 +47,21 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             name: "for",
             alternate: "stepwise",
             type: "cmd",
-            children: [{type: "var"},{type: "exp"},{type: "exp"}],
-            js: "for ({var} = {exp}; {var} < {exp2}; {var}++) {"
+            children: [{type: "var"},{type: "exp"},{type: "exp"},{type: "exp"}],
+            js: "for ({var} = {exp}; {var} < {exp2}; {var}+={exp3}) {"
         },
         {
             name: "offset",
             type: "cmd",
-            children: [{type: "var"}],
-            js: "dunno"            
-        },
-        {
-            name: "rand",
-            type: "exp",
-            children: [],
-            js: "dunno"
-        }
+            children: [{type: "var"},{type: "exp"}],
+            js: "{var} = {var} * Math.floor(Math.random() * {exp})"
+        } //,
+        // {
+        //     name: "rand",
+        //     type: "exp",
+        //     children: [{type: "exp"}],
+        //     js: "Math.floor(Math.random() * {exp})"
+        // }
     ],
     '𐅾': [
         {
@@ -133,8 +73,8 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
         {
             name: "ternary",
             type: "exp",
-            children: [],
-            js: "dunno"
+            children: [{type: "exp"},{type: "exp"},{type: "exp"}],
+            js: "{exp} ? {exp2} : {exp3}"
         }
     ],
     '𐆋': [
@@ -150,12 +90,12 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             children: [{type: "exp"},{type: "exp"}],
             js: "(({exp})*({exp2}))"
         },
-        {
-            name: "parseFloat",
-            type: "exp",
-            children: [{type: "exp"}],
-            js: "parseFloat({exp})"
-        }
+        // {
+        //     name: "parseFloat",
+        //     type: "exp",
+        //     children: [{type: "exp"}],
+        //     js: "parseFloat({exp})"
+        // }
     ],
     '𐆉': [
         {
@@ -172,18 +112,18 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             children: [{type: "var"}],
             js: "{var}-=1;"
         },
-        {
-            name: "decrement",
-            type: "exp",
-            children:[{type: "exp"}], // must be of type int
-            js: "{exp}--"
-        },
-        {
-            name: "parseInt",
-            type: "exp",
-            children: [{type: "exp"}],
-            js: "parseInt({exp})"
-        },
+        // {
+        //     name: "decrement",
+        //     type: "exp",
+        //     children:[{type: "exp"}], // must be of type int
+        //     js: "{exp}--"
+        // },
+        // {
+        //     name: "parseInt",
+        //     type: "exp",
+        //     children: [{type: "exp"}],
+        //     js: "parseInt({exp})"
+        // },
         {
             name: "-",
             type: "exp",
@@ -268,6 +208,61 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
         }
     ]
 };
+//"𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘"
+𐅘.lexicon.descriptions = {
+    '𐆊': {
+        key: 'q',
+        theme: "the void",
+        meanings: "0, empty the bucket"
+    },
+    '𐅘': {
+        key: 'w',
+        theme: "unity",
+        meanings: "no-op, 1"
+    },
+    '𐅶': {
+        key: 'e',
+        theme: "dual",
+        meanings: "binary, twoness, a doubling, the opposite, branching",
+        interpretations: ["2","*2","2","0-{exp}","else"]
+    },
+    '𐅾': {
+        key: 'r',
+        theme: "three",
+        meanings: "3, threeness, ternary conditional, a ternary value, else"
+    },
+    '𐅻': {
+        key: 'a',
+        theme: "unneveness, more than easily recognized, a movement toward entropy",
+        meanings: "5, multiplying, a complication, floating point number"
+    },
+    '𐆌': {
+        key: 's',
+        theme: "a const value, assignment, a string, else",
+        meanings: "const, assign, string"
+    },
+    '𐆇' :{
+        key: 'd',
+        theme: "factors",
+        meanings: "factors"
+    },
+    '𐆉': {
+        key: 'f',
+        theme: "reveal",
+        meanings: "print to the screen, invoke immediate calculation, print to file"
+    },
+    '𐆃': {
+        key: 'z',
+        theme: "decline, decay, close",
+        meanings: "counting down, subtracting"
+    },
+    '𐆁': {
+        key: 'c',
+        theme: "",
+        meanings: "while, a range"
+    }
+};
+
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = 𐅘.lexicon;

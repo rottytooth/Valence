@@ -1,8 +1,8 @@
-# 𐅘 (Valence)
+# 𐆉 (Valence)
 
-**𐅘** (read as *Valence*) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
+**𐆉** (read as *Valence*) is a programming language where every symbol is a homophone with multiple meanings. Context can sometimes determine the meaning of the symbol, but, the more complex the expression, the more possibilities are introduced.
 
-In 𐅘:
+In 𐆉:
 * Any symbol can alternately be a variable name or an instruction
 * All instructions have multiple meanings, as listed below
 * Instructions can be combined in any order in a line of code

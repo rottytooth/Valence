@@ -1,10 +1,12 @@
 const { start } = require('node:repl');
 const fs = require('node:fs'); // temporary, for testing
 
-if (!𐅘) var 𐅘 = {};
+const outfilename = "test4";
+
+if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
-    𐅘.lexicon = require('./multi.lexicon');
+    Valence.lexicon = require('./multi.lexicon');
 }
 
 class scanner {
@@ -12,7 +14,7 @@ class scanner {
         let instructions = [];
         line = [...line];
         for (let i = 0; i < line.length; i++) {
-            //FIXME: this only deals with ints!
+            //FIXME: this only deals with ints! Floats will not work
             if (line[i] >= '0' && line[i] <= '9') {
                 let number = "";
                 for( ; line[i] >= '0' && line[i] <= '9'; i++) {
@@ -27,14 +29,14 @@ class scanner {
             } else {
                 // everything else is a single character
                 let curr_char = line[i]
-                let k = 𐅘.lexicon[curr_char];
+                let k = Valence.lexicon[curr_char];
                 if (k !== undefined) {
                     let augmented_list = k.map( x => {x.symbol = curr_char; return x;});
                     instructions.push(augmented_list);
                 } else {
                     // consider it a string
                     let stringval = "";
-                    for ( ; 𐅘.lexicon[line[i]] == undefined && i < line.length; i++) {
+                    for ( ; Valence.lexicon[line[i]] == undefined && i < line.length; i++) {
                         stringval += line[i];
                     }
                     instructions.push([{
@@ -62,8 +64,6 @@ parser = (function() {
     
     var program = [];
 
-    var built_programs = [];
-
     const prime_factors = (n) => {
         const factors = [];
         let divisor = 2;
@@ -79,7 +79,7 @@ parser = (function() {
         return factors;
     }
 
-    const   next_unpopulated_expression = (node, type="var") => {
+    const next_unpopulated_expression = (node, type="var") => {
         // defaults to "var" as that is the widest set of options
 
         if (!("children" in node)) {
@@ -192,12 +192,12 @@ parser = (function() {
         let line = [...linenode.line];
         for(let i = 0; i < line.length; i++) {
             let sym = line[i];
-            if (sym in 𐅘.lexicon.descriptions)
+            if (sym in Valence.lexicon.descriptions)
                 linenode.tokens[i].push({
                     name: sym,
                     type: "var",
                     children: [],
-                    js: 𐅘.lexicon.descriptions[sym].key
+                    js: Valence.lexicon.descriptions[sym].key
                 });
         }
     }
@@ -247,7 +247,7 @@ parser = (function() {
 
         let varnode = find_child(line_tree, "var", 1);
         if (varnode) {
-            retstr = retstr.replaceAll('{var}', varnode.name);
+            retstr = retstr.replaceAll('{var}', varnode.js);
         }
         return retstr;
     }
@@ -257,7 +257,7 @@ parser = (function() {
 
         this.parse = (input, complete) => {
 
-            let start_time = Math.floor(Date.now() / 1000);
+            let start_time = Date.now();
 
             if (complete) {
                 let lines = input.split(/\r?\n/);
@@ -283,11 +283,16 @@ parser = (function() {
                     for(let j = 0; j < line_trees.length; j++)
                         outstr += line_trees[j].full_js + "\n";
                     
-                    complete_time = Math.floor(Date.now() / 1000)
-                    outstr += `\ncompleted in ${complete_time - start_time} seconds`;
+                    complete_time = Date.now();
+                    seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
+                    if (seconds > 0 ) {
+                        outstr += `\ncompleted in ${seconds} seconds`;
+                    } else {
+                        outstr += `\ncompleted in ${complete_time - start_time} milliseconds`;
+                    }
 
                     if (typeof module !== 'undefined' && fs) {
-                        fs.writeFile('outtest.txt', outstr, err => {
+                        fs.writeFile(`out/${outfilename}.txt`, outstr, err => {
                             if (err) {
                                 console.error(err);
                             }
@@ -304,13 +309,19 @@ parser = (function() {
     });
 })();
 
-𐅘.parser = new parser();
+Valence.parser = new parser();
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = 𐅘.parser;
+    module.exports = Valence.parser;
 }
 
 
 // entry point for testing for the moment
 
-𐅘.parser.parse("𐆌𐆌1",false);
+// Valence.parser.parse("𐅄Hello, World!",false);
+// Valence.parser.parse("𐆌𐆌1",false);
+// Valence.parser.parse("𐆇𐆌1",false);
+Valence.parser.parse("𐆌𐅄𐆊",false);
+
+// let f = Function("while(true){}")
+

@@ -10,7 +10,7 @@ In 𐆉:
 
 ## Instructions
 
-Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between the borrowed sign and its usage (𐆋 for fourness, is the sign for a quarter), they all mean something significantly different in Valence.
+Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between some borrowed signs and usage, they all mean something significantly different in Valence.
 
 symbol | typed as | meanings |
 ---|---|---|
@@ -18,13 +18,13 @@ symbol | typed as | meanings |
 𐆇 | w | factors, dividing, stepwise, a movement toward entropy
 𐅾 | e | threeness, ternary conditional, a ternary value, else if 
 𐆋 | r | fourness, quarter, multiplying, coming to fruition, a float
-𐆉 | a | revealing, printing to the screen, or invoking immediate calculation
+𐅄 | a | revealing, printing to the screen, or invoking immediate calculation
 𐅻 | s | fiveness, a decline, counting down, an integer, subtracting
 𐆌 | d | a const value, assignment, a string, else
 𐆊 | f | zero, end loop, end if, elimination
 𐆁 | z | while loop, goto, ???
 𐆃 | x | adding, exponential
-𐅘 | c | valence, unifying, a character, oneness, first branch 
+𐆉 | c | valence, unifying, a character, oneness, first branch 
 
 ## Example Programs
 
@@ -48,7 +48,3 @@ Even a simple loop adds much ambiguity. Since Ints and Floats are formed using t
 
 A few readings of this program:
 
-
-## Other Notes
-
-* 𐅘 was inspired in part by the Oou conlang

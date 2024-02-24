@@ -1,15 +1,15 @@
 
-if (!𐅘) var 𐅘 = {};
+if (!Valence) var Valence = {};
 
-const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
+const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅄";
 
-𐅘.lexicon = {
+Valence.lexicon = {
     '𐅶': [
         {
             name: "%2",
             type: "exp",
-            children: [{type: "exp"},{type:"exp"}],
-            js: "({exp}%2=={exp})"
+            children: [{type: "var"},{type:"exp"}],
+            js: "({var}%2=={exp})"
         },
         {
             name: "*2",
@@ -51,17 +51,11 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             js: "for ({var} = {exp}; {var} < {exp2}; {var}+={exp3}) {"
         },
         {
-            name: "offset",
+            name: "randomize",
             type: "cmd",
             children: [{type: "var"},{type: "exp"}],
             js: "{var} = {var} * Math.floor(Math.random() * {exp})"
-        } //,
-        // {
-        //     name: "rand",
-        //     type: "exp",
-        //     children: [{type: "exp"}],
-        //     js: "Math.floor(Math.random() * {exp})"
-        // }
+        }
     ],
     '𐅾': [
         {
@@ -90,14 +84,8 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             children: [{type: "exp"},{type: "exp"}],
             js: "(({exp})*({exp2}))"
         },
-        // {
-        //     name: "parseFloat",
-        //     type: "exp",
-        //     children: [{type: "exp"}],
-        //     js: "parseFloat({exp})"
-        // }
     ],
-    '𐆉': [
+    '𐅄': [
         {
             name: "print",
             type: "cmd",
@@ -112,18 +100,6 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             children: [{type: "var"}],
             js: "{var}-=1;"
         },
-        // {
-        //     name: "decrement",
-        //     type: "exp",
-        //     children:[{type: "exp"}], // must be of type int
-        //     js: "{exp}--"
-        // },
-        // {
-        //     name: "parseInt",
-        //     type: "exp",
-        //     children: [{type: "exp"}],
-        //     js: "parseInt({exp})"
-        // },
         {
             name: "-",
             type: "exp",
@@ -142,7 +118,7 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             name: "toStr",
             type: "exp",
             children: [{type: "exp"}],
-            js: "String(exp)"
+            js: "String({exp})"
         },
         {
             name: "else",
@@ -187,7 +163,7 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
             js: "({exp}^{exp2})"
         }
     ],
-    '𐅘': [
+    '𐆉': [
         {
             name: "while",
             type: "cmd",
@@ -208,14 +184,14 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
         }
     ]
 };
-//"𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘"
-𐅘.lexicon.descriptions = {
+//"𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅄"
+Valence.lexicon.descriptions = {
     '𐆊': {
         key: 'q',
         theme: "the void",
         meanings: "0, empty the bucket"
     },
-    '𐅘': {
+    '𐆉': {
         key: 'w',
         theme: "unity",
         meanings: "no-op, 1"
@@ -246,7 +222,7 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
         theme: "factors",
         meanings: "factors"
     },
-    '𐆉': {
+    '𐅄': {
         key: 'f',
         theme: "reveal",
         meanings: "print to the screen, invoke immediate calculation, print to file"
@@ -265,5 +241,5 @@ const alphabet = "𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅘";
 
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = 𐅘.lexicon;
+    module.exports = Valence.lexicon;
 }

@@ -12,9 +12,9 @@ In 𐆉:
 
 Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between some borrowed signs and usage, they all mean something significantly different in Valence.
 
-symbol | typed as | meanings |
+symbol | var name | meanings |
 ---|---|---|
-𐅶 | q | binary, twoness, a doubling, conditional (two branches), second branch
+𐅶 | q | binary, twoness, a doubling, second branch
 𐆇 | w | factors, dividing, stepwise, a movement toward entropy
 𐅾 | e | threeness, ternary conditional, a ternary value, else if 
 𐆋 | r | fourness, quarter, multiplying, coming to fruition, a float

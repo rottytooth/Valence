@@ -6,45 +6,115 @@ const outfilename = "test4";
 if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
-    Valence.lexicon = require('./multi.lexicon');
+    Valence.lexicon = require('./valence.lexicon');
 }
 
 class scanner {
+
+    static get_noncommand(i, line, instructions) {
+        // Capture text outside the alphabet in case it's used as a constant
+        // Returns -1 if unhandled, otherwise returns new index
+        let capture = "";
+        for ( ; i < line.length && !(line[i] in Valence.lexicon); i++) {
+            capture += line[i];
+        }
+        capture = capture.trim();
+
+        if (!capture) {
+            // nothing captured, nothing handled
+            return -1;
+        }
+
+        let num = NaN;
+        if (capture.indexOf(".") >= 0) {
+            // attempt float
+            num = parseFloat(capture);
+            if (!isNaN(num)) {
+                instructions.push([{
+                    symbol: num,
+                    type: "float",
+                    val: num,
+                    js: capture
+                }]);        
+                return i;
+            }
+        }
+        num = parseInt(capture);
+        if (!isNaN(num)) {
+            // attempt int
+            instructions.push([{
+                symbol: num,
+                type: "int",
+                val: num,
+                js: capture
+            }]);        
+            return i;
+        }
+
+        // otherwise, take as a string
+        instructions.push([{
+            symbol: capture,
+            type: "str",
+            val: capture,
+            js: '"' + capture + '"'
+        }]);
+        return i;
+    }
+
     static scan(line) {
         let instructions = [];
-        line = [...line];
+
+        line = [...line]; // convert to array for easier manipulation
+
         for (let i = 0; i < line.length; i++) {
-            //FIXME: this only deals with ints! Floats will not work
-            if (line[i] >= '0' && line[i] <= '9') {
-                let number = "";
-                for( ; line[i] >= '0' && line[i] <= '9'; i++) {
-                    number += line[i];
-                }
+
+            // if it's whitespace, skip it
+            if (line[i] === ' ') {
+                continue;
+            }
+
+            // first, is this punctuation (a bracket or comma)?
+            if (line[i] === '[') {
                 instructions.push([{
-                    symbol: parseInt(number),
-                    type: "exp",
-                    val: parseInt(number),
-                    js: number
-                }]);
+                    symbol: '[',
+                    type: "open_bracket",
+                    val: '['
+                }]);        
+                continue;
+            }
+            if (line[i] === ',') {
+                instructions.push([{
+                    symbol: ',',
+                    type: "comma",
+                    val: ','
+                }]);        
+                continue;
+            }
+            if (line[i] === ']') {
+                instructions.push([{
+                    symbol: ']',
+                    type: "close_bracket",
+                    val: ']'
+                }]);        
+                continue;
+            }
+
+            // handle if code is outside the alphabet
+            let new_idx = scanner.get_noncommand(i, line, instructions);
+            if (new_idx >= 0) {
+                i = new_idx;
+                continue;
+            }
+
+            // everything else is a single character
+            let curr_char = line[i]
+            let k = Valence.lexicon[curr_char];
+            if (k !== undefined) {
+                let augmented_list = k.map( x => {x.symbol = curr_char; return x;});
+                instructions.push(augmented_list);
             } else {
-                // everything else is a single character
-                let curr_char = line[i]
-                let k = Valence.lexicon[curr_char];
-                if (k !== undefined) {
-                    let augmented_list = k.map( x => {x.symbol = curr_char; return x;});
-                    instructions.push(augmented_list);
-                } else {
-                    // consider it a string
-                    let stringval = "";
-                    for ( ; Valence.lexicon[line[i]] == undefined && i < line.length; i++) {
-                        stringval += line[i];
-                    }
-                    instructions.push([{
-                        symbol: '"' + stringval + '"',
-                        type: "exp",
-                        val: stringval,
-                        js: '"' + stringval + '"'}]);
-                }
+                // we should never get here
+                throw new Error(`Unknown character: ${curr_char}`);
             }
         }
         return instructions;
@@ -321,7 +391,11 @@ if (typeof module !== 'undefined' && module.exports) {
 // Valence.parser.parse("𐅄Hello, World!",false);
 // Valence.parser.parse("𐆌𐆌1",false);
 // Valence.parser.parse("𐆇𐆌1",false);
-Valence.parser.parse("𐆌𐅄𐆊",false);
 
 // let f = Function("while(true){}")
 
+// FizzBuzz
+// Valence.parser.parse("𐆌𐅄100",false);
+// Valence.parser.parse("𐆁𐅄",false);
+
+Valence.parser.parse("𐅶[𐅾𐆋,𐅄]𐆁𐅄test",false);

@@ -7,239 +7,316 @@ Valence.alphabet = ["𐅶","𐆇","𐅾","𐆋","𐆉","𐅻","𐆌","𐆊","�
 Valence.lexicon = {
     '𐅶': [
         {
-            name: "%2",
+            name: "0",
+            type: "digit",
+            params: [],
+            js: "0"
+        },
+        {
+            name: "Q",
+            type: "var",
+            params: [],
+            js: "Q"
+        },
+        {
+            name: "int",
+            type: "type",
+            params: [],
+            js: "int"
+        },
+        {
+            name: "not",
             type: "exp",
-            children: [{type: "var"},{type:"exp"}],
-            js: "({var}%2=={exp})"
+            params: [{type: "exp"}],
+            js: "(!({exp}))"
         },
         {
-            name: "*2",
+            name: "add",
             type: "exp",
-            children: [{type: "exp"}],
-            js: "({exp}*2)"
+            params: [{type: "exp"},{type: "exp", repeat: "1+"}],
+            js: "add({exp},{exp2})"
         },
         {
-            name: "if",
+            name: "add_assign",
             type: "cmd",
-            children: [{type: "exp"}],
-            js: "if ({exp}) {"
-        },
-        {
-            name: "else",
-            type: "cmd",
-            children: [],
-            js: "} else {"
+            params: [{type: "var"},{type: "exp", repeat: "1+"}],
+            js: "{var} = add({var},{exp})"
         }
     ],
     '𐆇': [ 
         {
-            name: "factor",
-            type: "exp",
-            children: [{type: "exp"}],
-            js: "factor({exp})"
+            name: "1",
+            type: "digit",
+            params: [],
+            js: "1"
         },
         {
-            name: "/",
+            name: "W",
+            type: "var",
+            params: [],
+            js: "W"
+        },
+        {
+            name: "sub",
             type: "exp",
-            children: [{type: "exp"},{type: "exp"}],
-            js: "{exp} / {exp2}"
+            params: [{type: "exp"},{type: "exp"}],
+            js: "({exp} - {exp2})"
+        },
+        {
+            name: "if",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "if ({exp}) {"
+        },
+        {
+            name: "sub_assign",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp"}],
+            js: "{var} = ({var} - {exp})"
+        },
+        {
+            name: "randomize",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp"},{type: "exp"}],
+            js: "{var} = {var} * Math.floor(Math.random() * {exp})"
         },
         {
             name: "for",
             alternate: "stepwise",
             type: "cmd",
-            children: [{type: "var"},{type: "exp"},{type: "exp"},{type: "exp"}],
+            params: [{type: "var"},{type: "exp"},{type: "exp"},{type: "exp"}],
             js: "for ({var} = {exp}; {var} < {exp2}; {var}+={exp3}) {"
-        },
-        {
-            name: "randomize",
-            type: "cmd",
-            children: [{type: "var"},{type: "exp"}],
-            js: "{var} = {var} * Math.floor(Math.random() * {exp})"
         }
     ],
     '𐅾': [
         {
-            name: "else if",
-            type: "cmd",
-            children: [{type: "exp"}],
-            js: "} else if ({exp}) {"
+            name: "2",
+            type: "digit",
+            params: [],
+            js: "2"
         },
         {
-            name: "ternary",
+            name: "E",
+            type: "var",
+            params: [],
+            js: "E"
+        },
+        {
+            name: "div",
             type: "exp",
-            children: [{type: "exp"},{type: "exp"},{type: "exp"}],
-            js: "{exp} ? {exp2} : {exp3}"
-        }
-    ],
-    '𐆋': [
-        {
-            name: "/4",
-            type: "exp",
-            children: [{type: "exp"}],
-            js: "{exp}/4"
+            params: [{type: "exp"},{type: "exp"}],
+            js: "({exp} / {exp2})"
         },
         {
-            name: "*",
-            type: "exp",
-            children: [{type: "exp"},{type: "exp"}],
-            js: "(({exp})*({exp2}))"
-        },
-    ],
-    '𐅄': [
-        {
-            name: "print",
-            type: "cmd",
-            children: [{type: "exp"}],
-            js: "print({exp});"
-        }
-    ],
-    '𐅻': [
-        {
-            name: "decrement",
-            type: "cmd",
-            children: [{type: "var"}],
-            js: "{var}-=1;"
-        },
-        {
-            name: "-",
-            type: "exp",
-            children: [{type: "exp"},{type: "exp"}],
-            js: "({exp}-{exp2})"
-        },
-    ],
-    '𐆌': [
-        {
-            name: "assign",
-            type: "cmd",
-            children: [{type: "var"},{type: "exp"}],
-            js: "{var} = {exp};"
-        },
-        {
-            name: "toStr",
-            type: "exp",
-            children: [{type: "exp"}],
-            js: "String({exp})"
-        },
-        {
-            name: "else",
-            type: "cmd",
-            children: [],
-            js: "} else {"
-        },
-    ],
-    '𐆊': [
-        {
-            name: "0",
-            type: "exp",
-            children: [],
-            js: "0"
+            name: "ratio",
+            type: "type",
+            params: [],
+            js: "ratio"
         },
         {
             name: "end block",
             type: "cmd",
-            children: [],
+            params: [],
             js: "}"
-        }
-    ],
-    '𐆁': [
-        {
-            name: "label",
-            type: "cmd",
-            children: [{type: "var"}],
-            js: "{var}:"
-        }
-    ],
-    '𐆃': [
-        {
-            name: "+",
-            type: "exp",
-            children: [{type: "exp"},{type: "exp"}],
-            js: "({exp}+{exp})"
-        },
-        {
-            name: "^",
-            type: "exp",
-            children: [{type: "exp"},{type: "exp"}],
-            js: "({exp}^{exp2})"
-        }
-    ],
-    '𐆉': [
-        {
-            name: "while",
-            type: "cmd",
-            children: [{type: "exp"}],
-            js: "while({exp}) {"
         },
         {
             name: "goto",
             type: "cmd",
-            children: [{type: "var"}],
-            js: "goto {var}"
+            params: [{type: "lbl"}],
+            js: "goto(lbl)"
+        }
+    ],
+    '𐆋': [
+        {
+            name: "3",
+            type: "digit",
+            params: [],
+            js: "3"
         },
         {
-            name: "1",
+            name: "A",
+            type: "var",
+            params: [],
+            js: "A"
+        },
+        {
+            name: "to_str",
             type: "exp",
-            children: [],
-            js: "1"
+            params: [{type: "exp"}],
+            js: "str({exp)"
+        },
+        {
+            name: "equals",
+            type: "exp",
+            params: [{type: "exp"},{type: "exp"}],
+            js: "(({exp}) == ({exp2}))"
+        },
+        {
+            name: "print",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "print({exp});"
+        },
+        {
+            name: "while",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "while({exp}) {"
+        }
+    ],
+    '𐆉': [
+        {
+            name: "4",
+            type: "digit",
+            params: [],
+            js: "4"
+        },
+        {
+            name: "string",
+            type: "type",
+            params: [],
+            js: "str"
+        },
+        {
+            name: "null",
+            type: "exp",
+            params: [],
+            js: "null"
+        },
+        {
+            name: "int_or_floor",
+            type: "exp",
+            params: [{type: "exp"}],
+            js: "int({exp})"
+        },
+        {
+            name: "value",
+            type: "exp",
+            params: [{type: "type"},{type: "digit", repeat: "1+"}],
+            js: "value({type},{digit})"
+        },
+        {
+            name: "label",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "set_label(label,{exp});"
+        },
+        {
+            name: "assign",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp"}],
+            js: "let {var} = ({exp});"
+        }
+    ],
+    '𐅻': [
+        {
+            name: "5",
+            type: "digit",
+            params: [],
+            js: "5"
+        },
+        {
+            name: "D",
+            type: "var",
+            params: [],
+            js: "D"
+        },
+        {
+            name: "char",
+            type: "type",
+            params: [],
+            js: "char"
+        },
+        {
+            name: "mod",
+            type: "exp",
+            params: [{type: "exp"},{type: "exp"}],
+            js: "({exp}%{exp2})"
+        },
+        {
+            name: "jump",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "jmp({exp2})"
+        },
+    ],
+    '𐆊': [
+        {
+            name: "6",
+            type: "digit",
+            params: [],
+            js: "6"
+        },
+        {
+            name: "greater_zero",
+            type: "exp",
+            params: [{type: "exp"}],
+            js: "({exp} > 0)"
+        },
+        {
+            name: "or",
+            type: "exp",
+            params: [{type: "exp"},{type: "exp"}],
+            js: "({exp} || {exp2})"
+        },
+        {
+            name: "else",
+            type: "cmd",
+            params: [],
+            js: "} else {"
+        },
+        {
+            name: "else_if",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "} else if ({exp}) {"
+        },
+        {
+            name: "assign",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp"}],
+            js: "let {var} = ({exp});"
+        }
+    ],
+    '𐆁': [
+        {
+            name: "7",
+            type: "digit",
+            params: [],
+            js: "7"
+        },
+        {
+            name: "X",
+            type: "var",
+            params: [],
+            js: "X"
+        },
+        {
+            name: "random",
+            type: "exp",
+            params: [{type: "exp"}],
+            js: "rnd({exp})"
+        },
+        {
+            name: "mul",
+            type: "exp",
+            params: [{type: "exp"},{type: "exp", repeat: "1+"}],
+            js: "mul({exp},{exp2})"
+        },
+        {
+            name: "input",
+            type: "cmd",
+            params: [{type: "var"}],
+            js: "{var} = input();"
+        },
+        {
+            name: "mul_assign",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp", repeat: "1+"}],
+            js: "{var} = mul({exp2});"
         }
     ]
 };
-//"𐅶 𐆇 𐅾 𐆋 𐆉 𐅻 𐆌 𐆊 𐆁 𐆃 𐅄"
-Valence.lexicon.descriptions = {
-    '𐆊': {
-        key: 'q',
-        theme: "the void",
-        meanings: "0, empty the bucket"
-    },
-    '𐆉': {
-        key: 'w',
-        theme: "unity",
-        meanings: "no-op, 1"
-    },
-    '𐅶': {
-        key: 'e',
-        theme: "dual",
-        meanings: "binary, twoness, a doubling, the opposite, branching",
-        interpretations: ["2","*2","2","0-{exp}","else"]
-    },
-    '𐅾': {
-        key: 'r',
-        theme: "three",
-        meanings: "3, threeness, ternary conditional, a ternary value, else"
-    },
-    '𐅻': {
-        key: 'a',
-        theme: "unneveness, more than easily recognized, a movement toward entropy",
-        meanings: "5, multiplying, a complication, floating point number"
-    },
-    '𐆌': {
-        key: 's',
-        theme: "a const value, assignment, a string, else",
-        meanings: "const, assign, string"
-    },
-    '𐆇' :{
-        key: 'd',
-        theme: "factors",
-        meanings: "factors"
-    },
-    '𐅄': {
-        key: 'f',
-        theme: "reveal",
-        meanings: "print to the screen, invoke immediate calculation, print to file"
-    },
-    '𐆃': {
-        key: 'z',
-        theme: "decline, decay, close",
-        meanings: "counting down, subtracting"
-    },
-    '𐆁': {
-        key: 'c',
-        theme: "",
-        meanings: "while, a range"
-    }
-};
-
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.lexicon;

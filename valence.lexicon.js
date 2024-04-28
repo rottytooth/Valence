@@ -122,8 +122,8 @@ Valence.lexicon = {
         {
             name: "goto",
             type: "cmd",
-            params: [{type: "lbl"}],
-            js: "goto(lbl)"
+            params: [{type: "exp"}],
+            js: "goto(exp)"
         }
     ],
     '𐆋': [

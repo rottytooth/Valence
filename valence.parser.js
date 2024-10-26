@@ -69,24 +69,16 @@ class scanner {
         for (let i = 0; i < line.length; i++) {
 
             // if it's whitespace, skip it
-            if (line[i] === ' ') {
+            if (line[i] === ' ' || line[i] === '\t') {
                 continue;
             }
 
-            // first, is this punctuation (a bracket or comma)?
+            // first, is this punctuation (a bracket)?
             if (line[i] === '[') {
                 instructions.push([{
                     symbol: '[',
                     type: "open_bracket",
                     val: '['
-                }]);        
-                continue;
-            }
-            if (line[i] === ',') {
-                instructions.push([{
-                    symbol: ',',
-                    type: "comma",
-                    val: ','
                 }]);        
                 continue;
             }
@@ -101,7 +93,7 @@ class scanner {
 
             // handle if code is outside the alphabet
             let new_idx = scanner.get_noncommand(i, line, instructions);
-            if (new_idx >= 0) {
+            if (new_idx > -1) {
                 i = new_idx;
                 continue;
             }
@@ -164,45 +156,45 @@ parser = (function() {
     //     }
     // }
 
-    // const populate_tree_with_expressions = (cmdtree, built_lines) => {
-    //     // check if completely populated
-    //     if (!next_unpopulated_expression(cmdtree.command)) {
-    //         // check if all tokens are used -- if so, keep as completed
-    //         if (cmdtree.tokens.length == 0) {
-    //             cmdtree.full_js = transpile_js(cmdtree.command);
-    //             cmdtree.built = true;
+    const populate_tree_with_expressions = (cmdtree, built_lines) => {
+        // check if completely populated
+        if (!next_unpopulated_expression(cmdtree.command)) {
+            // check if all tokens are used -- if so, keep as completed
+            if (cmdtree.tokens.length == 0) {
+                cmdtree.full_js = transpile_js(cmdtree.command);
+                cmdtree.built = true;
 
-    //             if (!built_lines.find(x => x.full_js == cmdtree.full_js))
-    //                 built_lines.push(cmdtree);
-    //         }
-    //         return;
-    //     }
-    //     // run through each possible expression to use
-    //     for (let i = 0; i < cmdtree.tokens.length; i++) {
+                if (!built_lines.find(x => x.full_js == cmdtree.full_js))
+                    built_lines.push(cmdtree);
+            }
+            return;
+        }
+        // run through each possible expression to use
+        for (let i = 0; i < cmdtree.tokens.length; i++) {
 
-    //         // if (cmdtree.command.children.length == 0) continue;
+            // if (cmdtree.command.children.length == 0) continue;
 
-    //         for(let j = 0; j < cmdtree.tokens[i].length; j++) {
-    //             if (cmdtree.tokens[i][j].type == "cmd") {
-    //                 continue;
-    //             }
+            for(let j = 0; j < cmdtree.tokens[i].length; j++) {
+                if (cmdtree.tokens[i][j].type == "cmd") {
+                    continue;
+                }
 
-    //             let newtree = JSON.parse(JSON.stringify(cmdtree));
+                let newtree = JSON.parse(JSON.stringify(cmdtree));
 
-    //             // find first unpopulated expression in the tree
-    //             let exp_match = next_unpopulated_expression(newtree.command, newtree.tokens[i][j].type);
+                // find first unpopulated expression in the tree
+                let exp_match = next_unpopulated_expression(newtree.command, newtree.tokens[i][j].type);
 
-    //             if (!exp_match) continue; // could not match (happens if we are placing an exp and only vars are left)
+                if (!exp_match) continue; // could not match (happens if we are placing an exp and only vars are left)
 
-    //             // populate the expression
-    //             for(const prop in newtree.tokens[i][j]) {
-    //                 exp_match[prop] = newtree.tokens[i][j][prop];
-    //             }
-    //             newtree.tokens.splice(i, 1);
-    //             populate_tree_with_expressions(newtree, built_lines)
-    //         }
-    //     }
-    // }
+                // populate the expression
+                for(const prop in newtree.tokens[i][j]) {
+                    exp_match[prop] = newtree.tokens[i][j][prop];
+                }
+                newtree.tokens.splice(i, 1);
+                populate_tree_with_expressions(newtree, built_lines)
+            }
+        }
+    }
 
     // const create_tree_for_each_cmd = (linenode) => {
     //     /*
@@ -258,12 +250,89 @@ parser = (function() {
     // }
 
     const build_trees = (linenode) => {
-        // add_variables(linenode);
+        let built_lines = [];
+
+        // break out bracketted sub-expressions
+        linenode = parse_brackets(linenode);
+        // exp_level = 0;
+        // for (let i = 0; i < linenode.tokens.length; i++) {
+        //     if (linenode.tokens[i][0].type == "open_bracket") {
+        //         exp_level++;
+        //     }
+        // }
+        // if (exp_level != 0) {
+        //     throw new Error("Unmatched brackets");
+        // }
+
+        // place all the possible commands
+        // the LAST token CANNOT be a command because there is no prefix, only infix or postfix reading
+        for (let i = 0; i < linenode.tokens.length - 1; i++) {
+            params_prefix = JSON.parse(JSON.stringify(linenode.tokens.slice(0,i)));
+            params_postfix = JSON.parse(JSON.stringify(linenode.tokens.slice(i+1)));
+
+            // if either of the two expressions are bracketed, break them out
+            // otherwise, they remain grouped
+            if (params_prefix.length == 1 && params_prefix[0].length == 1 && params_prefix[0][0].type == "subexpression") {
+                params_prefix = params_prefix[0][0].children;
+            }
+            if (params_postfix.length == 1 && params_postfix[0].length == 1 && params_postfix[0][0].type == "subexpression") {
+                params_postfix = params_postfix[0][0].children;
+            }
+
+            let cmd_tree = {
+                command: linenode.tokens[i],
+                params: [
+                    JSON.parse(JSON.stringify(params_prefix)),
+                    JSON.parse(JSON.stringify(params_postfix))
+                ],
+                full_js: "",
+                built: false
+            }
+            built_lines.push(cmd_tree);
+        }
+
+        // for each command, expand with all the possible expressions
+        for(let j = 0; j < built_lines.length; j++) {
+            built_lines[j].prefixes = populate_expressions(built_lines[j].params[0]);
+            built_lines[j].postfixes = populate_expressions(built_lines[j].params[1]);
+        }
+
+        // populate_tree_with_expressions();
 
         linenode.built = true;
         return built_lines;
     }
 
+    const populate_expressions = (tokens, expression_list = []) => {
+        // find all possible combinations of expressions for this string
+        if (tokens.length == 0) {
+            return [];
+        }
+        // treat each token as the determining token and test if leads to valid expression
+        // (except the last)
+        for (let i = 0; i < tokens.length - 1; i++) {
+            // the whole thing as a number
+            let digit_expression = {
+                expression: tokens,
+                params: [[],[]],
+                full_js: "",
+                build: false
+            }
+            // for (let j = 0; j < tokens[i].length; j++) {
+                // if (tokens)
+            let new_expression = {
+                expression: tokens[i],
+                params: [
+                    JSON.parse(JSON.stringify(tokens.slice(0,i))),
+                    JSON.parse(JSON.stringify(tokens.slice(i+1)))
+                ],
+                full_js: "",
+                built: false
+            }
+            expression_list.push(new_expression);
+        }
+    }
+    
     // const build_trees_old = (linenode) => {
     //     add_variables(linenode);
 
@@ -315,27 +384,24 @@ parser = (function() {
     }
 
     const parse_brackets = (line) => {
-        let open_bracket = [];
+        let open_bracket = -1;
         for(let i = 0; i < line.tokens.length; i++) {
             let first_interpretation = line.tokens[i][0];
             switch(first_interpretation.type) {
-                case "comma":
-                    // nothing done yet with commas
-                    continue;
                 case "open_bracket":
-                    open_bracket.push(i);
+                    open_bracket = i;
                     continue;
                 case "close_bracket":
-                    if (open_bracket.length == 0) {
+                    if (open_bracket == -1) {
                         throw new Error("Unmatched brackets");
                     }
-                    oploc = open_bracket.pop();
-                    op = line.tokens[oploc][0];
+                    op = line.tokens[open_bracket][0];
                     op.type = "subexpression";
-                    op.children = line.tokens.slice(oploc+1, i);
-                    line.tokens = line.tokens.slice(0, oploc+1).concat(line.tokens.slice(i+1));
+                    op.children = line.tokens.slice(open_bracket + 1, i);
+                    line.tokens = line.tokens.slice(0, open_bracket + 1).concat(line.tokens.slice(i + 1));
+
                     // need to restart, as everything in the array has shifted
-                    open_bracket = [];
+                    open_bracket = -1;
                     i = 0;
                     break;
             }
@@ -416,14 +482,5 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // entry point for testing for the moment
 
-// Valence.parser.parse("𐅄Hello, World!",false);
-// Valence.parser.parse("𐆌𐆌1",false);
-// Valence.parser.parse("𐆇𐆌1",false);
-
-// let f = Function("while(true){}")
-
-// FizzBuzz
-// Valence.parser.parse("𐆌𐅄100",false);
-// Valence.parser.parse("𐆁𐅄",false);
-
-Valence.parser.parse("𐅶[𐅾𐆋,𐅄]𐆁𐅄test",false);
+//Valence.parser.parse("𐆇𐆊𐅶",false);
+Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);

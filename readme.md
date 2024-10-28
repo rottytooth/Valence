@@ -16,7 +16,7 @@ While any symbols can be succesfully combined to create *some* meaning, not all 
 
 Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between some borrowed signs and usage, they all mean something significantly different in Valence.
 
-symbol | var name | meanings |
+symbol | typed as | meanings |
 ---|---|---|
 𐅶 | q | the octal (base eight) digit 0, the variable 𐅶, integer, not, add, addition assignment
 𐆇 | w | the octal digit 1, the variable 𐆇, subtract, if, subtraction assignment, a movement toward entropy, loop with iterator

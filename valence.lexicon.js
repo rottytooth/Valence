@@ -1,9 +1,6 @@
 
 if (!Valence) var Valence = {};
 
-// this is not really used but might be useful for debugging
-Valence.alphabet = ["𐅶","𐆇","𐅾","𐆋","𐆉","𐅻","𐆌","𐆊","𐆁","𐆃","𐅄"];
-
 Valence.lexicon = {
     '𐅶': [
         {

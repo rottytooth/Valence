@@ -54,57 +54,64 @@ parser = (function() {
         }
     }
 
-    // const add_variables = (linenode) => {
-    //     let line = [...linenode.line];
-    //     for(let i = 0; i < line.length; i++) {
-    //         let sym = line[i];
-    //         if (sym in Valence.lexicon.descriptions)
-    //             linenode.tokens[i].push({
-    //                 name: sym,
-    //                 type: "var",
-    //                 children: [],
-    //                 js: Valence.lexicon.descriptions[sym].key
-    //             });
-    //     }
-    // }
+    const length_non_brackets = (x) => { 
+        let sh = x.line.replace(/\[/g,"").replace(/\]/g,""); 
+        return Array.from(sh.split(/[\ufe00-\ufe0f]/).join("")).length
+    }
+    const length_non_brackets_array = (x) => {return x.reduce((acc, val) => acc + (val == "]" || val == "[" ? 0 : 1), 0); }
 
-    const build_asts = (tokens) => {
-        // needs to multiply tokens, building out all the possibilities
 
-        for (let i = 0; i < tokens.length - 1; i++) {
-            if (tokens[i].type == "open_bracket") 
-                continue; // open_bracket can't be a command
+    // checks if complete and loads to line.interpretations if so
+    const check_complete = (line, path) => {
+        if ((length_non_brackets_array(path) 
+            == length_non_brackets(line)) &&
+            (path.filter(x => x=="[").length
+            == path.filter(x => x=="]").length)) {
 
-            tokens[i].params = [
-                build_asts(JSON.parse(JSON.stringify(
-                    tokens.slice(0,i)))),
-                build_asts(JSON.parse(JSON.stringify(
-                    tokens.slice(i+2))))
-            ];
+            if (!Object.hasOwn(line, "interpretations")) {
+                line.interpretations = [];
+            }
+            line.interpretations.push(path);
+            return true;
         }
-        return tokens;
+        return false;
     }
 
-    const populate_expressions = (tokens, expression_list = []) => {
-        // find all possible combinations of expressions for this string
-        if (tokens.length == 0) {
-            return [];
-        }
-        // treat each token as the determining token and test if leads to valid expression
-        // (except the last)
-        for (let i = 0; i < tokens.length - 1; i++) {
+    const build_asts = (line, tokens, curr_path = []) => {
+        // needs to multiply tokens, building out all the possibilities
 
-            let new_expression = {
-                expression: tokens[i],
-                params: [
-                    JSON.parse(JSON.stringify(tokens.slice(0,i))),
-                    JSON.parse(JSON.stringify(tokens.slice(i+2)))
-                ],
-                full_js: "",
-                built: false
+        if (tokens.length == 1) {
+            curr_path.push(tokens[0].number);
+            if (check_complete(line, curr_path)) {
+                return null;
             }
-            expression_list.push(new_expression);
         }
+        for (let i = 0; i < tokens.length - 1; i++) {
+            if (tokens[i].symbol == "[") {
+                continue; // can't have bracket as command
+            }
+            path = [...curr_path];
+
+            if (i > 0) {
+                path.push("[");            
+                path = build_asts(line, tokens.slice(0,i), path);
+                path.push("]");            
+            }
+            path.push(tokens[i].number);
+            if (tokens.length == i+2 && tokens[i+1].type == "open_bracket") {
+                path.push("[");
+                path = build_asts(line, tokens[i+1].children, path);
+                path.push("]");
+            } else {
+                path.push("[");
+                path = build_asts(line, tokens.slice(i+1), path);
+                path.push("]");
+            }
+            if (check_complete(line,path)) {
+                return null;
+            }
+        }
+        return curr_path;
     }
 
     const transpile_js = (line_tree) => {
@@ -127,8 +134,11 @@ parser = (function() {
         return retstr;
     }
 
+    // organize the line into a tree based on existing brackets
+    // and number the symbols for later processing
     const parse_brackets = (line) => {
         let open_bracket = -1;
+        let symbol_count = 0;
         for(let i = 0; i < line.tokens.length; i++) {
             switch(line.tokens[i].type) {
                 case "open_bracket":
@@ -150,6 +160,11 @@ parser = (function() {
                     open_bracket = -1;
                     i = 0;
                     break;
+                case "symbol":
+                    if (!Object.hasOwn(line.tokens[i], 'number')) {
+                        line.tokens[i].number = symbol_count;
+                        symbol_count++;
+                    }
             }
         }
         return line;
@@ -184,7 +199,8 @@ parser = (function() {
 
                 if (!program[i].built) {
                     // build out possibile ASTs
-                    program[i].interpretations = build_asts(JSON.parse(JSON.stringify(program[i].tokens)));
+                    build_asts(program[i], program[i].tokens);
+                    print(program[i].interpretations);
 
                     // DEBUG: print all the matched combinations
                     // for(let j = 0; j < line_trees.length; j++)
@@ -230,5 +246,5 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // entry point for testing for the moment
 
-//Valence.parser.parse("𐆇𐆊𐅶",false);
-Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);
+// Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);
+Valence.parser.parse("𐆇𐆊𐅶",false);

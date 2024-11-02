@@ -14,104 +14,135 @@ parser = (function() {
     
     var program = [];
 
-    const populate_tree_with_expressions = (cmdtree, built_lines) => {
-        // check if completely populated
-        if (!next_unpopulated_expression(cmdtree.command)) {
-            // check if all tokens are used -- if so, keep as completed
-            if (cmdtree.tokens.length == 0) {
-                cmdtree.full_js = transpile_js(cmdtree.command);
-                cmdtree.built = true;
+    const find_child_in_tree = (tree, num) => {
+        // depth-first search for a child with a specific id
+        if (tree.id === num) {
+            return tree;
+        }
+        if (Object.hasOwn(tree, 'children')) {
+            for (let i = 0; i < tree.children.length; i++) {
+                let r = find_child_in_tree(tree.children[i], num);
+                if (r) return r;
+            }
+        }
+        for (let i = 0; i < tree.params.length; i++) {
+            let r = find_child_in_tree(tree.params[i], num);
+            if (r) return r;
+        }
+        return null;
+    }
 
-                if (!built_lines.find(x => x.full_js == cmdtree.full_js))
-                    built_lines.push(cmdtree);
+    const check_complete = (tree) => {
+        if (Object.hasOwn(tree, 'children')) {
+            return false;
+        }
+        if (Array.isArray(tree)) {
+            return false;
+            // for (let i = 0; i < tree[i]; i++) {
+            //     let complete = check_complete(tree[i]);
+            //     if (!complete) return false;
+            // }
+        }
+        if (Object.hasOwn(tree, 'params')) {
+            for (let i = 0; i < tree.params.length; i++) {
+                let complete = check_complete(tree.params[i]);
+                if (!complete) return false;
+            }
+        }
+        return true;
+    }
+
+    const children_to_params = (tokens, idx) => {
+        // moves one token into place and makes the others its parameters
+        
+        pre_fix = tokens.slice(0,idx);
+        post_fix = tokens.slice(idx+1);
+
+        if (pre_fix.length == 1 && pre_fix[0].symbol == "[") {
+            pre_fix = pre_fix[0].children;
+        }
+        if (post_fix.length == 1 && post_fix[0].symbol == "[") {
+            post_fix = post_fix[0].children;
+        }
+
+        if (pre_fix.length == 0) {  
+            return [post_fix]; //  param 1
+        } else {
+            return [pre_fix, post_fix]; // params 1 and 2
+        }
+    }
+
+    const build_asts = (line, intpt, token = intpt) => {
+        // build all valid ASTs for a given line
+
+        if (!Object.hasOwn(token, 'params')) {
+            token.params = [];
+        }
+
+        if ((!Object.hasOwn(token, 'children') || token.children.length === 0) 
+            && token.params.length === 0) {
+            
+            if (check_complete(intpt)) {
+                intpt.complete = true;
             }
             return;
         }
-        // run through each possible expression to use
-        for (let i = 0; i < cmdtree.tokens.length; i++) {
-
-            // if (cmdtree.command.children.length == 0) continue;
-
-            for(let j = 0; j < cmdtree.tokens[i].length; j++) {
-                if (cmdtree.tokens[i][j].type == "cmd") {
-                    continue;
+        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol != "[") {
+            token.children = token.children[0].children;
+        }
+        if (Object.hasOwn(token, 'children') && token.params.length === 0 && token.children.length === 1 && token.children[0].symbol != "[") {
+            // if there's only one child, make it the first parameter
+            token.params = [token.children[0]];
+            build_asts(line, intpt, token.params[0]);
+            return; 
+        }
+        if (Object.hasOwn(token, 'children')) {
+        // if we get this far, there are multiple children or params to break out
+            for (let i = 0; i < token.children.length - 1; i++) {
+                if (token.children[i].symbol == "[") {
+                    continue; // can't have bracket as command
                 }
+                // copy the tree
+                new_tree = JSON.parse(JSON.stringify(intpt));
+                new_token = find_child_in_tree(new_tree, token.id);
+                new_token.children[i].params = children_to_params(new_token.children, i);
+                new_token.params.push(new_token.children[i]);
+                delete new_token.children;
 
-                let newtree = JSON.parse(JSON.stringify(cmdtree));
-
-                // find first unpopulated expression in the tree
-                let exp_match = next_unpopulated_expression(newtree.command, newtree.tokens[i][j].type);
-
-                if (!exp_match) continue; // could not match (happens if we are placing an exp and only vars are left)
-
-                // populate the expression
-                for(const prop in newtree.tokens[i][j]) {
-                    exp_match[prop] = newtree.tokens[i][j][prop];
+                // if this list begins with a bracket, remove it
+                if (new_tree.symbol == "[") {
+                    new_tree = new_tree.params[0];
                 }
-                newtree.tokens.splice(i, 1);
-                populate_tree_with_expressions(newtree, built_lines)
+                line.asts.push(new_tree);
+
+                for (let i = 0; i < new_token.params.length; i++) {
+                    build_asts(line, new_tree, new_token.params[i]);
+                }        
             }
         }
-    }
+        for (let i = 0; i < token.params.length; i++) { 
+            if (Array.isArray(token.params[i])) {
+                if (token.params[i].length == 1) {
+                    token.params[i] = token.params[i][0];
+                    build_asts(line, intpt, token.params[i]);
+                }
+                for(let j = 0; j < token.params[i].length - 1; j++) {
+                    new_tree = JSON.parse(JSON.stringify(intpt));
+                    new_token = find_child_in_tree(new_tree, token.id);
+                    new_token.params[i][j].params = children_to_params(new_token.params[i], j);
+                    new_token.params[i] = new_token.params[i][j];
+                    delete new_token.children;
 
-    const length_non_brackets = (x) => { 
-        let sh = x.line.replace(/\[/g,"").replace(/\]/g,""); 
-        return Array.from(sh.split(/[\ufe00-\ufe0f]/).join("")).length
-    }
-    const length_non_brackets_array = (x) => {return x.reduce((acc, val) => acc + (val == "]" || val == "[" ? 0 : 1), 0); }
+                    line.asts.push(new_tree);
 
-
-    // checks if complete and loads to line.interpretations if so
-    const check_complete = (line, path) => {
-        if ((length_non_brackets_array(path) 
-            == length_non_brackets(line)) &&
-            (path.filter(x => x=="[").length
-            == path.filter(x => x=="]").length)) {
-
-            if (!Object.hasOwn(line, "interpretations")) {
-                line.interpretations = [];
-            }
-            line.interpretations.push(path);
-            return true;
-        }
-        return false;
-    }
-
-    const build_asts = (line, tokens, curr_path = []) => {
-        // needs to multiply tokens, building out all the possibilities
-
-        if (tokens.length == 1) {
-            curr_path.push(tokens[0].number);
-            if (check_complete(line, curr_path)) {
-                return null;
-            }
-        }
-        for (let i = 0; i < tokens.length - 1; i++) {
-            if (tokens[i].symbol == "[") {
-                continue; // can't have bracket as command
-            }
-            path = [...curr_path];
-
-            if (i > 0) {
-                path.push("[");            
-                path = build_asts(line, tokens.slice(0,i), path);
-                path.push("]");            
-            }
-            path.push(tokens[i].number);
-            if (tokens.length == i+2 && tokens[i+1].type == "open_bracket") {
-                path.push("[");
-                path = build_asts(line, tokens[i+1].children, path);
-                path.push("]");
+                    for (let i = 0; i < new_token.params.length; i++) {
+                        build_asts(line, new_tree, new_token.params[i]);
+                    }        
+                }
             } else {
-                path.push("[");
-                path = build_asts(line, tokens.slice(i+1), path);
-                path.push("]");
-            }
-            if (check_complete(line,path)) {
-                return null;
+                build_asts(line, intpt, token.params[i]);
             }
         }
-        return curr_path;
     }
 
     const transpile_js = (line_tree) => {
@@ -136,9 +167,10 @@ parser = (function() {
 
     // organize the line into a tree based on existing brackets
     // and number the symbols for later processing
-    const parse_brackets = (line) => {
+    const parse_brackets_and_number_nodes = (line) => {
         let open_bracket = -1;
-        let symbol_count = 0;
+        let symbol_count = 1; // parent folder will be 0
+
         for(let i = 0; i < line.tokens.length; i++) {
             switch(line.tokens[i].type) {
                 case "open_bracket":
@@ -156,19 +188,46 @@ parser = (function() {
                     op.children = line.tokens.slice(open_bracket + 1, i);
                     line.tokens = line.tokens.slice(0, open_bracket + 1).concat(line.tokens.slice(i + 1));
 
+                    if (!Object.hasOwn(op, 'id')) {
+                        op.id = symbol_count;
+                        symbol_count++;
+                    }
+
                     // need to restart, as everything in the array has shifted
                     open_bracket = -1;
                     i = 0;
                     break;
                 case "symbol":
-                    if (!Object.hasOwn(line.tokens[i], 'number')) {
-                        line.tokens[i].number = symbol_count;
+                    if (!Object.hasOwn(line.tokens[i], 'id')) {
+                        line.tokens[i].id = symbol_count;
                         symbol_count++;
                     }
             }
         }
+
+        // if there is not a single parent at top of chain, add it here
+        if (line.tokens.length > 1 || line.tokens[0].symbol != "[") {
+            line.tokens = {type: "open_bracket", symbol: "[", children: JSON.parse(JSON.stringify(line.tokens)), id: 0};
+        }
+
         return line;
     }
+
+    const print_ast = (ast) => {
+        retstr = "";
+        if (ast.params.length == 2) {
+            retstr += `[${print_ast(ast.params[0], retstr)}]`;
+        }
+        retstr += ast.symbol;
+        if (ast.params.length == 1) {
+            retstr += `[${print_ast(ast.params[0], retstr)}]`;
+        }
+        if (ast.params.length == 2) {
+            retstr += `[${print_ast(ast.params[1], retstr)}]`;
+        }
+        return retstr;
+    }
+
 
     return (function () {
         // public functions
@@ -189,27 +248,37 @@ parser = (function() {
             // first put the nodes in a tree for each line
             for (let a = 0; a < program.length; a++) {
                 if (!program[a].built) {
-                    program[a] = parse_brackets(program[a]);
+                    program[a] = parse_brackets_and_number_nodes(program[a]);
                 }
             }
 
-            const programs = []; // list of combatible interpretations of each line
+            const programs = []; // list of combatible asts of each line
 
             for (let i = 0; i < program.length; i++) { // each line of code
 
                 if (!program[i].built) {
                     // build out possibile ASTs
-                    build_asts(program[i], program[i].tokens);
-                    print(program[i].interpretations);
 
-                    // DEBUG: print all the matched combinations
-                    // for(let j = 0; j < line_trees.length; j++)
-                    //     console.log(JSON.stringify(line_trees[j]));
+                    // set up initial conditions for building out the ASTs
+                    if (!Object.hasOwn(program[i], "asts")) {
+                        program[i].asts = [];
+                    }
+                    let token = JSON.parse(JSON.stringify(program[i].tokens));
+                    program[i].asts.push(token);
+                    
+                    build_asts(program[i], program[i].asts[0]);
+                    program[i].asts = program[i].asts.slice(1); // remove the original interpretation
 
-                    // DEBUG: print all matched combinations as javascript / psuedocode
-                    let outstr = program[i].line + "\n\n";
-                    for(let j = 0; j < line_trees.length; j++)
-                        outstr += line_trees[j].full_js + "\n";
+                    // remove incomplete ASTs
+                    program[i].asts = program[i].asts.filter(x => x.complete);
+
+                    // print results
+                    for (let j = 0; j < program[i].asts.length; j++) {
+                        console.log(print_ast(program[i].asts[j]));
+                    }
+
+                    
+
                     
                     complete_time = Date.now();
                     seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
@@ -246,5 +315,5 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // entry point for testing for the moment
 
-// Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);
-Valence.parser.parse("𐆇𐆊𐅶",false);
+Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);
+// Valence.parser.parse("𐆇𐆊𐅶",false);

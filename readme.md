@@ -16,18 +16,63 @@ While any symbols can be succesfully combined to create *some* meaning, not all 
 
 Each instruction is a single letter, borrowed from Ancient Greek numbering and measuring signs. While there is some association between some borrowed signs and usage, they all mean something significantly different in Valence.
 
-symbol | typed as | meanings |
----|---|---|
-𐅶 | q | the octal (base eight) digit 0, the variable 𐅶, integer, not, add, addition assignment
-𐆇 | w | the octal digit 1, the variable 𐆇, subtract, if, subtraction assignment, a movement toward entropy, loop with iterator
-𐅾 | e | the octal digit 2, the variable 𐅾, divide, a ratio, the end of a block, the and operator, calculated goto, and a reserved (currently unassigned) expression with a single parameter
-𐆋 | a | the octal digit 3, the variable 𐆋, convert to string, equals, print, while loop, do while
-𐆉 | s | the octal digit 4, string type, null, convert to integer, floor, read as a value, declare label, assign to a variable
-𐅻 | d | the octal digit 5, the variable 𐅻, char type, modulo, jump (a relative goto), an expression with one parameter left for future development
-𐆊 | z | the octal digit 6, is greater than zero, or, else, else if, assign to a variable
-𐆁 | x | the octal digit 7, the variable 𐆁, random number, multiply, multiply assignment, input from another process
-[ | [ | open bracket: begins a lexical unit
-] | ] | close bracket: closes a lexical unit
+symbol | typed as | interpretation | type | params 
+---|---|---|---|---|
+𐅶 | q | 0 | octal digit | 0
+  |  |   |  𐅶 | var | 0
+  |  |   | int | type | 0
+  |  |   | not | exp | 1 (exp)
+  |  |   | add | exp | 2 (exp, exp)
+  |  |   | while | cmd | 1 (exp)
+  |  |   | add_assign | cmd | 2 (var, exp)
+𐆇 | w | 1 | octal digit | 0
+  |  |  | 𐆇 | var | 0
+  |  |  | to_int | exp | 1 (digit)
+  |  |  | sub | exp | 2 (exp, exp)
+  |  |  | if | cmd | 1 (exp)
+  |  |  | sub_assign | cmd | 2 (var, exp)
+𐅾 | e | 2 | octal digit | 0
+  |  |  | 𐅾 | var | 0
+  |  |  | ratio | type | 0
+  |  |  | read_as_var | exp | 1 (var)
+  |  |  | div | exp | 2 (exp, exp)
+  |  |  | end block | cmd | 0
+  |  |  | goto | cmd | 1 (exp)
+  |  |  | randomize | cmd | 2 (var, range)
+𐆋 | a | 3 | octal digit | 0
+  |  |  | 𐆋 | var | 0
+  |  |  | to_str | exp | 1 (exp)
+  |  |  | equals | exp | 2 (exp, exp)
+  |  |  | print | cmd | 1 (exp)
+  |  |  | for | cmd | 2 (var, range)
+𐆉 | s | 4 | octal digit | 0
+  |  |  | string | type | 0
+  |  |  | null | exp | 0
+  |  |  | int_or_floor | exp | 1 (exp)
+  |  |  | value | exp | 2 (type, exp)
+  |  |  | label | cmd | 1 (var)
+  |  |  | assign | cmd | 2 (var, exp)
+𐅻 | d | 5 | octal digit | 0
+  |  |  | 𐅻 | var | 0
+  |  |  | char | type | 0
+  |  |  | mod | exp | 2 (exp, exp)
+  |  |  | jump | cmd | 1 (exp)
+  |  |  | append | cmd | 2 (var, exp)
+𐆊 | z | 6 | octal digit | 0
+  |  |  | 𐆊 | var | 0
+  |  |  | greater_zero | exp | 1 (exp)
+  |  |  | or | exp | 2 (exp, exp)
+  |  |  | else | cmd | 0
+  |  |  | else_if | cmd | 1 (exp)
+  |  |  | assign | cmd | 2 (var, exp)
+𐆁 | x | 7 | octal digit | 0
+  |  |  | 𐆁 | var | 0
+  |  |  | random | exp | 1 (range)
+  |  |  | mul | exp | 2 (exp, exp)
+  |  |  | input | cmd | 1 (var)
+  |  |  | mul_assign | cmd | 2 (var, exp)
+[ | [ <td colspan=3>open bracket: begins a lexical unit </td> 
+] | ] <td colspan=3> close bracket: closes a lexical unit</td> 
 
 ## Example Programs
 

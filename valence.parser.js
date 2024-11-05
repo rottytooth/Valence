@@ -1,8 +1,6 @@
 const { start } = require('node:repl');
 const fs = require('node:fs'); // temporary, for testing
 
-const outfilename = "test4";
-
 if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
@@ -10,7 +8,7 @@ if (typeof module !== 'undefined' && module.exports) {
     scanner = require('./valence.scanner');
 }
 
-parser = (function() {
+const parser = (function() {
     
     var program = [];
 
@@ -25,9 +23,11 @@ parser = (function() {
                 if (r) return r;
             }
         }
-        for (let i = 0; i < tree.params.length; i++) {
-            let r = find_child_in_tree(tree.params[i], num);
-            if (r) return r;
+        if (!Array.isArray(tree)) {
+            for (let i = 0; i < tree.params.length; i++) {
+                let r = find_child_in_tree(tree.params[i], num);
+                if (r) return r;
+            }
         }
         return null;
     }
@@ -38,10 +38,6 @@ parser = (function() {
         }
         if (Array.isArray(tree)) {
             return false;
-            // for (let i = 0; i < tree[i]; i++) {
-            //     let complete = check_complete(tree[i]);
-            //     if (!complete) return false;
-            // }
         }
         if (Object.hasOwn(tree, 'params')) {
             for (let i = 0; i < tree.params.length; i++) {
@@ -53,15 +49,22 @@ parser = (function() {
     }
 
     const children_to_params = (tokens, idx) => {
-        // moves one token into place and makes the others its parameters
+        // makes one child the operator and all the other 
+        // children its parameters
         
         pre_fix = tokens.slice(0,idx);
         post_fix = tokens.slice(idx+1);
 
         if (pre_fix.length == 1 && pre_fix[0].symbol == "[") {
+            if (Array.isArray(pre_fix[0].children && pre_fix[0].children[0].symbol == "[")) {
+                let a = 4;
+            }
             pre_fix = pre_fix[0].children;
         }
         if (post_fix.length == 1 && post_fix[0].symbol == "[") {
+            if (Array.isArray(post_fix[0].children && post_fix[0].children[0].symbol == "[")) {
+                let a = 4;
+            }
             post_fix = post_fix[0].children;
         }
 
@@ -69,6 +72,62 @@ parser = (function() {
             return [post_fix]; //  param 1
         } else {
             return [pre_fix, post_fix]; // params 1 and 2
+        }
+    }
+
+    const resolve_param_end_node = (node, param_num) => {
+        // an end node has special readings: a var can be an exp
+
+        if (node.params.length > param_num && node.params[param_num].params.length === 0) {
+            let r1 = null;
+            if (!Array.isArray(node.params[param_num].reading)) {
+                r1 = node.params[param_num].reading
+            } else {
+                r1 = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+
+                // if there is no exp, then pick var
+                if (!r1 || r1.length === 0) {
+                    if (node.reading.params[param_num].type == "exp") {
+                        r1 = node.params[param_num].reading.filter(x => x.type === "var");
+                    }
+                }
+            }
+            if (Array.isArray(r1)) r1 = r1[0];
+            node.params[param_num].reading = r1;
+        }
+    }
+
+    const interpret_node = (node, isCommand) => {
+        if (!Object.hasOwn(node, 'readings')) {
+            return;
+        }
+        if (isCommand) {
+            node.reading = node.readings.filter(x => x.type === "cmd");
+        } else {
+            node.reading = node.readings.filter(x => x.type !== "cmd");
+        }
+        for (let i = 0; i < node.params.length; i++) {
+            interpret_node(node.params[i], false);
+        }
+
+        // filter by number of params
+        node.reading = node.reading.filter(
+            x => x.params.length === node.params.length);
+
+            // if only one reading is left, de-arrayify it
+        if (node.reading.length === 1) {
+            node.reading = node.reading[0];
+        }
+        
+        // if any of the children are end nodes, resolve them
+        resolve_param_end_node(node, 0);
+        resolve_param_end_node(node, 1);
+
+        if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
+            throw new Error(`Could not resolve reading for sign ${node.params[0].symbol}`);
+        }
+        if (node.params.length == 2 && Array.isArray(node.params[1].reading)) {
+            throw new Error(`Could not resolve reading for sign ${node.params[1].symbol}`);
         }
     }
 
@@ -96,7 +155,7 @@ parser = (function() {
             build_asts(line, intpt, token.params[0]);
             return; 
         }
-        if (Object.hasOwn(token, 'children')) {
+        if (Object.hasOwn(token, 'children') && token.children !== undefined) {
         // if we get this far, there are multiple children or params to break out
             for (let i = 0; i < token.children.length - 1; i++) {
                 if (token.children[i].symbol == "[") {
@@ -145,26 +204,6 @@ parser = (function() {
         }
     }
 
-    const transpile_js = (line_tree) => {
-
-        let retstr = line_tree.js;
-
-        let max_expressions = 10;
-
-        for (let i = 1; i <= max_expressions; i++) {
-            let expnode = find_child(line_tree, "exp", i);
-            if (expnode) {
-                retstr = retstr.replaceAll(`{exp${i > 1 ? i : ''}}`, transpile_js(expnode));
-            }
-        }
-
-        let varnode = find_child(line_tree, "var", 1);
-        if (varnode) {
-            retstr = retstr.replaceAll('{var}', varnode.js);
-        }
-        return retstr;
-    }
-
     // organize the line into a tree based on existing brackets
     // and number the symbols for later processing
     const parse_brackets_and_number_nodes = (line) => {
@@ -206,7 +245,7 @@ parser = (function() {
         }
 
         // if there is not a single parent at top of chain, add it here
-        if (line.tokens.length > 1 || line.tokens[0].symbol != "[") {
+        if (line.tokens.length > 1 || line.tokens.symbol != "[") {
             line.tokens = {type: "open_bracket", symbol: "[", children: JSON.parse(JSON.stringify(line.tokens)), id: 0};
         }
 
@@ -272,36 +311,28 @@ parser = (function() {
                     // remove incomplete ASTs
                     program[i].asts = program[i].asts.filter(x => x.complete);
 
-                    // print results
+                    // interpret the nodes
                     for (let j = 0; j < program[i].asts.length; j++) {
-                        console.log(print_ast(program[i].asts[j]));
+                        interpret_node(program[i].asts[j], true);
+                        program[i].asts[j].line = print_ast(program[i].asts[j]);
                     }
-
-                    
-
                     
                     complete_time = Date.now();
                     seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
                     if (seconds > 0 ) {
-                        outstr += `\ncompleted in ${seconds} seconds`;
+                        outstr = `\ncompleted in ${seconds} seconds`;
                     } else {
-                        outstr += `\ncompleted in ${complete_time - start_time} milliseconds`;
+                        outstr = `\ncompleted in ${complete_time - start_time} milliseconds`;
                     }
 
-                    if (typeof module !== 'undefined' && fs) {
-                        fs.writeFile(`out/${outfilename}.txt`, outstr, err => {
-                            if (err) {
-                                console.error(err);
-                            }
-                        });
-                    }
                     console.log(outstr);
                 }
             }
-        }
-
-        this.program_state = () => {
-           return JSON.stringify(program);
+            this.program_state = () => {
+                return JSON.stringify(program);
+            }
+     
+            return program;
         }
     });
 })();
@@ -311,9 +342,3 @@ Valence.parser = new parser();
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.parser;
 }
-
-
-// entry point for testing for the moment
-
-Valence.parser.parse("𐆇[𐆇𐆇[𐆊𐅶]]",false);
-// Valence.parser.parse("𐆇𐆊𐅶",false);

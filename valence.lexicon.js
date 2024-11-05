@@ -1,4 +1,3 @@
-
 if (!Valence) var Valence = {};
 
 Valence.lexicon = {
@@ -24,19 +23,25 @@ Valence.lexicon = {
         {
             name: "not",
             type: "exp",
-            params: [{type: "exp"}],
+            params: [{type: "exp", name:"exp"}],
             js: "(!({exp}))"
         },
         {
             name: "add",
             type: "exp",
-            params: [{type: "exp"},{type: "exp", repeat: "1+"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "add({exp},{exp2})"
+        },
+        {
+            name: "while",
+            type: "cmd",
+            params: [{type: "exp"}],
+            js: "while({exp}) {"
         },
         {
             name: "add_assign",
             type: "cmd",
-            params: [{type: "var"},{type: "exp", repeat: "1+"}],
+            params: [{type: "var"},{type: "exp"}],
             js: "{var} = add({var},{exp})"
         }
     ],
@@ -54,9 +59,15 @@ Valence.lexicon = {
             js: "W"
         },
         {
+            name: "to_int",
+            type: "exp",
+            params: [{type: "digit"}],
+            js: "{digit}"
+        },
+        {
             name: "sub",
             type: "exp",
-            params: [{type: "exp"},{type: "exp"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "({exp} - {exp2})"
         },
         {
@@ -69,20 +80,7 @@ Valence.lexicon = {
             name: "sub_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = ({var} - {exp})"
-        },
-        {
-            name: "randomize",
-            type: "cmd",
-            params: [{type: "var"},{type: "exp"},{type: "exp"}],
-            js: "{var} = {var} * Math.floor(Math.random() * {exp})"
-        },
-        {
-            name: "for",
-            alternate: "stepwise",
-            type: "cmd",
-            params: [{type: "var"},{type: "exp"},{type: "exp"},{type: "exp"}],
-            js: "for ({var} = {exp}; {var} < {exp2}; {var}+={exp3}) {"
+            js: "{var} = sub({var}, {exp})"
         }
     ],
     '𐅾': [
@@ -99,16 +97,23 @@ Valence.lexicon = {
             js: "E"
         },
         {
-            name: "div",
-            type: "exp",
-            params: [{type: "exp"},{type: "exp"}],
-            js: "({exp} / {exp2})"
-        },
-        {
             name: "ratio",
             type: "type",
             params: [],
             js: "ratio"
+        },
+        {
+            /* forces the var reading */
+            name: "read_as_var",
+            "type": "exp",
+            params: [{type: "var"}],
+            js: "{var}"
+        },
+        {
+            name: "div",
+            type: "exp",
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
+            js: "({exp} / {exp2})"
         },
         {
             name: "end block",
@@ -120,8 +125,14 @@ Valence.lexicon = {
             name: "goto",
             type: "cmd",
             params: [{type: "exp"}],
-            js: "goto(exp)"
-        }
+            js: "goto({exp})"
+        },
+        {
+            name: "randomize",
+            type: "cmd",
+            params: [{type: "var"},{type: "range"}],
+            js: "{var} = {var} * (Math.floor(Math.random() * {range}[1]) + {range}[0]);"
+        },
     ],
     '𐆋': [
         {
@@ -145,7 +156,7 @@ Valence.lexicon = {
         {
             name: "equals",
             type: "exp",
-            params: [{type: "exp"},{type: "exp"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "(({exp}) == ({exp2}))"
         },
         {
@@ -155,10 +166,10 @@ Valence.lexicon = {
             js: "print({exp});"
         },
         {
-            name: "while",
+            name: "for",
             type: "cmd",
-            params: [{type: "exp"}],
-            js: "while({exp}) {"
+            params: [{type: "var"},{type: "range"}],
+            js: "for ({var} = {range}[0]; {var} < {range}[1]; {var}+={range}[1] >= {range}[0]) {"
         }
     ],
     '𐆉': [
@@ -189,14 +200,14 @@ Valence.lexicon = {
         {
             name: "value",
             type: "exp",
-            params: [{type: "type"},{type: "digit", repeat: "1+"}],
-            js: "value({type},{digit})"
+            params: [{type: "type"},{type: "exp"}],
+            js: "value({type},{exp})"
         },
         {
             name: "label",
             type: "cmd",
-            params: [{type: "exp"}],
-            js: "set_label(label,{exp});"
+            params: [{type: "var"}],
+            js: "set_label(label,{var});"
         },
         {
             name: "assign",
@@ -227,15 +238,22 @@ Valence.lexicon = {
         {
             name: "mod",
             type: "exp",
-            params: [{type: "exp"},{type: "exp"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "({exp}%{exp2})"
         },
         {
             name: "jump",
             type: "cmd",
             params: [{type: "exp"}],
-            js: "jmp({exp2})"
+            js: "jmp({exp})"
         },
+        {
+            // must also turn variable into a list if it isn't yet
+            name: "append",
+            type: "cmd",
+            params: [{type: "var"},{type: "exp"}],
+            js: "{var} += {exp};"
+        }
     ],
     '𐆊': [
         {
@@ -253,7 +271,7 @@ Valence.lexicon = {
         {
             name: "or",
             type: "exp",
-            params: [{type: "exp"},{type: "exp"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "({exp} || {exp2})"
         },
         {
@@ -291,13 +309,13 @@ Valence.lexicon = {
         {
             name: "random",
             type: "exp",
-            params: [{type: "exp"}],
-            js: "rnd({exp})"
+            params: [{type: "range"}],
+            js: "rnd({range})"
         },
         {
             name: "mul",
             type: "exp",
-            params: [{type: "exp"},{type: "exp", repeat: "1+"}],
+            params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "mul({exp},{exp2})"
         },
         {
@@ -309,11 +327,33 @@ Valence.lexicon = {
         {
             name: "mul_assign",
             type: "cmd",
-            params: [{type: "var"},{type: "exp", repeat: "1+"}],
-            js: "{var} = mul({exp2});"
+            params: [{type: "var"},{type: "exp"}],
+            js: "{var} = mul({exp});"
         }
     ]
 };
+
+Valence.lexicon.to_string = function(md=false) {
+    retstr = "";
+    for (let key in Valence.lexicon) {
+        retstr += key;
+        retstr += "\n";
+        for (let i = 0; i < Valence.lexicon[key].length; i++) {
+            // generate markdown chart
+            if (md) {
+                let name = Valence.lexicon[key][i].name;
+                if (Valence.lexicon[key][i].type === "var") {
+                    name = key;
+                }
+                retstr += `  |  | ${name} | ${Valence.lexicon[key][i].type} | ${Valence.lexicon[key][i].params.length}\n`;
+            } else {
+                retstr += `    ${Valence.lexicon[key][i].name} (${Valence.lexicon[key][i].type}) ${Valence.lexicon[key][i].params.length}\n`;
+            }
+        }
+        retstr += "\n";
+    }
+    return retstr;
+}
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.lexicon;

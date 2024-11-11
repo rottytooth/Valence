@@ -30,7 +30,7 @@ Valence.lexicon = {
             name: "add",
             type: "exp",
             params: [{type: "exp"},{type: "exp", name:"exp2"}],
-            js: "add({exp},{exp2})"
+            js: "({exp} + {exp2})"
         },
         {
             name: "while",
@@ -42,7 +42,7 @@ Valence.lexicon = {
             name: "add_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = add({var},{exp})"
+            js: "{var} = ({var} + {exp})"
         }
     ],
     '𐆇': [ 
@@ -80,7 +80,7 @@ Valence.lexicon = {
             name: "sub_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = sub({var}, {exp})"
+            js: "{var} = ({var} - {exp})"
         }
     ],
     '𐅾': [
@@ -151,7 +151,7 @@ Valence.lexicon = {
             name: "to_str",
             type: "exp",
             params: [{type: "exp"}],
-            js: "str({exp)"
+            js: "str({exp})"
         },
         {
             name: "equals",
@@ -180,17 +180,23 @@ Valence.lexicon = {
             js: "4"
         },
         {
+            name: "S",
+            type: "var",
+            params: [],
+            js: "S"
+        },
+        {
             name: "string",
             type: "type",
             params: [],
             js: "str"
         },
-        {
-            name: "null",
-            type: "exp",
-            params: [],
-            js: "null"
-        },
+        // {
+        //     name: "null",
+        //     type: "exp",
+        //     params: [],
+        //     js: "null"
+        // },
         {
             name: "int_or_floor",
             type: "exp",
@@ -207,7 +213,7 @@ Valence.lexicon = {
             name: "label",
             type: "cmd",
             params: [{type: "var"}],
-            js: "set_label(label,{var});"
+            js: "set_label(label, {var});"
         },
         {
             name: "assign",
@@ -263,6 +269,12 @@ Valence.lexicon = {
             js: "6"
         },
         {
+            name: "Z",
+            type: "var",
+            params: [],
+            js: "Z"
+        },
+        {
             name: "greater_zero",
             type: "exp",
             params: [{type: "exp"}],
@@ -316,7 +328,7 @@ Valence.lexicon = {
             name: "mul",
             type: "exp",
             params: [{type: "exp"},{type: "exp", name:"exp2"}],
-            js: "mul({exp},{exp2})"
+            js: "({exp} * {exp2})"
         },
         {
             name: "input",

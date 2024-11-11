@@ -14,6 +14,7 @@ const parser = (function() {
 
     const find_child_in_tree = (tree, num) => {
         // depth-first search for a child with a specific id
+
         if (tree.id === num) {
             return tree;
         }
@@ -36,7 +37,7 @@ const parser = (function() {
         if (Object.hasOwn(tree, 'children')) {
             return false;
         }
-        if (Array.isArray(tree)) {
+        if (Array.isArray(tree) && tree.length > 0) {
             return false;
         }
         if (Object.hasOwn(tree, 'params')) {
@@ -76,7 +77,7 @@ const parser = (function() {
     }
 
     const resolve_param_end_node = (node, param_num) => {
-        // an end node has special readings: a var can be an exp
+        // an end node has special potential_readings: a var can be an exp
 
         if (node.params.length > param_num && node.params[param_num].params.length === 0) {
             let r1 = null;
@@ -98,13 +99,13 @@ const parser = (function() {
     }
 
     const interpret_node = (node, isCommand) => {
-        if (!Object.hasOwn(node, 'readings')) {
+        if (!Object.hasOwn(node, 'potential_readings')) {
             return;
         }
         if (isCommand) {
-            node.reading = node.readings.filter(x => x.type === "cmd");
+            node.reading = node.potential_readings.filter(x => x.type === "cmd");
         } else {
-            node.reading = node.readings.filter(x => x.type !== "cmd");
+            node.reading = node.potential_readings.filter(x => x.type !== "cmd");
         }
         for (let i = 0; i < node.params.length; i++) {
             interpret_node(node.params[i], false);
@@ -138,6 +139,7 @@ const parser = (function() {
             token.params = [];
         }
 
+        // FIRST deal with all the node's children, moving them to params
         if ((!Object.hasOwn(token, 'children') || token.children.length === 0) 
             && token.params.length === 0) {
             
@@ -179,6 +181,7 @@ const parser = (function() {
                 }        
             }
         }
+        // SECOND, process those params
         for (let i = 0; i < token.params.length; i++) { 
             if (Array.isArray(token.params[i])) {
                 if (token.params[i].length == 1) {
@@ -186,6 +189,10 @@ const parser = (function() {
                     build_asts(line, intpt, token.params[i]);
                 }
                 for(let j = 0; j < token.params[i].length - 1; j++) {
+                    if (token.params[i][j].symbol == "[") {
+                        continue; // can't have bracket as command
+                    }
+    
                     new_tree = JSON.parse(JSON.stringify(intpt));
                     new_token = find_child_in_tree(new_tree, token.id);
                     new_token.params[i][j].params = children_to_params(new_token.params[i], j);
@@ -205,7 +212,7 @@ const parser = (function() {
     }
 
     // organize the line into a tree based on existing brackets
-    // and number the symbols for later processing
+    // and number (give IDs to) the symbols for later processing
     const parse_brackets_and_number_nodes = (line) => {
         let open_bracket = -1;
         let symbol_count = 1; // parent folder will be 0

@@ -24,8 +24,10 @@ const transpile_js = (ast) => {
 const parse = (program, retstr = "") => {
     parsed_prog = Valence.parser.parse(program, false);
     for(let i = 0; i < parsed_prog.length; i++) {
+        // for each line
         retstr += parsed_prog[i].line + "\n";
         for(let j = 0; j < parsed_prog[i].asts.length; j++) {
+            // for each reading of that line
             retstr += parsed_prog[i].asts[j].line + "\n";
             retstr += transpile_js(parsed_prog[i].asts[j]) + "\n";
         }
@@ -33,7 +35,16 @@ const parse = (program, retstr = "") => {
     return retstr;
 }
 
-const parse_to_file = (program, outfile) => {
+const parse_and_print = (program) => {
+    console.log(parse(program));
+}
+
+const parse_program = (program, to_file=false, outfile = null) => {
+    // parse a program from text, output to either screen or a file
+    if (!to_file) {
+        parse_and_print(program);
+        return;
+    }
     if (!outfile) {
         outfile = `output/${program}.txt`;
     }
@@ -43,12 +54,24 @@ const parse_to_file = (program, outfile) => {
     });
 }
 
-const parse_and_print = (program) => {
-    console.log(parse(program));
+const parse_file = (infile, to_file=false, outfile = null) => {
+    // parse a .val file (requires node)
+    fs.readFile(infile, 'utf8', (err, program) => {
+        if (err) throw err;
+        if (!to_file) {
+            parse_and_print(program, outfile);
+            return;
+        }
+        parse_program(program, to_file, outfile);
+    });
 }
 
 
-parse_to_file("𐆋𐆇𐆋𐅾𐆊𐅾𐅶𐅾𐅾");
+
+// parse_program("𐆋𐆇𐆋𐅾𐆊𐅾𐅶𐅾𐅾");
+parse_file("programs/fizzbuzz.val", true);
+
+
 // parse_to_file("𐆇𐆊𐅶")
 // parse_to_file("𐆇[𐆇𐆇[𐆊𐅶]]")
 // parse_to_file("[𐆋]𐆇[[𐆋]𐅾[[𐆊]𐅾[[𐅶]𐅾[𐅾]]]]")

@@ -1,6 +1,8 @@
 const { start } = require('node:repl');
 const fs = require('node:fs'); // temporary, for testing
 
+const MAX_ASTS = 2000;
+
 if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
@@ -11,6 +13,39 @@ if (typeof module !== 'undefined' && module.exports) {
 const parser = (function() {
     
     var program = [];
+
+    const print_ast = (ast) => {
+        // print the ast on a single line with brackets
+        retstr = "";
+        if (ast.params.length == 2) {
+            retstr += `[${print_ast(ast.params[0], retstr)}]`;
+        }
+        retstr += ast.symbol;
+        if (ast.params.length == 1) {
+            retstr += `[${print_ast(ast.params[0], retstr)}]`;
+        }
+        if (ast.params.length == 2) {
+            retstr += `[${print_ast(ast.params[1], retstr)}]`;
+        }
+        return retstr;
+    }
+
+    const print_ast_detail = (ast, level = 0) => {
+        // draw the ast as a tree, indented by level
+        retstr = "";
+        if (level == 0) {
+            retstr += ast.line + "\n"; 
+        }
+        for(let i = 0; i < level; i++) {
+            retstr += "\t";
+        }
+        retstr += `${ast.symbol} ${ast.reading.name} id:${ast.id}\n`;
+        for(let j = 0; j < ast.params.length; j++) {
+            retstr += print_ast_detail(ast.params[j], level + 1);
+        }
+        return retstr;
+    }
+
 
     const find_child_in_tree = (tree, num) => {
         // depth-first search for a child with a specific id
@@ -76,53 +111,82 @@ const parser = (function() {
         }
     }
 
-    const resolve_param_end_node = (node, param_num) => {
-        // an end node has special potential_readings: a var can be an exp
+    const resolve_param_end_node = (line, ast, node, param_num, original_idx) => {
+        // an end node has special potential_readings: a var or digit can be an exp
 
-        if (node.params.length > param_num && node.params[param_num].params.length === 0) {
-            let r1 = null;
-            if (!Array.isArray(node.params[param_num].reading)) {
-                r1 = node.params[param_num].reading
-            } else {
-                r1 = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+        if (!(node.params.length > param_num && node.params[param_num].params.length === 0)) 
+            return;
 
-                // if there is no exp, then pick var
-                if (!r1 || r1.length === 0) {
-                    if (node.reading.params[param_num].type == "exp") {
-                        r1 = node.params[param_num].reading.filter(x => x.type === "var");
+        if (node.params[param_num].reading.length === 1) {
+            node.params[param_num].reading = node.params[param_num].reading[0];
+        }
+
+        let reading_to_assign = null;
+        if (!Array.isArray(node.params[param_num].reading)) {
+            reading_to_assign = node.params[param_num].reading
+        } else {
+            reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+
+            // if there is no exp, then duplicate the ast, one with var, the other with int
+            if (!reading_to_assign || reading_to_assign.length === 0) {
+                switch(node.reading.params[param_num].type) {
+                case "var":
+                case "digit":
+                    // if it's a var or a digit, adopt that reading
+                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+                    break;
+                case "exp":
+                    // otherwise, split the ast into two, one for each reading
+                    if (line.asts.length > MAX_ASTS) {
+                        throw new Error("Too many interpretations of this line of code; probably stuck in an infinite loop");
                     }
+                    // assign the var reading to the existing ast
+                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === "var");
+
+                    // dupe the ast and assign digit to the other
+                    new_tree = JSON.parse(JSON.stringify(ast));
+                    new_tree.forked_from = original_idx;
+                    line.asts.push(new_tree);
+                    new_token = find_child_in_tree(new_tree, node.id);
+                    new_token.params[param_num].reading = new_token.params[param_num].reading.filter(x => x.type === "digit")[0];
+                    break;
                 }
             }
-            if (Array.isArray(r1)) r1 = r1[0];
-            node.params[param_num].reading = r1;
         }
+        if (Array.isArray(reading_to_assign)) reading_to_assign = reading_to_assign[0];
+        node.params[param_num].reading = reading_to_assign;
     }
 
-    const interpret_node = (node, isCommand) => {
+    const interpret_node = (line, ast, node, isCommand, original_idx) => {
         if (!Object.hasOwn(node, 'potential_readings')) {
             return;
         }
-        if (isCommand) {
-            node.reading = node.potential_readings.filter(x => x.type === "cmd");
-        } else {
-            node.reading = node.potential_readings.filter(x => x.type !== "cmd");
+        if (node.reading == undefined || (Array.isArray(node.reading) && node.reading.length !== 1)) {
+            // if reading is already resolved, don't do this
+            if (isCommand) {
+                node.reading = node.potential_readings.filter(x => x.type === "cmd");
+            } else {
+                node.reading = node.potential_readings.filter(x => x.type !== "cmd");
+            }
         }
         for (let i = 0; i < node.params.length; i++) {
-            interpret_node(node.params[i], false);
+            interpret_node(line, ast, node.params[i], false, original_idx);
         }
 
         // filter by number of params
-        node.reading = node.reading.filter(
-            x => x.params.length === node.params.length);
+        if (Array.isArray(node.reading)) {
+            node.reading = node.reading.filter(
+                x => x.params.length === node.params.length);
 
             // if only one reading is left, de-arrayify it
-        if (node.reading.length === 1) {
-            node.reading = node.reading[0];
+            if (node.reading.length === 1) {
+                node.reading = node.reading[0];
+            }
         }
         
         // if any of the children are end nodes, resolve them
-        resolve_param_end_node(node, 0);
-        resolve_param_end_node(node, 1);
+        resolve_param_end_node(line, ast, node, 0, original_idx);
+        resolve_param_end_node(line, ast, node, 1, original_idx);
 
         if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
             throw new Error(`Could not resolve reading for sign ${node.params[0].symbol}`);
@@ -259,21 +323,6 @@ const parser = (function() {
         return line;
     }
 
-    const print_ast = (ast) => {
-        retstr = "";
-        if (ast.params.length == 2) {
-            retstr += `[${print_ast(ast.params[0], retstr)}]`;
-        }
-        retstr += ast.symbol;
-        if (ast.params.length == 1) {
-            retstr += `[${print_ast(ast.params[0], retstr)}]`;
-        }
-        if (ast.params.length == 2) {
-            retstr += `[${print_ast(ast.params[1], retstr)}]`;
-        }
-        return retstr;
-    }
-
 
     return (function () {
         // public functions
@@ -312,16 +361,23 @@ const parser = (function() {
                     let token = JSON.parse(JSON.stringify(program[i].tokens));
                     program[i].asts.push(token);
                     
+                    // build out program[i].asts
                     build_asts(program[i], program[i].asts[0]);
                     program[i].asts = program[i].asts.slice(1); // remove the original interpretation
 
                     // remove incomplete ASTs
                     program[i].asts = program[i].asts.filter(x => x.complete);
-
-                    // interpret the nodes
+                    // complete has no meaning after this, so remove to reduce confusion
                     for (let j = 0; j < program[i].asts.length; j++) {
-                        interpret_node(program[i].asts[j], true);
+                        delete program[i].asts[j].complete;
+                    }
+
+                    // fill out the reading field of each ast
+                    // asts will multiply when an end node can be read in multiple ways
+                    for (let j = 0; j < program[i].asts.length; j++) {
+                        interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
                         program[i].asts[j].line = print_ast(program[i].asts[j]);
+                        console.log(print_ast_detail(program[i].asts[j]));
                     }
                     
                     complete_time = Date.now();

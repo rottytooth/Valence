@@ -32,11 +32,12 @@ const parse = (program, retstr = "") => {
             retstr += transpile_js(parsed_prog[i].asts[j]) + "\n";
         }
     }
-    return retstr;
+    parsed_prog.log = retstr;
+    return parsed_prog;
 }
 
 const parse_and_print = (program) => {
-    console.log(parse(program));
+    console.log(parse(program).log);
 }
 
 const parse_program = (program, to_file=false, outfile = null) => {
@@ -48,7 +49,7 @@ const parse_program = (program, to_file=false, outfile = null) => {
     if (!outfile) {
         outfile = `output/${program}.txt`;
     }
-    fs.writeFile(outfile, parse(program), (err) => {
+    fs.writeFile(outfile, parse(program).log, (err) => {
         if (err) throw err;
         console.log('The file has been saved!');
     });
@@ -68,8 +69,8 @@ const parse_file = (infile, to_file=false, outfile = null) => {
 
 
 
-// parse_program("𐆋𐆇𐆋𐅾𐆊𐅾𐅶𐅾𐅾");
-parse_file("programs/fizzbuzz.val", true);
+parse_program("𐅾");
+//parse_file("programs/fizzbuzz.val", true);
 
 
 // parse_to_file("𐆇𐆊𐅶")

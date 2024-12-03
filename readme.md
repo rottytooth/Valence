@@ -8,9 +8,13 @@ In Valence:
 * Any symbol can alternately be a variable name or an instruction
 * All instructions have multiple meanings, as listed below
 * Instructions can be combined in any order in a line of code
-* Every possible reading of that line of code plays out, resulting in many parallel executions of any program. Some programs get stuck in infinite loops or can't be executed because of syntax errors; if detectable, these programs are not built. The others are treated equally, and run in parallel.
+* Every possible reading of that line of code plays out, resulting in many parallel executions of any program. Some programs get stuck in infinite loops or can't be executed because of syntax errors; if detectable, these are skipped; the others are treated equally, and run in parallel.
 
 While any symbols can be succesfully combined to create *some* meaning, not all lines of code are compatible: unclosed blocks of code are ignored, until that program has the appropriate close block instruction added. 
+
+## Project Status
+
+Grammar is complete. Parser/transpiler is mostly complete but has several known issues (for which there are failing tests). Side-by-side execution and debugging will come later. Next step: Working sample programs.
 
 ## Instructions
 
@@ -74,22 +78,3 @@ symbol | typed as | interpretation | type | params
 [ | [ <td colspan=3>open bracket: begins a lexical unit </td> 
 ] | ] <td colspan=3> close bracket: closes a lexical unit</td> 
 
-## Example Programs
-
-### Hello World
-
-There is only one reading of this Hello World program, since the 𐆉 has no alternate readings in this context:
-
-    𐆋Hello, World!
-
-No quotes are needed, as any characters from outside the Valence lexicon are treated as a string. If quotes had been included, those quotes would have been interpreted as part of the string.
-
-### FizzBuzz
-
-Even a simple loop adds much ambiguity. Since Ints and Floats are formed using the 𐆋 instructions, each ends up with several alternate values:
-
-    (TO BE ADDED)
-
-A few readings of this program:
-
-    (TO BE ADDED)

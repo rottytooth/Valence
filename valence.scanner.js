@@ -6,56 +6,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
 class scanner {
 
-    // static get_noncommand(i, line, instructions) {
-    //     // Capture text outside the alphabet in case it's used as a constant
-    //     // Returns -1 if unhandled, otherwise returns new index
-    //     let capture = "";
-    //     for ( ; i < line.length && !(line[i] in Valence.lexicon); i++) {
-    //         capture += line[i];
-    //     }
-    //     capture = capture.trim();
-
-    //     if (!capture) {
-    //         // nothing captured, nothing handled
-    //         return -1;
-    //     }
-
-    //     let num = NaN;
-    //     if (capture.indexOf(".") >= 0) {
-    //         // attempt float
-    //         num = parseFloat(capture);
-    //         if (!isNaN(num)) {
-    //             instructions.push([{
-    //                 symbol: num,
-    //                 type: "float",
-    //                 val: num,
-    //                 js: capture
-    //             }]);        
-    //             return i;
-    //         }
-    //     }
-    //     num = parseInt(capture);
-    //     if (!isNaN(num)) {
-    //         // attempt int
-    //         instructions.push([{
-    //             symbol: num,
-    //             type: "int",
-    //             val: num,
-    //             js: capture
-    //         }]);        
-    //         return i;
-    //     }
-
-    //     // otherwise, take as a string
-    //     instructions.push([{
-    //         symbol: capture,
-    //         type: "str",
-    //         val: capture,
-    //         js: '"' + capture + '"'
-    //     }]);
-    //     return i;
-    // }
-
     static convert(line) {
         // convert Toman chars to valid Valence signs
         line = [...line];
@@ -98,13 +48,6 @@ class scanner {
                 });        
                 continue;
             }
-
-            // // handle if code is outside the alphabet
-            // let new_idx = scanner.get_noncommand(i, line, instructions);
-            // if (new_idx > -1) {
-            //     i = new_idx;
-            //     continue;
-            // }
 
             // everything else is a single character
             let curr_char = line[i]

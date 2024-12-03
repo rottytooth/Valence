@@ -14,39 +14,6 @@ const parser = (function() {
     
     var program = [];
 
-    const print_ast = (ast) => {
-        // print the ast on a single line with brackets
-        retstr = "";
-        if (ast.params.length == 2) {
-            retstr += `[${print_ast(ast.params[0], retstr)}]`;
-        }
-        retstr += ast.symbol;
-        if (ast.params.length == 1) {
-            retstr += `[${print_ast(ast.params[0], retstr)}]`;
-        }
-        if (ast.params.length == 2) {
-            retstr += `[${print_ast(ast.params[1], retstr)}]`;
-        }
-        return retstr;
-    }
-
-    const print_ast_detail = (ast, level = 0) => {
-        // draw the ast as a tree, indented by level
-        retstr = "";
-        if (level == 0) {
-            retstr += ast.line + "\n"; 
-        }
-        for(let i = 0; i < level; i++) {
-            retstr += "\t";
-        }
-        retstr += `${ast.symbol} ${ast.reading.name} id:${ast.id}\n`;
-        for(let j = 0; j < ast.params.length; j++) {
-            retstr += print_ast_detail(ast.params[j], level + 1);
-        }
-        return retstr;
-    }
-
-
     const find_child_in_tree = (tree, num) => {
         // depth-first search for a child with a specific id
 
@@ -212,7 +179,7 @@ const parser = (function() {
             }
             return;
         }
-        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol != "[") {
+        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol != "[" && token.children[0].children !== undefined) {
             token.children = token.children[0].children;
         }
         if (Object.hasOwn(token, 'children') && token.params.length === 0 && token.children.length === 1 && token.children[0].symbol != "[") {
@@ -327,7 +294,42 @@ const parser = (function() {
     return (function () {
         // public functions
 
+        this.print_ast = (ast) => {
+            // print the ast on a single line with brackets
+            retstr = "";
+            if (ast.params.length == 2) {
+                retstr += `[${this.print_ast(ast.params[0], retstr)}]`;
+            }
+            retstr += ast.symbol;
+            if (ast.params.length == 1) {
+                retstr += `[${this.print_ast(ast.params[0], retstr)}]`;
+            }
+            if (ast.params.length == 2) {
+                retstr += `[${this.print_ast(ast.params[1], retstr)}]`;
+            }
+            return retstr;
+        }
+
+        this.print_ast_detail = (ast, level = 0) => {
+            // draw the ast as a tree, indented by level
+            retstr = "";
+            if (level == 0) {
+                retstr += ast.line + "\n"; 
+            }
+            for(let i = 0; i < level; i++) {
+                retstr += "\t";
+            }
+            retstr += `${ast.symbol} ${ast.reading.name} id:${ast.id}\n`;
+            for(let j = 0; j < ast.params.length; j++) {
+                retstr += this.print_ast_detail(ast.params[j], level + 1);
+            }
+            return retstr;
+        }
+
         this.parse = (input, complete) => {
+            // complete = evaluate as complete program, dropping interpretations with unmatched brackets or other invalid syntax
+
+            program = [];
 
             let start_time = Date.now();
 
@@ -367,7 +369,7 @@ const parser = (function() {
 
                     // remove incomplete ASTs
                     program[i].asts = program[i].asts.filter(x => x.complete);
-                    // complete has no meaning after this, so remove to reduce confusion
+                    // remove complete that has no meaning after this
                     for (let j = 0; j < program[i].asts.length; j++) {
                         delete program[i].asts[j].complete;
                     }
@@ -376,8 +378,10 @@ const parser = (function() {
                     // asts will multiply when an end node can be read in multiple ways
                     for (let j = 0; j < program[i].asts.length; j++) {
                         interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
-                        program[i].asts[j].line = print_ast(program[i].asts[j]);
-                        console.log(print_ast_detail(program[i].asts[j]));
+                        program[i].asts[j].line = this.print_ast(program[i].asts[j]);
+
+                        // debug: print the tree
+                        // console.log(print_ast_detail(program[i].asts[j]));
                     }
                     
                     complete_time = Date.now();

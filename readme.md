@@ -75,6 +75,6 @@ symbol | typed as | interpretation | type | params
   |  |  | mul | exp | 2 (exp, exp)
   |  |  | input | cmd | 1 (var)
   |  |  | mul_assign | cmd | 2 (var, exp)
-[ | [ <td colspan=3>open bracket: begins a lexical unit </td> 
-] | ] <td colspan=3> close bracket: closes a lexical unit</td> 
+[ | [ | begin lexical group
+] | ] | end lexical group
 

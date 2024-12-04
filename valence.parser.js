@@ -177,17 +177,9 @@ const parser = (function() {
             }
             return;
         }
-        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol === "[" && token.children[0].children !== undefined) {
-            token.children = token.children[0].children;
-        }
-        if (Object.hasOwn(token, 'children') && token.params.length === 0 && token.children.length === 1 && token.children[0].symbol != "[") {
-            // if there's only one child, make it the first parameter
-            token.params = [token.children[0]];
-            build_asts(line, intpt, token.params[0]);
-            return; 
-        }
         if (Object.hasOwn(token, 'children') && token.children !== undefined) {
-        // if we get this far, there are multiple children or params to break out
+            // if we get this far, there are multiple children or params to break out
+
             for (let i = 0; i < token.children.length - 1; i++) {
                 if (token.children[i].symbol == "[") {
                     continue; // can't have bracket as command
@@ -211,33 +203,37 @@ const parser = (function() {
             }
 
         }
-        // SECOND, process those params: walk through each param and organize them into parameterized functions as well
+        // SECOND, process those params: 
+        // * either they are already single nodes, and should be sent to this func
+        // * or they are arrays of nodes
+        //   * if they are arrays, reorganize into params, for each valid command and split this ast into two
         for (let i = 0; i < token.params.length; i++) { 
-            if (Array.isArray(token.params[i])) {
-                if (token.params[i].length == 1) {
-                    // single element gets broken out of array
-                    token.params[i] = token.params[i][0];
-                    build_asts(line, intpt, token.params[i]);
-                }
-                for(let j = 0; j < token.params[i].length - 1; j++) {
-                    // basically doing the same loop as we did in the 2x children loop above but with params
-                    if (token.params[i][j].symbol == "[") {
-                        continue; // can't have bracket as command
-                    }
-
-                    new_tree = JSON.parse(JSON.stringify(intpt));
-                    new_token = find_child_in_tree(new_tree, token.id);
-                    new_token.params[i][j].params = children_to_params(new_token.params[i], j);
-                    new_token.params[i] = new_token.params[i][j];
-                    delete new_token.children;
-
-                    line.asts.push(new_tree);
-                    
-                    build_asts(line, new_tree, new_token);
-                }
-
-            } else {
+            if (!Array.isArray(token.params[i])) {
                 build_asts(line, intpt, token.params[i]);
+                continue;
+            }
+            if (token.params[i].length == 1) {
+                // single element gets broken out of array
+                token.params[i] = token.params[i][0];
+                build_asts(line, intpt, token.params[i]);
+                continue;
+            }
+
+            for(let j = 0; j < token.params[i].length - 1; j++) {
+                // basically doing the same loop as we did in the 2x children loop above but with params. For each possible command, mark it and make the previous siblings parameter 1, the following parameter 2
+                if (token.params[i][j].symbol == "[") {
+                    continue; // can't have bracket as command
+                }
+
+                new_tree = JSON.parse(JSON.stringify(intpt));
+                new_token = find_child_in_tree(new_tree, token.id);
+                new_token.params[i][j].params = children_to_params(new_token.params[i], j);
+                new_token.params[i] = new_token.params[i][j];
+                delete new_token.children;
+
+                line.asts.push(new_tree);
+
+                build_asts(line, new_tree, new_token);
             }
         }
     }

@@ -120,7 +120,7 @@ test('lex: brackets force a single reading', () => {
     expect(tree[0].asts.length).toBe(1);
 });
 
-test('lex: brackets force a single reading', () => {
+test('lex: brackets force a single reading, longer', () => {
     let program = "𐆋[𐆋[𐆋[𐆋[𐅾[𐅾𐅻]]]]]";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(1);
@@ -153,8 +153,14 @@ test('parse: label with name', () => {
     expect(tree[0].asts[0].params[0].reading.name).toBe('Q');
 });
 
-test('parse: beginning of Hello World', () => {
+test('parse: beginning of Hello World with all brackets', () => {
     let program = "[𐆋]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐆇𐆊]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+});
+
+test('parse: beginning of Hello World, no brackets', () => {
+    let program = "𐆋𐆉𐅻𐅻𐆇𐆇𐅶𐆇𐆊";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
 });

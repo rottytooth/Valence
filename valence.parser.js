@@ -54,20 +54,14 @@ const parser = (function() {
     const children_to_params = (tokens, idx) => {
         // makes one child the operator and all the other 
         // children its parameters
-        
+
         pre_fix = tokens.slice(0,idx);
         post_fix = tokens.slice(idx+1);
 
         if (pre_fix.length == 1 && pre_fix[0].symbol == "[") {
-            if (Array.isArray(pre_fix[0].children && pre_fix[0].children[0].symbol == "[")) {
-                let a = 4;
-            }
             pre_fix = pre_fix[0].children;
         }
         if (post_fix.length == 1 && post_fix[0].symbol == "[") {
-            if (Array.isArray(post_fix[0].children && post_fix[0].children[0].symbol == "[")) {
-                let a = 4;
-            }
             post_fix = post_fix[0].children;
         }
 
@@ -170,7 +164,11 @@ const parser = (function() {
             token.params = [];
         }
 
-        // FIRST deal with all the node's children, moving them to params
+        // A token will have either children or params
+        // CHILDREN are not yet grouped, may have brackets
+        // PARAMS are children broken down into parameters to the token
+
+        // FIRST we deal with any children, moving them to params
         if ((!Object.hasOwn(token, 'children') || token.children.length === 0) 
             && token.params.length === 0) {
             
@@ -179,7 +177,7 @@ const parser = (function() {
             }
             return;
         }
-        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol != "[" && token.children[0].children !== undefined) {
+        if (Object.hasOwn(token, 'children') && token.children.length === 1 && token.children[0].symbol === "[" && token.children[0].children !== undefined) {
             token.children = token.children[0].children;
         }
         if (Object.hasOwn(token, 'children') && token.params.length === 0 && token.children.length === 1 && token.children[0].symbol != "[") {
@@ -207,23 +205,26 @@ const parser = (function() {
                 }
                 line.asts.push(new_tree);
 
-                for (let i = 0; i < new_token.params.length; i++) {
-                    build_asts(line, new_tree, new_token.params[i]);
-                }        
+                for (let k = 0; k < new_token.params.length; k++) {
+                    build_asts(line, new_tree, new_token.params[k]);
+                }
             }
+
         }
-        // SECOND, process those params
+        // SECOND, process those params: walk through each param and organize them into parameterized functions as well
         for (let i = 0; i < token.params.length; i++) { 
             if (Array.isArray(token.params[i])) {
                 if (token.params[i].length == 1) {
+                    // single element gets broken out of array
                     token.params[i] = token.params[i][0];
                     build_asts(line, intpt, token.params[i]);
                 }
                 for(let j = 0; j < token.params[i].length - 1; j++) {
+                    // basically doing the same loop as we did in the 2x children loop above but with params
                     if (token.params[i][j].symbol == "[") {
                         continue; // can't have bracket as command
                     }
-    
+
                     new_tree = JSON.parse(JSON.stringify(intpt));
                     new_token = find_child_in_tree(new_tree, token.id);
                     new_token.params[i][j].params = children_to_params(new_token.params[i], j);
@@ -231,11 +232,10 @@ const parser = (function() {
                     delete new_token.children;
 
                     line.asts.push(new_tree);
-
-                    for (let i = 0; i < new_token.params.length; i++) {
-                        build_asts(line, new_tree, new_token.params[i]);
-                    }        
+                    
+                    build_asts(line, new_tree, new_token);
                 }
+
             } else {
                 build_asts(line, intpt, token.params[i]);
             }

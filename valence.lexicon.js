@@ -191,12 +191,6 @@ Valence.lexicon = {
             params: [],
             js: "str"
         },
-        // {
-        //     name: "null",
-        //     type: "exp",
-        //     params: [],
-        //     js: "null"
-        // },
         {
             name: "int_or_floor",
             type: "exp",
@@ -240,6 +234,12 @@ Valence.lexicon = {
             type: "type",
             params: [],
             js: "char"
+        },
+        {
+            name: "mult_by_eight",
+            type: "exp",
+            params: [{type: "exp"}],
+            js: "({exp}*8)"
         },
         {
             name: "mod",

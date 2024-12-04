@@ -69,10 +69,10 @@ const parse_file = (infile, to_file=false, outfile = null) => {
 
 
 
-parse_program("𐅾");
-//parse_file("programs/fizzbuzz.val", true);
+//parse_program("𐅾");
+// parse_program("𐆇𐆊𐅶")
+parse_file("programs/hello_world.val", true);
 
 
-// parse_to_file("𐆇𐆊𐅶")
 // parse_to_file("𐆇[𐆇𐆇[𐆊𐅶]]")
 // parse_to_file("[𐆋]𐆇[[𐆋]𐅾[[𐆊]𐅾[[𐅶]𐅾[𐅾]]]]")

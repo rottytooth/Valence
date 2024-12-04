@@ -37,10 +37,32 @@ test('ast count: 3 instructions -> 4 asts', () => {
     expect(tree[0].asts.length).toBe(4);
 });
 
-test('ast count: 4 instructions -> 6 asts', () => {
+test('ast count: 4 instructions -> 8 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(6);
+    expect(tree[0].asts.length).toBe(8);
+});
+
+test('ast: all interpretations are unique', () => {
+    let program = "𐆇𐆉𐆇𐅶";
+    let tree = Valence.parser.parse(program, false);
+
+    let unique = tree[0].asts.filter((value, index, self) => {
+        return self.findIndex(v => Valence.parser.print_ast_detail(v) === Valence.parser.print_ast_detail(value)) === index;
+    });
+
+    expect(tree[0].asts.length).toBe(unique.length);
+});
+
+test('ast: all interpretations are unique, longer ex', () => {
+    let program = "𐅶𐆇𐅾𐆊𐆁𐆋𐆉𐅻";
+    let tree = Valence.parser.parse(program, false);
+
+    let unique = tree[0].asts.filter((value, index, self) => {
+        return self.findIndex(v => Valence.parser.print_ast_detail(v) === Valence.parser.print_ast_detail(value)) === index;
+    });
+
+    expect(tree[0].asts.length).toBe(unique.length);
 });
 
 test('ast count: 3 instructions -> 4 asts, alternate', () => {
@@ -131,3 +153,8 @@ test('parse: label with name', () => {
     expect(tree[0].asts[0].params[0].reading.name).toBe('Q');
 });
 
+test('parse: beginning of Hello World', () => {
+    let program = "[𐆋]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐆇𐆊]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+});

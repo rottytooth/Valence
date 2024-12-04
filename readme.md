@@ -18,7 +18,7 @@ This parses but is missing some key features. Known bugs have failing tests.
 
 IN PROGRESS: 
 * Splitting of complete programs and filtering of mismatched brackets
-* More complete / more representative programs
+* More complete / more representative sample programs
 * Transpiling to JS instead of pseudo-code
 
 TO COME: Side-by-side execution and debugging.

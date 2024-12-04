@@ -1,8 +1,6 @@
 # Valence
 
-*Valence* is a programming language where every symbol is a homophone with multiple meanings. 
-
-Context determines the meaning of the symbol when possible, but if multiple readings remain, each plays out in parallel.
+*Valence* is a programming language where each symbol is a homophone with multiple meanings. Context determines the meaning of the symbol; if multiple readings remain, each interpretation plays out in parallel.
 
 In Valence:
 * Any symbol can alternately be a variable name or an instruction

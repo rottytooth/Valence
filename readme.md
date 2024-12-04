@@ -14,7 +14,13 @@ While any symbols can be succesfully combined to create *some* meaning, not all 
 
 ## Project Status
 
-Grammar is complete. Parser/transpiler is mostly complete but has several known issues (for which there are failing tests). Side-by-side execution and debugging will come later. Next step: Working sample programs.
+This parses the language but is missing a few key features and is still slightly buggy. Known bugs have failing tests.
+
+IN PROGRESS: 
+* More complete / better sample programs
+* Transpiling to JS instead of pseudo-code
+
+TO COME: Side-by-side execution and debugging.
 
 ## Instructions
 

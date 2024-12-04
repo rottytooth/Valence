@@ -130,6 +130,11 @@ const parser = (function() {
                 node.reading = node.potential_readings.filter(x => x.type !== "cmd");
             }
         }
+
+        if (node.params === undefined) {
+            node.params = [];
+        }
+
         for (let i = 0; i < node.params.length; i++) {
             interpret_node(line, ast, node.params[i], false, original_idx);
         }
@@ -146,8 +151,9 @@ const parser = (function() {
         }
         
         // if any of the children are end nodes, resolve them
-        resolve_param_end_node(line, ast, node, 0, original_idx);
-        resolve_param_end_node(line, ast, node, 1, original_idx);
+        for (let j = 0; j < 2; j++) {
+            resolve_param_end_node(line, ast, node, j, original_idx);
+        }
 
         if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
             throw new Error(`Could not resolve reading for sign ${node.params[0].symbol}`);
@@ -180,11 +186,24 @@ const parser = (function() {
         if (Object.hasOwn(token, 'children') && token.children !== undefined) {
             // if we get this far, there are multiple children or params to break out
 
+            // check for a command that has no params
+            if (token == intpt // is a command
+                && token.children.length == 1 // has no siblings
+                // has no children:
+                && (token.children[0].children === undefined || token.children[0].children.length === 0)
+                && (token.children[0].params === undefined || token.children[0].params.length === 0)
+            ) {
+                token.children[0].complete = true; // forcing this; as we know there are no other nodes to check
+                line.asts.push(token.children[0]);
+                return;
+            }
+
             for (let i = 0; i < token.children.length - 1; i++) {
                 if (token.children[i].symbol == "[") {
                     continue; // can't have bracket as command
                 }
                 // copy the tree
+                // FIXME: Why does this always duplicate, when below (for params) we test for whether its nec with split_yet? Don't want to make this more complex unnecessarily. Perhaps the unfinished are just being dropped as incomplete anyway
                 new_tree = JSON.parse(JSON.stringify(intpt));
                 new_token = find_child_in_tree(new_tree, token.id);
                 new_token.children[i].params = children_to_params(new_token.children, i);
@@ -197,16 +216,14 @@ const parser = (function() {
                 }
                 line.asts.push(new_tree);
 
-                for (let k = 0; k < new_token.params.length; k++) {
-                    build_asts(line, new_tree, new_token.params[k]);
-                }
+                build_asts(line, new_tree, new_token);
             }
 
         }
         // SECOND, process those params: 
-        // * either they are already single nodes, and should be sent to this func
-        // * or they are arrays of nodes
-        //   * if they are arrays, reorganize into params, for each valid command and split this ast into two
+        // * either they are already single nodes and should be sent to this func
+        // * or they are arrays
+        //   * if so, reorganize into params, for each valid command and split this ast into two
         for (let i = 0; i < token.params.length; i++) { 
             if (!Array.isArray(token.params[i])) {
                 build_asts(line, intpt, token.params[i]);
@@ -219,21 +236,32 @@ const parser = (function() {
                 continue;
             }
 
+            let split_yet = false;
             for(let j = 0; j < token.params[i].length - 1; j++) {
-                // basically doing the same loop as we did in the 2x children loop above but with params. For each possible command, mark it and make the previous siblings parameter 1, the following parameter 2
+                // if more than one, we need to try each (but the last) as the parent node (for cmd or exp). For each possible parent, copy the ast, make that the parent, take the preceeding nodes its first param and its following siblings its second
                 if (token.params[i][j].symbol == "[") {
-                    continue; // can't have bracket as command
+                    continue; // can't have bracket as operator
                 }
 
-                new_tree = JSON.parse(JSON.stringify(intpt));
-                new_token = find_child_in_tree(new_tree, token.id);
-                new_token.params[i][j].params = children_to_params(new_token.params[i], j);
-                new_token.params[i] = new_token.params[i][j];
-                delete new_token.children;
+                if (!split_yet) {
+                    split_yet = true;
 
-                line.asts.push(new_tree);
+                    token.params[i][j].params = children_to_params(token.params[i], j);
+                    token.params[i] = token.params[i][j];
+                    delete token.children;
 
-                build_asts(line, new_tree, new_token);
+                    build_asts(line, intpt, token); // rerun new token
+                } else {    
+                    new_tree = JSON.parse(JSON.stringify(intpt));
+                    new_token = find_child_in_tree(new_tree, token.id);
+                    new_token.params[i][j].params = children_to_params(new_token.params[i], j);
+                    new_token.params[i] = new_token.params[i][j];
+                    delete new_token.children;
+
+                    line.asts.push(new_tree);
+
+                    build_asts(line, new_tree, new_token); // rerun new token after it was reorganized
+                }
             }
         }
     }
@@ -365,7 +393,7 @@ const parser = (function() {
 
                     // remove incomplete ASTs
                     program[i].asts = program[i].asts.filter(x => x.complete);
-                    // remove complete that has no meaning after this
+                    // remove complete, which has no meaning after this
                     for (let j = 0; j < program[i].asts.length; j++) {
                         delete program[i].asts[j].complete;
                     }

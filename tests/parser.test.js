@@ -31,19 +31,30 @@ test('ast count: blank line has no ast', () => {
     expect(tree[2].asts.length).not.toBeLessThan(1);
 });
 
-test('ast count: 3 instructions -> 4 asts', () => {
+test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
     let program = "𐆇𐆉𐅶";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(4);
 });
 
-test('ast count: 4 instructions -> 8 asts', () => {
+test('ast count: 4 instructions (one to_int) -> 4 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(8);
+    expect(tree[0].asts.length).toBe(4);
 });
 
 test('ast: all interpretations are unique', () => {
+    let program = "𐆇𐆉𐆇𐅶𐅶";
+    let tree = Valence.parser.parse(program, false);
+
+    let unique = tree[0].asts.filter((value, index, self) => {
+        return self.findIndex(v => Valence.parser.print_ast_detail(v) === Valence.parser.print_ast_detail(value)) === index;
+    });
+
+    expect(tree[0].asts.length).toBe(unique.length);
+});
+
+test('parse: range identifier resolves', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
 
@@ -54,7 +65,7 @@ test('ast: all interpretations are unique', () => {
     expect(tree[0].asts.length).toBe(unique.length);
 });
 
-test('ast: all interpretations are unique, longer ex', () => {
+test('ast: all interpretations are unique, longer example', () => {
     let program = "𐅶𐆇𐅾𐆊𐆁𐆋𐆉𐅻";
     let tree = Valence.parser.parse(program, false);
 
@@ -153,13 +164,13 @@ test('parse: label with name', () => {
     expect(tree[0].asts[0].params[0].reading.name).toBe('Q');
 });
 
-test('parse: beginning of Hello World with all brackets', () => {
+test('parse: multiple peaks, all brackets', () => {
     let program = "[𐆋]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐆇𐆊]]";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
 });
 
-test('parse: beginning of Hello World, no brackets', () => {
+test('parse: multiple peaks, no brackets', () => {
     let program = "𐆋𐆉𐅻𐅻𐆇𐆇𐅶𐆇𐆊";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);

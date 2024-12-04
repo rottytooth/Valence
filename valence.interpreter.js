@@ -21,8 +21,8 @@ const transpile_js = (ast) => {
     return localstr;
 }
 
-const parse = (program, retstr = "") => {
-    parsed_prog = Valence.parser.parse(program, false);
+const parse = (program, complete = false) => {
+    parsed_prog = Valence.parser.parse(program, complete);
     for(let i = 0; i < parsed_prog.length; i++) {
         // for each line
         retstr += parsed_prog[i].line + "\n";
@@ -49,7 +49,7 @@ const parse_program = (program, to_file=false, outfile = null) => {
     if (!outfile) {
         outfile = `output/${program}.txt`;
     }
-    fs.writeFile(outfile, parse(program).log, (err) => {
+    fs.writeFile(outfile, parse(program, true).log, (err) => {
         if (err) throw err;
         console.log('The file has been saved!');
     });
@@ -68,11 +68,11 @@ const parse_file = (infile, to_file=false, outfile = null) => {
 }
 
 
+// DEBUG
 
 //parse_program("𐅾");
 // parse_program("𐆇𐆊𐅶")
 parse_file("programs/hello_world.val", true);
-
 
 // parse_to_file("𐆇[𐆇𐆇[𐆊𐅶]]")
 // parse_to_file("[𐆋]𐆇[[𐆋]𐅾[[𐆊]𐅾[[𐅶]𐅾[𐅾]]]]")

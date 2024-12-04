@@ -105,7 +105,7 @@ Valence.lexicon = {
         {
             /* forces the var reading */
             name: "read_as_var",
-            "type": "exp",
+            type: "exp",
             params: [{type: "var"}],
             js: "{var}"
         },
@@ -130,7 +130,7 @@ Valence.lexicon = {
         {
             name: "randomize",
             type: "cmd",
-            params: [{type: "var"},{type: "range"}],
+            params: [{type: "var"},{type: "var", name: "range"}],
             js: "{var} = {var} * (Math.floor(Math.random() * {range}[1]) + {range}[0]);"
         },
     ],
@@ -168,7 +168,7 @@ Valence.lexicon = {
         {
             name: "for",
             type: "cmd",
-            params: [{type: "var"},{type: "range"}],
+            params: [{type: "var"},{type: "var", name: "range"}],
             js: "for ({var} = {range}[0]; {var} < {range}[1]; {var}+={range}[1] >= {range}[0]) {"
         }
     ],
@@ -321,7 +321,7 @@ Valence.lexicon = {
         {
             name: "random",
             type: "exp",
-            params: [{type: "range"}],
+            params: [{type: "var", name: "range"}],
             js: "rnd({range})"
         },
         {

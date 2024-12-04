@@ -23,7 +23,7 @@ Valence.lexicon = {
         {
             name: "not",
             type: "exp",
-            params: [{type: "exp", name:"exp"}],
+            params: [{type: "exp"}],
             js: "(!({exp}))"
         },
         {
@@ -59,7 +59,7 @@ Valence.lexicon = {
             js: "W"
         },
         {
-            name: "to_int",
+            name: "read_as_int",
             type: "exp",
             params: [{type: "digit"}],
             js: "{digit}"

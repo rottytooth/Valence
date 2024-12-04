@@ -14,10 +14,11 @@ While any symbols can be succesfully combined to create *some* meaning, not all 
 
 ## Project Status
 
-This parses the language but is missing a few key features and is still slightly buggy. Known bugs have failing tests.
+This parses but is missing some key features. Known bugs have failing tests.
 
 IN PROGRESS: 
-* More complete / better sample programs
+* Splitting of complete programs and filtering of mismatched brackets
+* More complete / more representative programs
 * Transpiling to JS instead of pseudo-code
 
 TO COME: Side-by-side execution and debugging.
@@ -84,3 +85,30 @@ symbol | typed as | interpretation | type | params
 [ | [ | begin lexical group
 ] | ] | end lexical group
 
+## Example Programs
+
+### Hello World (with single interpretation)
+
+```
+[𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐅻[𐆇𐆇]]]]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐅶[[𐅻[𐆇𐆋]]𐅶[𐆇𐅻]]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐅶[[𐅻[𐆇𐆇]]𐅶[𐆇𐆇]]
+[𐅶]𐅶[𐅾𐆋]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐅶[𐆇𐆋]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆉]𐆉[𐅻[𐆇𐆉]]
+[𐅶]𐅶[𐅾𐆉]
+[𐅾𐆁]𐆉[[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐅻[𐆇𐅾]]]𐅶[𐆇𐆁]]
+[𐅶]𐅶[𐅾𐆁]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐅶[𐆇𐆋]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐆇[[𐅻[𐆇𐆇]]𐅶[𐆇𐅾]]
+[𐅶]𐅶[𐅾𐆋]
+[𐅾𐆋]𐆇[𐅻[𐆇𐆇]]
+[𐅶]𐅶[𐅾𐆋]
+𐆋[𐅾𐅶]
+```

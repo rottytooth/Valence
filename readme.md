@@ -5,14 +5,13 @@
 In Valence:
 * Any symbol can alternately be a variable name or an instruction
 * All instructions have multiple meanings, as listed below
-* Instructions can be combined in any order in a line of code
-* Every possible reading of that line of code plays out, resulting in many parallel executions of any program. Some programs get stuck in infinite loops or can't be executed because of syntax errors; if detectable, these are skipped; the others are treated equally, and run in parallel.
+* Every possible reading of that line of code plays out in parallel
 
-While any symbols can be succesfully combined to create *some* meaning, not all lines of code are compatible: unclosed blocks of code are ignored, until that program has the appropriate close block instruction added. 
+There is no single line of Valence that isn't valid; any combination of the signs has multiple meanings. However, some programs have mismatched brackets or (detectable) infinite loops; during execution, these are skipped.
 
 ## Project Status
 
-The parser is functional but not finalized, as there may be changes to the grammar as testing continues.
+The parser is functional but not finalized, as the grammar may change while testing continues.
 
 IN PROGRESS: 
 * Interpreter with parallel execution

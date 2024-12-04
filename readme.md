@@ -14,14 +14,12 @@ While any symbols can be succesfully combined to create *some* meaning, not all 
 
 ## Project Status
 
-This parses but is missing some key features. Known bugs have failing tests.
+The parser is functional but not finalized, as there may be changes to the grammar as testing continues.
 
 IN PROGRESS: 
-* Splitting of complete programs and filtering of mismatched brackets
-* More complete / more representative sample programs
-* Transpiling to JS instead of pseudo-code
-
-TO COME: Side-by-side execution and debugging.
+* Interpreter with parallel execution
+* More complex / more representative sample programs
+* Transpile to JS instead of pseudo-code
 
 ## Instructions
 

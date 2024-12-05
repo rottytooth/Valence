@@ -3,19 +3,20 @@
 *Valence* is a programming language where each symbol is a homophone with multiple meanings. Context determines the meaning of the symbol; if multiple readings remain, each interpretation plays out in parallel.
 
 In Valence:
-* Any symbol can alternately be a variable name or an instruction
-* All instructions have multiple meanings, as listed below
-* Every possible reading of that line of code plays out in parallel
+* Any symbol can be read as a variable name, an octal digit, a command, a type, or an expression
+* For commands and expressions, most symbols have multiple interpretations based on parameter count
+* Every possible reading of a program plays out in parallel
+* Brackets can disambiguate a phrase when needed
 
 There is no single line of Valence that isn't valid; any combination of the signs has multiple meanings. However, some programs have mismatched brackets or (detectable) infinite loops; during execution, these are skipped.
 
 ## Project Status
 
-The parser is functional but not finalized, as the grammar may change while testing continues.
+The parser is functional but not finalized as the grammar may be altered while testing continues.
 
 IN PROGRESS: 
-* Interpreter with parallel execution
 * More complex / more representative sample programs
+* Interpreter with parallel execution
 * Transpile to JS instead of pseudo-code
 
 ## Instructions

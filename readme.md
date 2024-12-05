@@ -12,7 +12,7 @@ There is no single line of Valence that isn't valid; any combination of the sign
 
 ## Project Status
 
-The parser is functional but not finalized as the grammar may be altered while testing continues.
+The parser is functional but not finalized. While testing continues, the grammar may change.
 
 IN PROGRESS: 
 * More complex / more representative sample programs

@@ -4,6 +4,6 @@ notes.txt
 design_drafts
 .vscode
 out
-output
+output/*
 node_modules
 coverage

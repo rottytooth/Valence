@@ -29,7 +29,8 @@ const parse = (program, complete = false) => {
         for(let j = 0; j < parsed_prog[i].asts.length; j++) {
             // for each reading of that line
             retstr += parsed_prog[i].asts[j].line + "\n";
-            retstr += transpile_js(parsed_prog[i].asts[j]) + "\n";
+            parsed_prog[i].asts[j].reading.js = transpile_js(parsed_prog[i].asts[j]);
+            retstr += parsed_prog[i].asts[j].reading.js + "\n";
         }
     }
     parsed_prog.log = retstr;
@@ -67,12 +68,26 @@ const parse_file = (infile, to_file=false, outfile = null) => {
     });
 }
 
+const parse_to_proglist = (program) => {
+    let parsed = parse(program.trim(), true);
+    let progs = [];
 
-// DEBUG
+    // first line creates the initial trees
+    for (let q = 0; q < parsed[0].asts.length; q++) {
+        progs.push([JSON.parse(JSON.stringify(parsed[0].asts[q]))]);
+    }
 
-//parse_program("𐅾");
-// parse_program("𐆇𐆊𐅶")
-parse_file("programs/hello_world.val", true);
+    for (let p = 1; p < parsed.length; p++) {
+        let progs_new = [];
+        for (let q = 0; q < parsed[p].asts.length; q++) {
+            for (let r = 0; r < progs.length; r++) {
+                new_prog = JSON.parse(JSON.stringify(progs[r]));
+                new_prog.push(JSON.parse(JSON.stringify(parsed[p].asts[q])));
+                progs_new.push(new_prog);
+            }
+        }
+        progs = progs_new;
+    }
 
-// parse_to_file("𐆇[𐆇𐆇[𐆊𐅶]]")
-// parse_to_file("[𐆋]𐆇[[𐆋]𐅾[[𐆊]𐅾[[𐅶]𐅾[𐅾]]]]")
+    return progs;
+}

@@ -1,0 +1,37 @@
+@font-face {
+    font-family: 'Everson Mono';
+    src: url('fonts/Everson Mono.ttf') format('truetype');
+    font-style: normal;
+}
+.code-block {
+    float: left;
+    border: 1px solid red;
+    padding: 10px;
+    margin: 5px;
+}
+.valence-code {
+    float: left;
+    font-family: 'Everson Mono';
+    letter-spacing: .3rem;
+    font-size: 22pt;
+}
+.js-code {
+    float: left;
+    font-family: 'Everson Mono';
+    font-size: 22pt;
+    margin-left: 5px;
+    padding-left: 10px;
+    border-left: 1px solid red;
+}
+.js-code:before {
+    height: 70%;
+    display: block;
+}
+#program-text {
+    font-family: 'Everson Mono';
+    font-size: 22pt;
+    letter-spacing: .3rem;
+    border: 1px solid #000;
+    padding: 10px;
+    margin: 5px;
+}

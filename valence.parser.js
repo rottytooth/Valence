@@ -1,11 +1,11 @@
-const { start } = require('node:repl');
-const fs = require('node:fs'); // temporary, for testing
-
 const MAX_ASTS = 2000;
 
 if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
+    const { start } = require('node:repl');
+    const fs = require('node:fs'); // temporary, for testing
+
     Valence.lexicon = require('./valence.lexicon');
     scanner = require('./valence.scanner');
 }

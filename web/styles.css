@@ -8,6 +8,7 @@
     border: 1px solid red;
     padding: 10px;
     margin: 5px;
+    border-radius: 10px;
 }
 .valence-code {
     float: left;
@@ -34,4 +35,7 @@
     border: 1px solid #000;
     padding: 10px;
     margin: 5px;
+    caret-color: red;
+    width: 400px;
+    min-height: 200px;
 }

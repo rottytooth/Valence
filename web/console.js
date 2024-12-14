@@ -1,41 +1,51 @@
 var program = "";
 var curr_line = "";
+var hit_return = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.onkeypress = keyevents;
+    // document.onkeypress = keyevents;
     document.onkeydown = specialKeys;
+    let editor = document.getElementById("program-text");
+    editor.focus();
+    editor.addEventListener("input", updateInput);
 }, false);
 
-const keyevents = (e) => {
-    var code = e.keyCode || e.which;
-    String.fromCharCode(e.keyCode).toUpperCase();
-    return true;
-}
-
-const specialKeys = (e) => {
-    if (e.keyCode == 13) { // return key
-        type("<br>");
-        processLine();
-        e.preventDefault();
-        curr_line = "";
-    } else {
+const updateInput = () => {
+    // let caret = getCaretPosition(document.getElementById("program-text"));
+    let txt = document.getElementById("program-text");
+    let prog = Array.from(txt.value);
+    let outprog = "";
+    for (let p = 0; p < prog.length; p++) {
+        if (prog[p] === "\n" || prog[p] === "[" || prog[p] === "]") {
+            outprog += prog[p];
+            continue;
+        }
         for(const [key, value] of Object.entries(Valence.lexicon)) {
-            if (Array.isArray(value) && value.filter(x => x.name === String.fromCharCode(e.keyCode).toUpperCase() && x.type === "var").length === 1) {
-                type(key);
+            if (prog[p] === key) {
+                outprog = outprog + key;
+                break;
+            }
+            if (Array.isArray(value) && value.filter(x => x.name === prog[p].toUpperCase() && x.type === "var").length === 1) {
+                outprog = outprog + key;
                 break;
             }
         }
     }
+    txt.value = outprog;
+    // setCaretPosition(txt, caret)
+    processLine();
 }
 
-const type = (char) => {
-    let txt = document.getElementById("program-text");
-    txt.innerHTML += char;
+// not used
+const specialKeys = (e) => {
+    if (e.keyCode == 13) { // return key
+        hit_return = true;
+    }
 }
 
 const processLine = () => {
     let txt = document.getElementById("program-text");
-    let prog = parse_to_proglist(txt.innerText);
+    let prog = Valence.interpreter.parse_to_proglist(txt.value);
     let run_holder = document.getElementById("programs-running");
 
     run_holder.innerText = ""; // clear it

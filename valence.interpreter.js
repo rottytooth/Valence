@@ -6,7 +6,9 @@ if (typeof module !== 'undefined' && module.exports) {
     Valence.parser = require('./valence.parser');
 }
 
-const transpile_js = (ast) => {
+Valence.interpreter = {};
+
+Valence.interpreter.transpile_js = (ast) => {
     localstr = ast.reading.js;
 
     for(let i = 0; i < ast.params.length; i++) {
@@ -16,12 +18,12 @@ const transpile_js = (ast) => {
         else
             name = ast.reading.params[i].type;
 
-        localstr = localstr.replaceAll("{"+name+"}", transpile_js(ast.params[i]));
+        localstr = localstr.replaceAll("{"+name+"}", Valence.interpreter.transpile_js(ast.params[i]));
     }
     return localstr;
 }
 
-const parse = (program, complete = false) => {
+Valence.interpreter.parse = (program, complete = false) => {
     parsed_prog = Valence.parser.parse(program, complete);
     for(let i = 0; i < parsed_prog.length; i++) {
         // for each line
@@ -29,7 +31,7 @@ const parse = (program, complete = false) => {
         for(let j = 0; j < parsed_prog[i].asts.length; j++) {
             // for each reading of that line
             retstr += parsed_prog[i].asts[j].line + "\n";
-            parsed_prog[i].asts[j].reading.js = transpile_js(parsed_prog[i].asts[j]);
+            parsed_prog[i].asts[j].reading.js = Valence.interpreter.transpile_js(parsed_prog[i].asts[j]);
             retstr += parsed_prog[i].asts[j].reading.js + "\n";
         }
     }
@@ -37,14 +39,14 @@ const parse = (program, complete = false) => {
     return parsed_prog;
 }
 
-const parse_and_print = (program) => {
-    console.log(parse(program).log);
+Valence.interpreter.parse_and_print = (program) => {
+    console.log(Valence.interpreter.parse(program).log);
 }
 
-const parse_program = (program, to_file=false, outfile = null) => {
+Valence.interpreter.parse_program = (program, to_file=false, outfile = null) => {
     // parse a program from text, output to either screen or a file
     if (!to_file) {
-        parse_and_print(program);
+        Valence.interpreter.parse_and_print(program);
         return;
     }
     if (!outfile) {
@@ -56,20 +58,20 @@ const parse_program = (program, to_file=false, outfile = null) => {
     });
 }
 
-const parse_file = (infile, to_file=false, outfile = null) => {
+Valence.interpreter.parse_file = (infile, to_file=false, outfile = null) => {
     // parse a .val file (requires node)
     fs.readFile(infile, 'utf8', (err, program) => {
         if (err) throw err;
         if (!to_file) {
-            parse_and_print(program, outfile);
+            Valence.interpreter.parse_and_print(program, outfile);
             return;
         }
-        parse_program(program, to_file, outfile);
+        Valence.interpreter.parse_program(program, to_file, outfile);
     });
 }
 
-const parse_to_proglist = (program) => {
-    let parsed = parse(program.trim(), true);
+Valence.interpreter.parse_to_proglist = (program) => {
+    let parsed = Valence.interpreter.parse(program.trim(), true);
     let progs = [];
 
     // first line creates the initial trees

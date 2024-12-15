@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let editor = document.getElementById("program-text");
     editor.focus();
     editor.addEventListener("input", updateInput);
+
+    // open first menu item on left
+    document.querySelectorAll(".menu-item")[4].classList.add("open");
 }, false);
 
 const updateInput = () => {
@@ -132,12 +135,14 @@ const buildLeftControl = (term, typedas, values) => {
         let lexSubMenuItem = document.createElement("li");
         lexSubMenuItem.className = 'sub-menu';
 
+        let lexSubMenuItemKeyOne = document.createElement("span");
         if (val.type == "var" || val.type == "digit") {
-            let lexSubMenuItemKey = document.createElement("span");
-            lexSubMenuItemKey.className = `sub-menu-exp sub-menu-block`;
-            lexSubMenuItemKey.innerText = '\u202F';
-            lexSubMenuItem.appendChild(lexSubMenuItemKey);
+            lexSubMenuItemKeyOne.className = `sub-menu-exp sub-menu-block`;
+        } else {
+            lexSubMenuItemKeyOne.className = `sub-menu-none sub-menu-block`;
         }
+        lexSubMenuItemKeyOne.innerText = '\u202F';
+        lexSubMenuItem.appendChild(lexSubMenuItemKeyOne);
 
         let lexSubMenuItemKey = document.createElement("span");
         lexSubMenuItemKey.className = `sub-menu-${val.type} sub-menu-block`;

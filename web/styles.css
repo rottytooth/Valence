@@ -1,11 +1,31 @@
+:root {
+    --cmd: #7ecb54;
+    --exp: #616f8c;
+    --var:  #ec6e2d;
+    --digit:#f6df56;
+    --type: #eee;
+
+    --btn: #333;
+    --btn-front: #ccc;
+    --code-back: #0d1020;
+
+    --title-height: 180px;
+}
 @font-face {
     font-family: 'Symbola';
     src: url('fonts/Symbola.ttf') format('truetype');
     font-style: normal;
 }
+@font-face {
+    font-family: 'Ubuntu Mono';
+    src: url('fonts/UbuntuMono-Regular.ttf') format('truetype');
+    font-style: normal;
+}
 body {
     display: flex;
     width: 99%;
+    background-color: #565656;
+    font-family: 'Ubuntu Mono', monospace;
 }
 #main-content {
     padding-left: 215px;
@@ -15,19 +35,31 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    height: 60px;
+    height: var(--title-height);
+    text-align: center;
+    width: 200px;
+    font-weight: bold;
+    background-color: var(--code-back);
+    margin-left: 8px;
+    margin-top: 8px;
 }
 #title h1 {
     font-size: 18pt;
     font-weight: normal;
     padding-left: 10px;
-    font-family: 'Gill Sans','Arial','Helvetia','Sans-Serif';
+    /* color: #9d8e37; */
+    color: #fff;
+}
+#title p, #title a {
+    color: var(--exp);
 }
 
 .code-block {
     float: left;
     display: table;
-    border: 1px solid red;
+    /* border: 1px solid var(--btn-front); */
+    background-color: var(--code-back);
+    color: #ccc;
     padding: 10px;
     margin: 5px;
     border-radius: 10px;
@@ -58,34 +90,41 @@ body {
     font-family: 'Symbola';
     font-size: 22pt;
     letter-spacing: .3rem;
-    border: 1px solid #000;
-    padding: 10px;
-    margin: 5px;
-    caret-color: red;
+    border: none;
+    padding: 8px;
+    margin: 0 5px 5px 5px;
+    caret-color: #ec6e2d;
     width: 400px;
     min-height: 200px;
+    background-color: var(--code-back);
+    color: #ccc;
 }
 #text-holder {
     float: left;
     padding-right: 10px;
+    padding-top: 0;
+}
+#text-holder span {
+    padding-left: 8px;
+    color: #ccc;
 }
 
 /* Left menu */
 
 #left-menu {
     position: fixed;
-    top: 60px;
+    top: var(--title-height);
     width: 200px;
     overflow-y: auto;
     overflow-x: hidden;
     height: calc(100% - 60px);
-    font-family: 'Gill Sans';
     width: 200px;
-    border-right: 1px solid black;
+    /* border-right: 1px solid black; */
     padding-right: 0;
 }
 .menu-item {
-    background-color: #eee;
+    background-color: var(--btn);
+    color: var(--btn-front);
     width: 200px;
     font-size: 20pt;
 }
@@ -102,18 +141,16 @@ body {
     display: inline-block;
     width: 20px;
     transform: rotate(90deg) translate(5px, 7px);
-
-    /* content: '\25BC'; */
 }
 .menu-item ul {
-    padding-top: 10px;
+    padding-top: 0px;
     list-style-type: none;
     margin-left: none;
     padding-left: 0px;
-    background-color: #fff;
-    margin-top: 0px;
-    /* margin-bottom: 0px; */
-    border-top: 1px solid #ddd;
+    background-color: var(--code-back);
+    margin-top: 3px;
+    margin-bottom: 3px;
+    border-bottom: 1px solid #666;
 }
 .menu-item .sub-menu {
     display: none;
@@ -128,24 +165,27 @@ body {
 }
 .sub-menu-block {
     display: inline-block;
-    width: 20px;
+    width: 8px;
     margin-right: 5px;
-    border: 1px solid #ddd;
+    /* border: 1px solid #666; */
 }
 .sub-menu-digit {
-    background-color: #ddf;
+    background-color: var(--digit);
 }
 .sub-menu-var {
-    background-color: #fdd;
+    background-color: var(--var);
 }
 .sub-menu-type {
-    background-color: #dff;
+    background-color: var(--type);
 }
 .sub-menu-exp {
-    background-color: #ffc;
+    background-color: var(--exp);
 }
 .sub-menu-cmd {
-    background-color: #dfd;
+    background-color: var(--cmd);
+}
+.sub-menu-none {
+    background-color: var(--code-back);
 }
 
 /* Control menu */
@@ -165,18 +205,17 @@ body {
 .control-key {
     float: right;
     font-size: 12pt;
-    font-family: 'Gill Sans','Arial','Helvetia','Sans-Serif';
-    background-color: #eee;
-    width:50px;
+    width: 50px;
     padding-top: 10px;
+    pointer-events: none;
 }
 .btn {
     padding: 6px;
     border: 0px;
     cursor: pointer;
-    background-color: #000;
+    background-color: var(--btn);
     border-radius: 12px;
-    color: #fff;
+    color: var(--btn-front);
 }
 .add-btn {
     width: 40px;
@@ -189,16 +228,28 @@ body {
     height: 40px;
     font-size: 12pt;
     padding: 0 10px 0 10px;
+    font-family: 'Ubuntu Mono', monospace;
 }
 
 /* running programs */
 h3 {
     clear: both;
     padding-top: 10px;
-    padding-left: 5px;
-    font-family: 'Gill Sans','Arial','Helvetia','Sans-Serif';
+    padding-left: 8px;
     font-size: 125%;
     font-weight: normal;
+    color: #ccc;
+}
+hr {
+    clear: both;
+    padding-top: 20px;
+    padding-left: 8px;
+    display: block;
+    height: 1px;
+    border: 0;
+    /* border-bottom: 1px solid #ccc; */
+    margin-top: 5px;
+    margin-left: 8px;
 }
 #programs-running {
     clear: both;

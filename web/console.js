@@ -45,34 +45,28 @@ const processProgram = () => {
         let run = document.createElement("div");
         run.classList += "code-block";
         
-        let code_text = document.createElement("div");
-        code_text.classList += "valence-code";
-
-        for (let i = 0; i < prog[r].length; i++) {
-            if (i > 0) {
-                linebreak = document.createElement("br");
-                code_text.appendChild(linebreak);
-            }
-            line_node = document.createTextNode(prog[r][i].line);
-            code_text.appendChild(line_node);
-        }
-        run.appendChild(code_text);
-
-        let intrpt = document.createElement("div");
-        intrpt.classList += "js-code";
-
         let add_run = true;
         for (let i = 0; i < prog[r].length; i++) {
-            if (i > 0) {
-                intrpt.innerHTML += "<br/>";
-            }
+            let code_row = document.createElement("div");
+            code_row.className = "code-row";
+        
+            line_node = document.createElement("div");
+            line_node.innerText = prog[r][i].line;
+            line_node.className = "valence-code";
+            code_row.appendChild(line_node);
+
             if (prog[r][i].reading.js === undefined) {
                 add_run = false;
+                break;
             }
-            reading_node = document.createTextNode(prog[r][i].reading.js);
-            intrpt.appendChild(reading_node);
+
+            reading_node = document.createElement("div");
+            reading_node.innerText = prog[r][i].reading.js;
+            reading_node.className = "js-code";
+            code_row.appendChild(reading_node);
+
+            run.appendChild(code_row);
         }
-        run.appendChild(intrpt);
 
         if (add_run) {
             run_holder.appendChild(run);

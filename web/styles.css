@@ -26,19 +26,24 @@ body {
 
 .code-block {
     float: left;
+    display: table;
     border: 1px solid red;
     padding: 10px;
     margin: 5px;
     border-radius: 10px;
 }
+.code-row {
+    display: table-row;
+}
 .valence-code {
-    float: left;
+    display: table-cell;
     font-family: 'Symbola';
     letter-spacing: .3rem;
     font-size: 18pt;
+    padding-right: 10px;
 }
 .js-code {
-    float: left;
+    display: table-cell;
     font-family:'Courier New', Courier, monospace;
     font-size: 18pt;
     margin-left: 5px;

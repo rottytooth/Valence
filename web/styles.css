@@ -8,8 +8,11 @@
     --btn: #333;
     --btn-front: #ccc;
     --code-back: #0d1020;
+    --split: #22283b;
 
-    --title-height: 180px;
+    --body-back: #4c4c4c;
+
+    --title-height: 220px;
 }
 @font-face {
     font-family: 'Symbola';
@@ -24,7 +27,7 @@
 body {
     display: flex;
     width: 99%;
-    background-color: #565656;
+    background-color: var(--body-back);
     font-family: 'Ubuntu Mono', monospace;
 }
 #main-content {
@@ -37,21 +40,26 @@ body {
     left: 0;
     height: var(--title-height);
     text-align: center;
-    width: 200px;
+    width: 192px;
     font-weight: bold;
     background-color: var(--code-back);
     margin-left: 8px;
     margin-top: 8px;
+    padding: 4px;
 }
 #title h1 {
     font-size: 18pt;
     font-weight: normal;
     padding-left: 10px;
     /* color: #9d8e37; */
-    color: #fff;
+    color: var(--cmd);
 }
-#title p, #title a {
+#title p{
     color: var(--exp);
+}
+
+#title a {
+    color: var(--cmd);
 }
 
 .code-block {
@@ -59,7 +67,7 @@ body {
     display: table;
     /* border: 1px solid var(--btn-front); */
     background-color: var(--code-back);
-    color: #ccc;
+    color: var(--exp);
     padding: 10px;
     margin: 5px;
     border-radius: 10px;
@@ -74,13 +82,32 @@ body {
     font-size: 18pt;
     padding-right: 10px;
 }
+.code-digit {
+    color: var(--digit);
+}
+.code-var {
+    color: var(--var);
+}
+.code-type {
+    color: var(--type);
+}
+.code-exp {
+    color: var(--exp);
+}
+.code-cmd {
+    color: var(--cmd);
+}
+.code-none {
+    background-color: var(--code-back);
+}
+
 .js-code {
     display: table-cell;
     font-family:'Courier New', Courier, monospace;
     font-size: 18pt;
     margin-left: 5px;
     padding-left: 10px;
-    border-left: 1px solid red;
+    border-left: 1px solid var(--split); 
 }
 .js-code:before {
     height: 70%;
@@ -108,18 +135,22 @@ body {
     padding-left: 8px;
     color: #ccc;
 }
+#intpt-msg {
+    color: #ccc;
+    padding-top: 20px;
+    margin-left: 18px;
+    font-size: 14pt;
+}
 
 /* Left menu */
 
 #left-menu {
     position: fixed;
     top: var(--title-height);
-    width: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    height: calc(100% - 60px);
-    width: 200px;
-    /* border-right: 1px solid black; */
+    height: calc(100% - var(--title-height));
+    /* width: 200px; */
     padding-right: 0;
 }
 .menu-item {
@@ -150,7 +181,7 @@ body {
     background-color: var(--code-back);
     margin-top: 3px;
     margin-bottom: 3px;
-    border-bottom: 1px solid #666;
+    border-bottom: 1px solid var(--body-back);;
 }
 .menu-item .sub-menu {
     display: none;
@@ -165,7 +196,7 @@ body {
 }
 .sub-menu-block {
     display: inline-block;
-    width: 8px;
+    width: 6px;
     margin-right: 5px;
     /* border: 1px solid #666; */
 }
@@ -232,6 +263,7 @@ body {
 }
 
 /* running programs */
+
 h3 {
     clear: both;
     padding-top: 10px;

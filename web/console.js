@@ -2,6 +2,14 @@ var program = "";
 var curr_line = "";
 var hit_return = false;
 
+TOKEN_TYPES = {
+    "c": "cmd",
+    "e": "exp",
+    "v": "var",
+    "d": "digit",
+    "t": "type"
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     buildControlList();
 
@@ -37,6 +45,17 @@ const updateInput = () => {
     processProgram();
 }
 
+const sytaxHighlight = (ast, line_node) => {
+    let i = 0;
+    for (let l of ast.line) {
+        let sp = document.createElement("span");
+        sp.className = `code-${TOKEN_TYPES[ast.line_markers[i]]}`;
+        sp.innerText = l;
+        line_node.appendChild(sp);
+        i++;
+    }
+}
+
 const processProgram = () => {
     let txt = document.getElementById("program-text");
     let prog = Valence.interpreter.parse_to_proglist(txt.value);
@@ -44,17 +63,22 @@ const processProgram = () => {
 
     run_holder.innerText = ""; // clear it
 
+    intpt_msg = document.getElementById("intpt-msg");
+    intpt_msg.innerText = `${prog.length} interpretations`;
+
     for (let r = 0; r < prog.length; r++) {
         let run = document.createElement("div");
         run.classList += "code-block";
         
         let add_run = true;
         for (let i = 0; i < prog[r].length; i++) {
+            // if (prog[r][i].line !== undefined) continue;
+
             let code_row = document.createElement("div");
             code_row.className = "code-row";
         
             line_node = document.createElement("div");
-            line_node.innerText = prog[r][i].line;
+            sytaxHighlight(prog[r][i], line_node);
             line_node.className = "valence-code";
             code_row.appendChild(line_node);
 

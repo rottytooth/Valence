@@ -318,18 +318,33 @@ const parser = (function() {
     return (function () {
         // public functions
 
-        this.print_ast = (ast) => {
+        this.print_ast = (ast, inc_markers = false) => {
             // print the ast on a single line with brackets
-            retstr = "";
+
+            let retstr = "";
+            let retmarkers = "";
+
+            let code = ast.reading.type[0];
+
             if (ast.params.length == 2) {
-                retstr += `[${this.print_ast(ast.params[0], retstr)}]`;
+                let nd = this.print_ast(ast.params[0], true);
+                retstr += `[${nd[0]}]`;
+                retmarkers += `${code}${nd[1]}${code}`
             }
             retstr += ast.symbol;
+            retmarkers += code;
             if (ast.params.length == 1) {
-                retstr += `[${this.print_ast(ast.params[0], retstr)}]`;
+                let nd = this.print_ast(ast.params[0], true);
+                retstr += `[${nd[0]}]`;
+                retmarkers += `${code}${nd[1]}${code}`
             }
             if (ast.params.length == 2) {
-                retstr += `[${this.print_ast(ast.params[1], retstr)}]`;
+                let nd = this.print_ast(ast.params[1], true);
+                retstr += `[${nd[0]}]`;
+                retmarkers += `${code}${nd[1]}${code}`
+            }
+            if (inc_markers) {
+                return [retstr, retmarkers];
             }
             return retstr;
         }
@@ -402,11 +417,19 @@ const parser = (function() {
                     // asts will multiply when an end node can be read in multiple ways
                     for (let j = 0; j < program[i].asts.length; j++) {
                         interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
-                        program[i].asts[j].line = this.print_ast(program[i].asts[j]);
+
+                        if (program[i].asts[j].reading !== undefined && program[i].asts[j].reading.length !== 0) {
+                            retset = this.print_ast(program[i].asts[j], true);
+                            program[i].asts[j].line = retset[0];
+                            program[i].asts[j].line_markers = retset[1];
+                        }
 
                         // debug: print the tree
-                        // console.log(print_ast_detail(program[i].asts[j]));
+                        // console.log(this.print_ast_detail(program[i].asts[j]));
                     }
+
+                    // filter out those without valid readings
+                    program[i].asts = program[i].asts.filter(x => x.reading !== undefined && x.reading.length !== 0);
                     
                     complete_time = Date.now();
                     seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);

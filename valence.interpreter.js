@@ -25,6 +25,9 @@ Valence.interpreter.transpile_js = (ast) => {
 
 Valence.interpreter.parse = (program, complete = false) => {
     parsed_prog = Valence.parser.parse(program, complete);
+
+    let retstr = "";
+    
     for(let i = 0; i < parsed_prog.length; i++) {
         // for each line
         retstr += parsed_prog[i].line + "\n";
@@ -92,4 +95,8 @@ Valence.interpreter.parse_to_proglist = (program) => {
     }
 
     return progs;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Valence.interpreter;
 }

@@ -175,3 +175,53 @@ test('parse: multiple peaks, no brackets', () => {
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
 });
+
+test('each ast has line and line_marker', () => {
+    let program = "𐆋𐆉";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+    for (let a = 0; a < tree[0].asts.length; a++) {
+        ast = tree[0].asts[a];
+        expect(ast.line).not.toBe(undefined);
+        expect(ast.line.length).not.toBe(0);
+
+        expect(ast.line_markers).not.toBe(undefined);
+        expect(ast.line_markers.length).not.toBe(0);
+    }
+});
+
+test('lines are correct', () => {
+    let program = "𐆋𐆉";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+    for (let a = 0; a < tree[0].asts.length; a++) {
+        ast = tree[0].asts[a];
+        expect(['𐆋[𐆉]']).toContain(ast.line);
+    }
+});
+
+test('lines are correct', () => {
+    let program = "𐆋𐆋𐆉";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+    for (let a = 0; a < tree[0].asts.length; a++) {
+        ast = tree[0].asts[a];
+        expect(['[𐆋]𐆋[𐆉]','𐆋[𐆋[𐆉]]']).toContain(ast.line);
+    }
+});
+
+test('bad reading has no asts', () => {
+    let program = "𐆋";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(0);
+});
+
+test('parse: syntax highlighting', () => {
+    let program = "𐆋𐆋𐆋";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(3);
+    for (let i = 0; i < tree[0].asts.length; i++) {
+        ast = tree[0].asts[i];
+        expect(['cceevec','cvcccvc','cceedec']).toContain(ast.line_markers);
+    }
+});

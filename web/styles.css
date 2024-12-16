@@ -83,6 +83,10 @@ body {
     padding-right: 10px;
     font-variant-numeric: tabular-nums;
 }
+.code-lex-item {
+    display: inline-block;
+    width: 20px;
+}
 .code-digit {
     color: var(--digit);
 }

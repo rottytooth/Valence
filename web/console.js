@@ -49,7 +49,7 @@ const sytaxHighlight = (ast, line_node) => {
     let i = 0;
     for (let l of ast.line) {
         let sp = document.createElement("span");
-        sp.className = `code-${TOKEN_TYPES[ast.line_markers[i]]}`;
+        sp.className = `code-${TOKEN_TYPES[ast.line_markers[i]]} code-lex-item`;
         if (l == '[' || l == ']') {
             sp.className += ' code-mono';
         }

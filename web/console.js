@@ -50,6 +50,9 @@ const sytaxHighlight = (ast, line_node) => {
     for (let l of ast.line) {
         let sp = document.createElement("span");
         sp.className = `code-${TOKEN_TYPES[ast.line_markers[i]]}`;
+        if (l == '[' || l == ']') {
+            sp.className += ' code-mono';
+        }
         sp.innerText = l;
         line_node.appendChild(sp);
         i++;
@@ -64,7 +67,7 @@ const processProgram = () => {
     run_holder.innerText = ""; // clear it
 
     intpt_msg = document.getElementById("intpt-msg");
-    intpt_msg.innerText = `${prog.length} interpretations`;
+    intpt_msg.innerText = `${prog.length} interpretation${prog.length === 1 ? "" : "s"}`;
 
     for (let r = 0; r < prog.length; r++) {
         let run = document.createElement("div");
@@ -82,13 +85,13 @@ const processProgram = () => {
             line_node.className = "valence-code";
             code_row.appendChild(line_node);
 
-            if (prog[r][i].reading.js === undefined) {
+            if (prog[r][i].reading.pseudo === undefined) {
                 add_run = false;
                 break;
             }
 
             reading_node = document.createElement("div");
-            reading_node.innerText = prog[r][i].reading.js;
+            reading_node.innerText = prog[r][i].reading.pseudo;
             reading_node.className = "js-code";
             code_row.appendChild(reading_node);
 

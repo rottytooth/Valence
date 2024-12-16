@@ -8,8 +8,11 @@ if (typeof module !== 'undefined' && module.exports) {
 
 Valence.interpreter = {};
 
-Valence.interpreter.transpile_js = (ast) => {
-    localstr = ast.reading.js;
+Valence.interpreter.transpile_js = (ast, use_pseudo) => {
+    let localstr = ast.reading.js;
+    if (use_pseudo && Object.hasOwn(ast.reading,"pseudo")) {
+        localstr = ast.reading.pseudo;
+    }
 
     for(let i = 0; i < ast.params.length; i++) {
         let name = null;
@@ -18,7 +21,8 @@ Valence.interpreter.transpile_js = (ast) => {
         else
             name = ast.reading.params[i].type;
 
-        localstr = localstr.replaceAll("{"+name+"}", Valence.interpreter.transpile_js(ast.params[i]));
+        let replacement = Valence.interpreter.transpile_js(ast.params[i], use_pseudo);
+        localstr = localstr.replaceAll("{"+name+"}", replacement);
     }
     return localstr;
 }
@@ -34,8 +38,10 @@ Valence.interpreter.parse = (program, complete = false) => {
         for(let j = 0; j < parsed_prog[i].asts.length; j++) {
             // for each reading of that line
             retstr += parsed_prog[i].asts[j].line + "\n";
-            parsed_prog[i].asts[j].reading.js = Valence.interpreter.transpile_js(parsed_prog[i].asts[j]);
-            retstr += parsed_prog[i].asts[j].reading.js + "\n";
+            parsed_prog[i].asts[j].reading.pseudo = parsed_prog[i].asts[j].reading.js;
+            parsed_prog[i].asts[j].reading.js = Valence.interpreter.transpile_js(parsed_prog[i].asts[j], false);
+            parsed_prog[i].asts[j].reading.pseudo = Valence.interpreter.transpile_js(parsed_prog[i].asts[j], true);
+            retstr += parsed_prog[i].asts[j].reading.pseudo + "\n";
         }
     }
     parsed_prog.log = retstr;

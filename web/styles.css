@@ -81,6 +81,7 @@ body {
     letter-spacing: .3rem;
     font-size: 18pt;
     padding-right: 10px;
+    font-variant-numeric: tabular-nums;
 }
 .code-digit {
     color: var(--digit);
@@ -99,6 +100,9 @@ body {
 }
 .code-none {
     background-color: var(--code-back);
+}
+.code-mono {
+    font-family: 'Ubuntu Mono', monospace;
 }
 
 .js-code {
@@ -125,6 +129,7 @@ body {
     min-height: 200px;
     background-color: var(--code-back);
     color: #ccc;
+    line-height: 120%;
 }
 #text-holder {
     float: left;

@@ -12,7 +12,8 @@ Valence.lexicon = {
             name: "Q",
             type: "var",
             params: [],
-            js: "Q"
+            js: "Q",
+            pseudo: "𐅶"
         },
         {
             name: "int",
@@ -56,7 +57,8 @@ Valence.lexicon = {
             name: "W",
             type: "var",
             params: [],
-            js: "W"
+            js: "W",
+            pseudo: "𐆇"
         },
         {
             name: "read_as_int",
@@ -94,7 +96,8 @@ Valence.lexicon = {
             name: "E",
             type: "var",
             params: [],
-            js: "E"
+            js: "E",
+            pseudo: "𐅾"
         },
         {
             name: "ratio",
@@ -145,7 +148,8 @@ Valence.lexicon = {
             name: "A",
             type: "var",
             params: [],
-            js: "A"
+            js: "A",
+            pseudo: "𐆋"
         },
         {
             name: "to_str",
@@ -183,7 +187,8 @@ Valence.lexicon = {
             name: "S",
             type: "var",
             params: [],
-            js: "S"
+            js: "S",
+            pseudo: "𐆉"
         },
         {
             name: "string",
@@ -227,7 +232,8 @@ Valence.lexicon = {
             name: "D",
             type: "var",
             params: [],
-            js: "D"
+            js: "D",
+            pseudo: "𐅻"
         },
         {
             name: "char",
@@ -272,7 +278,8 @@ Valence.lexicon = {
             name: "Z",
             type: "var",
             params: [],
-            js: "Z"
+            js: "Z",
+            pseudo: "𐆊"
         },
         {
             name: "greater_zero",
@@ -316,7 +323,8 @@ Valence.lexicon = {
             name: "X",
             type: "var",
             params: [],
-            js: "X"
+            js: "X",
+            pseudo: "𐆁"
         },
         {
             name: "random",

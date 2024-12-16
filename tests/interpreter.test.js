@@ -27,3 +27,11 @@ test('builds pseudocode', () => {
         expect(ast.reading.pseudo).not.toBe("");
     }
 });
+
+test('uses pseudo when marked', () => {
+    let program = '𐆉[𐆊[𐅾𐆁]]';
+    let tree = Valence.interpreter.parse(program);
+    expect(tree.length).toBe(1);
+    ast = tree[0].asts[0];
+    expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");
+});

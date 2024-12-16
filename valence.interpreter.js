@@ -38,7 +38,9 @@ Valence.interpreter.parse = (program, complete = false) => {
         for(let j = 0; j < parsed_prog[i].asts.length; j++) {
             // for each reading of that line
             retstr += parsed_prog[i].asts[j].line + "\n";
-            parsed_prog[i].asts[j].reading.pseudo = parsed_prog[i].asts[j].reading.js;
+            if (parsed_prog[i].asts[j].reading.pseudo === undefined) {
+                parsed_prog[i].asts[j].reading.pseudo = parsed_prog[i].asts[j].reading.js;
+            }
             parsed_prog[i].asts[j].reading.js = Valence.interpreter.transpile_js(parsed_prog[i].asts[j], false);
             parsed_prog[i].asts[j].reading.pseudo = Valence.interpreter.transpile_js(parsed_prog[i].asts[j], true);
             retstr += parsed_prog[i].asts[j].reading.pseudo + "\n";

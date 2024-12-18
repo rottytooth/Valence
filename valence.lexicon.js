@@ -119,7 +119,7 @@ Valence.lexicon = {
             js: "({exp} / {exp2})"
         },
         {
-            name: "end block",
+            name: "end_block",
             type: "cmd",
             params: [],
             js: "}"

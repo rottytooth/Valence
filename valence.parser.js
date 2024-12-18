@@ -1,4 +1,4 @@
-const MAX_ASTS = 2000;
+const MAX_ASTS = 200;
 
 if (!Valence) var Valence = {};
 
@@ -434,9 +434,9 @@ const parser = (function() {
                     complete_time = Date.now();
                     seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
                     if (seconds > 0 ) {
-                        outstr = `\ncompleted in ${seconds} seconds`;
+                        outstr = `\parsed in ${seconds} seconds`;
                     } else {
-                        outstr = `\ncompleted in ${complete_time - start_time} milliseconds`;
+                        outstr = `\parsed in ${complete_time - start_time} milliseconds`;
                     }
 
                     console.log(outstr);

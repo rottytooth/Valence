@@ -72,6 +72,9 @@ const processProgram = () => {
     for (let r = 0; r < prog.length; r++) {
         let run = document.createElement("div");
         run.classList += "code-block";
+        if (prog[r].failed === true) {
+            run.classList += " failed";
+        }
         
         let add_run = true;
         for (let i = 0; i < prog[r].length; i++) {
@@ -79,6 +82,9 @@ const processProgram = () => {
 
             let code_row = document.createElement("div");
             code_row.className = "code-row";
+            if (prog[r].failed === true && prog[r].length > 1 && prog[r].bad_line === i) {
+                code_row.classList += " row-failed";
+            }
         
             line_node = document.createElement("div");
             sytaxHighlight(prog[r][i], line_node);
@@ -218,4 +224,16 @@ const buildControlList = () => {
     buildButton("[");
     buildButton("]");
     buildButton("\u21B5");
+}
+
+const run_hide_progs = (checkbox) => {
+    if (checkbox.checked) {
+        Array.from(document.getElementsByClassName("failed")).forEach((el) => {
+            el.style.display = "none";
+        });
+    } else {
+        Array.from(document.getElementsByClassName("failed")).forEach((el) => {
+            el.style.display = "block";
+        });
+    }
 }

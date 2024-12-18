@@ -8,6 +8,8 @@
     --btn: #333;
     --btn-front: #ccc;
     --code-back: #0d1020;
+    --failed-back: #361117;
+    --failed-line: #5f2327;
     --split: #22283b;
 
     --body-back: #4c4c4c;
@@ -72,8 +74,14 @@ body {
     margin: 5px;
     border-radius: 10px;
 }
+.failed {
+    background-color: var(--failed-back);
+}
 .code-row {
     display: table-row;
+}
+.row-failed {
+    background-color: var(--failed-line);
 }
 .valence-code {
     display: table-cell;
@@ -144,11 +152,15 @@ body {
     padding-left: 8px;
     color: #ccc;
 }
-#intpt-msg {
-    color: #ccc;
-    padding-top: 20px;
+.interface {
     margin-left: 18px;
     font-size: 14pt;
+    color: #ccc;
+    padding-top: 20px;
+    height: 25px;
+}
+#intpt-msg {
+    padding-left: 10px;
 }
 
 /* Left menu */

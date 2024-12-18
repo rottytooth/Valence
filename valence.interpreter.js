@@ -2,6 +2,7 @@ if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
     var fs = require('node:fs');
+    const {performance} = require('perf_hooks');
     Valence.lexicon = require('./valence.lexicon');
     Valence.parser = require('./valence.parser');
 }
@@ -63,7 +64,7 @@ Valence.interpreter.parse_program = (program, to_file=false, outfile = null) => 
     if (!outfile) {
         outfile = `output/${program}.txt`;
     }
-    fs.writeFile(outfile, parse(program, true).log, (err) => {
+    fs.writeFile(outfile, Valence.interpreter.parse(program, true).log, (err) => {
         if (err) throw err;
         console.log('The file has been saved!');
     });
@@ -94,6 +95,9 @@ Valence.interpreter.parse_to_proglist = (program) => {
         let progs_new = [];
         for (let q = 0; q < parsed[p].asts.length; q++) {
             for (let r = 0; r < progs.length; r++) {
+                if (progs[r].length > MAX_ASTS) {
+                    throw new Error("Too many ASTs");
+                }
                 new_prog = JSON.parse(JSON.stringify(progs[r]));
                 new_prog.push(JSON.parse(JSON.stringify(parsed[p].asts[q])));
                 progs_new.push(new_prog);
@@ -102,9 +106,111 @@ Valence.interpreter.parse_to_proglist = (program) => {
         progs = progs_new;
     }
 
+    Valence.interpreter.mark_bad_programs(progs);
     return progs;
+}
+
+Valence.interpreter.is_playing = false;
+
+var delays = [400, 300, 200, 100, 500];
+const NODE_DELAY = 500; // this should be configurable
+
+Valence.interpreter.mark_bad_programs = (progs) => {
+    for (let i = 0; i < progs.length; i++) {
+        var stack = [];
+        for (let ln = 0; ln < progs[i].length; ln++) {
+            console.log(progs[i][ln].reading.pseudo);
+            if (["if", "while", "for"].includes(progs[i][ln].reading.name)) {
+                stack.push({ line: ln, cmd: progs[i][ln].reading.name});
+            }
+            else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
+                if (stack.length === 0 || stack[stack.length-1] !== "if") {
+                    progs[i].failed = true;
+                    progs[i].bad_line = ln;
+                    break;
+                }
+            }
+            else if (["end_block"].includes(progs[i][ln].reading.name)) {
+                if (stack.length === 0) {
+                    progs[i].failed = true;
+                    progs[i].bad_line = ln;
+                    break;
+                }
+                stack.pop();
+            }
+        }
+        if (stack.length > 0) {
+            progs[i].failed = true;
+            progs[i].bad_line = stack[stack.length-1].line;
+        }
+    }
+}
+
+Valence.interpreter.interpret = (program) => {
+    Valence.interpreter.is_playing = true;
+
+    let progs = JSON.parse(JSON.stringify(Valence.interpreter.parse_to_proglist(program)));
+
+    Valence.interpreter.current_promise = Promise.resolve();
+
+    // we'll loop through each program
+    prog = progs[0];
+
+    // use let everywhere for correct scope
+    for(let i = 0; i < delays.length; i++) {
+        Valence.interpreter.current_promise = Valence.interpreter.current_promise.then(function() {
+            return Valence.interpreter._launch_interpreters(delays[i]);
+        });
+    }
+}
+
+Valence.interpreter._launch_interpreters = (delay) => {
+    return new Promise(function(resolve, reject) {
+        const startTime = performance.now();
+        doAThing(delay).then(function() {
+            const endTime = performance.now();
+            const time_to_wait = NODE_DELAY - (endTime - startTime); // sometimes negative
+
+            // the buffer and call to next step
+            if (Valence.interpreter.is_playing) {
+                setTimeout(function() {
+                    const finalEnd = performance.now();
+                    console.log(`waiting ${time_to_wait}`);
+                    console.log(`in total, took ${finalEnd - startTime}\n`);
+                    resolve();
+                }, time_to_wait);
+            }
+        });
+    });
+}
+
+const doAThing = (delay) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            console.log(`doing a task that takess this long : ${delay}`);
+            resolve();
+        }, delay);
+    });
+}
+
+Valence.interpreter.promises_test = () => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            console.log('step 1');
+            resolve('1');
+        }, 1000);
+    }).then(function(result) { // (**)
+        console.log(result); // 1
+        return result * 2;
+    }).then(function(result) { // (**)
+        console.log(result); // 1
+        return result * 2;
+    });
 }
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.interpreter;
 }
+
+// let prog = Valence.parser.parse('𐆇𐆉𐅶', true);
+// Valence.interpreter.interpret('𐆇𐆉𐅶');

@@ -35,3 +35,8 @@ test('uses pseudo when marked', () => {
     ast = tree[0].asts[0];
     expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");
 });
+
+test('parse: stop at too many', () => {
+    let program = "𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶𐅶";
+    expect(Valence.interpreter.parse_to_proglist(program, true)).toThrow(Error);
+})

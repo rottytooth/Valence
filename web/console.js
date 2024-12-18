@@ -66,8 +66,11 @@ const processProgram = () => {
 
     run_holder.innerText = ""; // clear it
 
+    let runnable = prog.length - prog.filter(x => x.failed === true).length;
+    if (!runnable) runnable = 0; // for NaN, undefined, etc.
+
     intpt_msg = document.getElementById("intpt-msg");
-    intpt_msg.innerText = `${prog.length} interpretation${prog.length === 1 ? "" : "s"}`;
+    intpt_msg.innerText = `${prog.length} interpretation${prog.length === 1 ? "" : "s"}, ${runnable} runnable`;
 
     for (let r = 0; r < prog.length; r++) {
         let run = document.createElement("div");

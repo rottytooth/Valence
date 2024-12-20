@@ -8,7 +8,7 @@ beforeEach(() => jest.resetAllMocks());
 
 test('parse_to_proglist completes', () => {
     let program = "𐆇𐆉𐅶";
-    let tree = Valence.interpreter.parse_to_proglist(program);
+    Valence.interpreter.parse_to_proglist(program);
 });
 
 test('parse_to_proglist completes: invalid code', () => {
@@ -39,4 +39,12 @@ test('uses pseudo when marked', () => {
 test('parse: stop at too many', () => {
     let program = "𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶𐅶";
     expect(Valence.interpreter.parse_to_proglist(program, true)).toThrow(Error);
-})
+});
+
+test('marking: if / else / end if is valid', () => {
+    let program = "𐆇𐅶\n𐆊\n𐅾";
+    let tree = Valence.interpreter.parse_to_proglist(program);
+    expect(tree.length).toBe(2);
+    expect(!Object.hasOwn(tree[0],"failed") || tree[0].failed === false).toBe(true);
+    expect(!Object.hasOwn(tree[1],"failed") || tree[0].failed === false).toBe(true);
+});

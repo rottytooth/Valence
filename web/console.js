@@ -111,6 +111,7 @@ const processProgram = () => {
             run_holder.appendChild(run);
         }
     }
+    run_hide_progs();
 }
 
 function insertTextAtCursor(textareaId, text) {
@@ -129,13 +130,34 @@ function insertTextAtCursor(textareaId, text) {
     textarea.focus();
   }
 
-const buildButton = (term) => {
+const buildButton = (term, typedas) => {
     let controlList = document.getElementById("lang-insert");
 
-    let addBtn = document.createElement("input");
-    addBtn.type = "button";
-    addBtn.value = term;
+    let addBtn = document.createElement("button");
+    // addBtn.type = "button";
+    let btnText = term;
+    addBtn.innerText = btnText;
     addBtn.className = "add-btn btn";
+
+    if (typedas !== undefined) {
+        let controlKey = document.createElement("div");
+        controlKey.className = "control-btn-key";
+
+        let bracket1 = document.createElement("span");
+        bracket1.textContent = "[";
+        bracket1.className = "control-lt";
+        controlKey.appendChild(bracket1);
+
+        controlKey.appendChild(document.createTextNode(typedas));
+
+        let bracket2 = document.createElement("span");
+        bracket2.textContent = "]";
+        bracket2.className = "control-lt";
+        controlKey.appendChild(bracket2);
+
+        addBtn.appendChild(controlKey);
+        addBtn.className += " control-btn";
+    }
     addBtn.onclick = (e) => {
         insertTextAtCursor("program-text", term);
         updateInput();
@@ -229,8 +251,8 @@ const buildControlList = () => {
     buildButton("\u21B5");
 }
 
-const run_hide_progs = (checkbox) => {
-    if (checkbox.checked) {
+const run_hide_progs = () => {
+    if (document.getElementById("hide_nonrun").checked) {
         Array.from(document.getElementsByClassName("failed")).forEach((el) => {
             el.style.display = "none";
         });

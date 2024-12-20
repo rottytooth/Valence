@@ -6,7 +6,9 @@
     --type: #eee;
 
     --btn: #333;
+    --btn-txt-light: #757575;
     --btn-front: #ccc;
+
     --code-back: #0d1020;
     --failed-back: #361117;
     --failed-line: #5f2327;
@@ -271,7 +273,7 @@ body {
 }
 .add-btn {
     width: 40px;
-    font-size: 18pt;
+    font-size: 20pt;
     margin-right: 10px;
 }
 .other-btn {
@@ -281,6 +283,23 @@ body {
     font-size: 12pt;
     padding: 0 10px 0 10px;
     font-family: 'Ubuntu Mono', monospace;
+}
+.control-btn {
+    width: 90px;
+    text-align: left;
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+.control-btn-key {
+    font-size: 12pt;
+    pointer-events: none;
+    font-family: 'Ubuntu Mono', monospace;
+    position: absolute;
+    top: 25px;
+    padding-left: 33px;
+}
+.control-lt {
+    color: var(--btn-txt-light);
 }
 
 /* running programs */

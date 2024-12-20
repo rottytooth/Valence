@@ -1,5 +1,3 @@
-const MAX_ASTS = 200;
-
 if (!Valence) var Valence = {};
 
 if (typeof module !== 'undefined' && module.exports) { 
@@ -98,7 +96,7 @@ const parser = (function() {
                     break;
                 case "exp":
                     // otherwise, split the ast into two, one for each reading
-                    if (line.asts.length > MAX_ASTS) {
+                    if (line.asts.length > Valence.parser.MAX_ASTS) {
                         throw new Error("Too many interpretations of this line of code; probably stuck in an infinite loop");
                     }
                     // assign the var reading to the existing ast
@@ -452,6 +450,8 @@ const parser = (function() {
 })();
 
 Valence.parser = new parser();
+
+Valence.parser.MAX_ASTS = 200;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.parser;

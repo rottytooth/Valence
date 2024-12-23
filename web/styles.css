@@ -10,6 +10,8 @@
     --btn-front: #ccc;
 
     --code-back: #0d1020;
+    --code-lit: #202258;
+    --code-run-back: #303841;
     --failed-back: #361117;
     --failed-line: #5f2327;
     --split: #22283b;
@@ -56,25 +58,44 @@ body {
     font-weight: normal;
     padding-left: 10px;
     /* color: #9d8e37; */
-    color: var(--cmd);
+    color: #fff;
 }
 #title p{
     color: var(--exp);
 }
 
 #title a {
-    color: var(--cmd);
+    color: #fff;
+}
+
+.outer-code-block {
+    float: left;
+    margin: 5px;
+}
+
+.output {
+    display: none;
+
+    min-height: 20px;
+    border-radius: 0 0 10px 10px;
+    background-color: var(--code-run-back);
 }
 
 .code-block {
-    float: left;
     display: table;
-    /* border: 1px solid var(--btn-front); */
     background-color: var(--code-back);
     color: var(--exp);
     padding: 10px;
-    margin: 5px;
+    margin: 0;
     border-radius: 10px;
+}
+.running-block {
+    /* when running, the bottom is straight */
+    border-radius: 10px 10px 0 0;
+}
+
+.running {
+    background-color: var(--code-lit);
 }
 .failed {
     background-color: var(--failed-back);
@@ -92,6 +113,8 @@ body {
     font-size: 18pt;
     padding-right: 10px;
     font-variant-numeric: tabular-nums;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 .code-lex-item {
     display: inline-block;

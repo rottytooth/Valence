@@ -9,34 +9,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 Valence.interpreter = (function() {
 
-    const doAThing = (delay) => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                console.log(`doing a task that takess this long : ${delay}`);
-                resolve();
-            }, delay);
-        });
-    };
-
-    const launch_interpreters = (delay) => {
-        return new Promise(function(resolve, reject) {
-            const startTime = performance.now();
-            doAThing(delay).then(function() {
-                const endTime = performance.now();
-                const time_to_wait = node_delay - (endTime - startTime); // sometimes negative
-    
-                // the buffer and call to next step
-                if (Valence.interpreter.is_playing) {
-                    setTimeout(function() {
-                        const finalEnd = performance.now();
-                        console.log(`waiting ${time_to_wait}`);
-                        console.log(`in total, took ${finalEnd - startTime}\n`);
-                        resolve();
-                    }, time_to_wait);
-                }
-            });
-        });
-    };    
+    let node_delay = 500; 
 
     const transpile_js = (ast, use_pseudo) => {
         let localstr = ast.reading.js;
@@ -130,16 +103,21 @@ Valence.interpreter = (function() {
             }
             progs = progs_new;
         }
+
+        for (let p = 0; p < progs.length; p++) {
+            progs[p].id = p;
+        }
     
         mark_bad_programs(progs);
         return progs;
     };
 
    const mark_bad_programs = (progs) => {
+        // this both modifies progs by ref and returns it
         for (let i = 0; i < progs.length; i++) {
             var stack = [];
             for (let ln = 0; ln < progs[i].length; ln++) {
-                console.log(progs[i][ln].reading.pseudo);
+
                 if (["if", "while", "for"].includes(progs[i][ln].reading.name)) {
                     stack.push({ line: ln, cmd: progs[i][ln].reading.name});
                 }
@@ -164,13 +142,55 @@ Valence.interpreter = (function() {
                 progs[i].bad_line = stack[stack.length-1].line;
             }
         }
+        return progs;
+    };
+
+    const initial_state = () => {
+        return [0,1,2,3,4,5,6,7];
     }
 
-    var delays = [400, 300, 200, 100, 500];
+    const launch_interpreter = async (program) => {
+        program.line_number = 0;
+        let curr_promise = new Promise(function(resolve, reject) {
+            interpret_line(program, 0, initial_state(), resolve);
+        });
+        return curr_promise;
+    };
+
+    const interpret_line = async (program, line, state, resolve, callback) => {
+        const startTime = performance.now();
+
+        let output = null;
+
+        // actually run the line of code
+
+        // where to go next in the program
+
+        // update output
+        // callback(program_id, line, output);
+
+        // check for end of program
+        if (!Valence.interpreter.is_playing || program.line >= program.length) {
+            return;
+        }
+
+        const endTime = performance.now();
+        const time_to_wait = node_delay - (endTime - startTime); // sometimes negative
+
+        // // the buffer and call to next step
+        setTimeout(function() {
+            const finalEnd = performance.now();
+            console.log(`waiting ${time_to_wait}`);
+            console.log(`in total, took ${finalEnd - startTime}\n`);
+            resolve({state});
+        }, time_to_wait);
+    };
+    
+
 
     return {
 
-        node_delay: 500, // speed per line of code
+        node_delay: node_delay, // speed per line of code
 
         is_playing: false,
 
@@ -188,39 +208,36 @@ Valence.interpreter = (function() {
 
         parse_to_proglist: parse_to_proglist,
 
-        mark_bad_programs: mark_bad_programs,
+        // exposing private methods for testing
+        _testing : {
 
-        interpret: function(program) {
+            _mark_bad_programs: mark_bad_programs,
+
+            _launch_interpreter: launch_interpreter
+        },
+
+        interpret: async function(program, wait = false) {
             Valence.interpreter.is_playing = true;
-        
+
+            // parse and keep only the runnable programs
             let progs = JSON.parse(JSON.stringify(parse_to_proglist(program)));
-        
-            Valence.interpreter.current_promise = Promise.resolve();
-        
-            // we'll loop through each program
-            prog = progs[0];
-        
-            // use let everywhere for correct scope
-            for(let i = 0; i < delays.length; i++) {
-                Valence.interpreter.current_promise = Valence.interpreter.current_promise.then(function() {
-                    return launch_interpreters(delays[i]);
-                });
+            progs = (mark_bad_programs(progs)).filter(p => !(p.failed === true));
+
+            // return promise for each valid program
+            if (!wait) {
+                return Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
+            } else {
+                await Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
             }
         },
 
-        promises_test: function() {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    console.log('step 1');
-                    resolve('1');
-                }, 1000);
-            }).then(function(result) { // (**)
-                console.log(result); // 1
-                return result * 2;
-            }).then(function(result) { // (**)
-                console.log(result); // 1
-                return result * 2;
-            });
+        launch_all: async function(progs, wait = false) {
+            // return promise for each valid program
+            if (!wait) {
+                return Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
+            } else {
+                await Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
+            }
         }
     };
 })();
@@ -229,6 +246,3 @@ Valence.interpreter = (function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.interpreter;
 }
-
-// let prog = Valence.parser.parse('𐆇𐆉𐅶', true);
-// Valence.interpreter.interpret('𐆇𐆉𐅶');

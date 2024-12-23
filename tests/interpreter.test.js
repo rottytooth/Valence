@@ -1,3 +1,5 @@
+jest.setTimeout(20 * 1000);
+
 if (!Valence) var Valence = {};
 
 Valence.lexicon = require('../valence.lexicon');
@@ -47,4 +49,47 @@ test('marking: if / else / end if is valid', () => {
     expect(tree.length).toBe(2);
     expect(!Object.hasOwn(tree[0],"failed") || tree[0].failed === false).toBe(true);
     expect(!Object.hasOwn(tree[1],"failed") || tree[0].failed === false).toBe(true);
+});
+
+test('marking: good if / bad if', () => {
+    let program = "𐆇𐅶\n𐆇𐅶\n𐅾";
+    let tree = Valence.interpreter.parse_to_proglist(program);
+    expect(tree.length).toBe(4);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
+});
+
+test('interpreter completes', async () => {
+    let program = "𐆇𐆉𐅶";
+    await Valence.interpreter.interpret(program);
+});
+
+test('interpreter: synchronous call', () => {
+    let program = "𐆇𐆉𐅶";
+    Valence.interpreter.interpret(program, true);
+});
+
+test('interpret(): launches only successful builds', async () => {
+    let program = "𐆇𐆉𐅶";
+    await Valence.interpreter.interpret(program).then(data => {
+        expect(data.length).toBe(2);
+      });
+});
+
+test('interpret(): two-line program', async () => {
+    let program = "𐆇𐆉[𐅾𐅶]\n𐅾𐅾𐆋";
+    await Valence.interpreter.interpret(program).then(data => {
+        expect(data.length).toBe(2);
+      });
+});
+
+test('launch_all called twice', async () => {
+    let program = "𐆇𐆉𐅶";
+    const spy = jest.spyOn(Valence.interpreter._testing, '_launch_interpreter');
+    Valence.interpreter.interpret(program).then( d => {
+        expect(spy).toHaveBeenCalledTimes(2);
+        spy.mockRestore();
+    });
 });

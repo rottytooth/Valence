@@ -2,6 +2,8 @@ var program = "";
 var curr_line = "";
 var hit_return = false;
 
+let is_running = false;
+
 TOKEN_TYPES = {
     "c": "cmd",
     "e": "exp",
@@ -42,7 +44,8 @@ const updateInput = () => {
         }
     }
     txt.value = outprog;
-    processProgram();
+    formatProgram();
+    run_stop(false, true);
 }
 
 const sytaxHighlight = (ast, line_node) => {
@@ -59,7 +62,7 @@ const sytaxHighlight = (ast, line_node) => {
     }
 }
 
-const processProgram = () => {
+const formatProgram = () => {
     let txt = document.getElementById("program-text");
     let prog = Valence.interpreter.parse_to_proglist(txt.value);
     let run_holder = document.getElementById("programs-running");
@@ -73,7 +76,11 @@ const processProgram = () => {
     intpt_msg.innerText = `${prog.length} interpretation${prog.length === 1 ? "" : "s"}, ${runnable} runnable`;
 
     for (let r = 0; r < prog.length; r++) {
+        let bigrun = document.createElement("div");
+        bigrun.classList += "outer-code-block";
+
         let run = document.createElement("div");
+        run.id = `prog-${prog[r].id}`;
         run.classList += "code-block";
         if (prog[r].failed === true) {
             run.classList += " failed";
@@ -81,7 +88,6 @@ const processProgram = () => {
         
         let add_run = true;
         for (let i = 0; i < prog[r].length; i++) {
-            // if (prog[r][i].line !== undefined) continue;
 
             let code_row = document.createElement("div");
             code_row.className = "code-row";
@@ -108,10 +114,30 @@ const processProgram = () => {
         }
 
         if (add_run) {
-            run_holder.appendChild(run);
+            bigrun.appendChild(run);
+
+            let output = document.createElement("div");
+            output.className = "output";
+            bigrun.appendChild(output);
+
+            run_holder.appendChild(bigrun);
         }
     }
     run_hide_progs();
+    add_foot_to_good_programs();
+}
+
+const add_foot_to_good_programs = () => {
+
+    // remove all feet
+    Array.from(document.getElementsByClassName("running-block")).forEach(x => x.classList.remove("running-block"));
+
+    // selectively add the correct ones
+    let unfailedOuterBlocks = Array.from(document.getElementsByClassName("outer-code-block")).filter(x => Array.from(x.children).filter(y => y.classList.contains("failed")).length === 0);
+
+    Array.from(document.getElementsByClassName("code-block")).filter(x => !x.classList.contains("failed")).forEach(x => x.classList.add("running-block"));
+
+    unfailedOuterBlocks.forEach(x => Array.from(x.children).filter(x => x.classList.contains("output"))[0].style.display = "block");
 }
 
 function insertTextAtCursor(textareaId, text) {
@@ -134,7 +160,6 @@ const buildButton = (term, typedas) => {
     let controlList = document.getElementById("lang-insert");
 
     let addBtn = document.createElement("button");
-    // addBtn.type = "button";
     let btnText = term;
     addBtn.innerText = btnText;
     addBtn.className = "add-btn btn";
@@ -214,6 +239,7 @@ const buildLeftControl = (term, typedas, values) => {
         if (val.type == "digit") {
             menuText = `0o${val.name}`;
         }
+        menuText = menuText.replace(/_/g, " ");
         let lexSubMenuItemText = document.createTextNode(menuText);
         lexSubMenuItem.appendChild(lexSubMenuItemText);
 
@@ -260,5 +286,31 @@ const run_hide_progs = () => {
         Array.from(document.getElementsByClassName("failed")).forEach((el) => {
             el.style.display = "block";
         });
+    }
+}
+
+
+const update_display_by_running_state = () => {
+    if (is_running) {
+
+    }
+}
+
+const report = (progid, line, add_to_output) => {
+    // highlight the currently running line of the program and add to output
+    rows = Array.from(document.getElementById(`prog-${progid}`).children).filter(x => x.classList.contains("code-row"));
+
+    rows.forEach(x => x.classList.remove("running"));
+    rows[line].classList.add("running");
+}
+
+
+// run or stop running programs
+const run_stop = (force_start = false, force_end = false) => {
+    is_running = !is_running;
+    if ((is_running && !force_end) || force_start) {
+        document.getElementById("run-stop").value = "Stop All";
+    } else {
+        document.getElementById("run-stop").value = "Run All";
     }
 }

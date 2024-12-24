@@ -149,12 +149,47 @@ Valence.interpreter = (function() {
         return [0,1,2,3,4,5,6,7];
     }
 
-    const launch_interpreter = async (program) => {
+    const key_to_idx = (key) => {
+        return parseInt(Valence.lexicon[key].filter(x => x.type == 'digit')[0]['js']);
+    }
+
+    const launch_interpreter = async (program, callback) => {
         program.line_number = 0;
+
+        // find initial state of all variables
+        let state = initial_state();
+
+        // evaluate all labels at launch in case there are jump-forwards
+        // (these will be re-evaluated when we hit the label)
+        for (let ln= 0; ln < program.length; ln++) {
+            if (program[ln].reading.name === "label") {
+                let loc = evaluate_expression(program[ln].params[0], state, "var");
+                state[loc] = ln; // assign the location of the label to its var
+            }
+        }
+
+        // if there's a callback, call it with initial state
+        if (callback) {
+            callback(program.id, -1, "", state);
+        }
+
         let curr_promise = new Promise(function(resolve, reject) {
-            interpret_line(program, 0, initial_state(), resolve);
+            interpret_line(program, 0, state, resolve, callback);
         });
         return curr_promise;
+    };
+
+    const evaluate_expression = (node, state, resolve_to) => {
+        switch (node.reading.type) {
+            case "var":
+                // if we're looking for a var, return its location in the state array
+                // if we're looking for a value, return the var's value
+                if (resolve_to == "var") 
+                    return key_to_idx(node.reading.pseudo);
+                return state[key_to_idx(node.reading.pseudo)];
+            case "digit":
+                return 0; // TODO
+        }
     };
 
     const interpret_line = async (program, line, state, resolve, callback) => {
@@ -164,13 +199,15 @@ Valence.interpreter = (function() {
 
         // actually run the line of code
 
-        // where to go next in the program
 
         // update output
-        // callback(program_id, line, output);
+        if (callback) callback(program.id, line, output, state);
+
+        // where to go next in the program
 
         // check for end of program
         if (!Valence.interpreter.is_playing || program.line >= program.length) {
+            resolve();
             return;
         }
 
@@ -182,7 +219,6 @@ Valence.interpreter = (function() {
             const finalEnd = performance.now();
             console.log(`waiting ${time_to_wait}`);
             console.log(`in total, took ${finalEnd - startTime}\n`);
-            resolve({state});
         }, time_to_wait);
     };
     
@@ -208,6 +244,8 @@ Valence.interpreter = (function() {
 
         parse_to_proglist: parse_to_proglist,
 
+        key_to_idx: key_to_idx,
+
         // exposing private methods for testing
         _testing : {
 
@@ -231,13 +269,9 @@ Valence.interpreter = (function() {
             }
         },
 
-        launch_all: async function(progs, wait = false) {
+        launch_all: async function(progs, callback = false) {
             // return promise for each valid program
-            if (!wait) {
-                return Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
-            } else {
-                await Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
-            }
+            return Promise.all(progs.map(prog => { return launch_interpreter(prog, callback); }));
         }
     };
 })();

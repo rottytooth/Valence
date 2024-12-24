@@ -4,6 +4,18 @@ if (typeof module !== 'undefined' && module.exports) {
     Valence.lexicon = require('./valence.lexicon');
 }
 
+class InternalError extends Error {
+    constructor(message) {
+        super('Internal Error: ' + message);
+    }
+}
+
+class SyntaxError extends Error {
+    constructor(message) {
+        super('Syntax Error: ' + message);
+    }
+}
+
 class scanner {
 
     static convert(line) {
@@ -62,14 +74,28 @@ class scanner {
                 });
             } else {
                 // we should never get here
-                throw new Error(`Unknown character: ${curr_char}`);
+                throw new InternalError(`Unknown character: ${curr_char}`);
             }
         }
         return instructions;
     };
 
-    static evaluate_line(line, read_roman_chars = true) {
+    static do_brackets_match(line) {
+        let open = line.split("[").length - 1;
+        let close = line.split("]").length - 1;
+        return open === close;
+    }
+
+    static evaluate_line(line, read_roman_chars = true, ln = -1) {
         line = line.trim();
+
+        if (!scanner.do_brackets_match(line)) {
+            if (ln > -1)
+                throw new SyntaxError(`Brackets do not match on line ${ln+1}`); 
+            else
+                throw new SyntaxError(`Brackets do not match`);
+        }
+
         if (read_roman_chars) {
             line = scanner.convert(line);
         }
@@ -82,5 +108,9 @@ class scanner {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = scanner;
+    module.exports = {
+        scanner: scanner,
+        SyntaxError: SyntaxError,
+        InternalError: InternalError
+    }
 }

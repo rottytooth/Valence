@@ -75,14 +75,14 @@ test('interpret(): launches only successful builds', async () => {
     let program = "𐆇𐆉𐅶";
     await Valence.interpreter.interpret(program).then(data => {
         expect(data.length).toBe(2);
-      });
+    });
 });
 
 test('interpret(): two-line program', async () => {
     let program = "𐆇𐆉[𐅾𐅶]\n𐅾𐅾𐆋";
     await Valence.interpreter.interpret(program).then(data => {
         expect(data.length).toBe(2);
-      });
+    });
 });
 
 test('launch_all called twice', async () => {
@@ -91,5 +91,14 @@ test('launch_all called twice', async () => {
     Valence.interpreter.interpret(program).then( d => {
         expect(spy).toHaveBeenCalledTimes(2);
         spy.mockRestore();
+    });
+});
+
+test('label is assigned at start of program', async () => {
+    let program = "𐅾[𐅾𐆇]\n𐆉𐆇";
+    let progs = JSON.parse(JSON.stringify(Valence.interpreter.parse_to_proglist(program)));
+    progs = (Valence.interpreter._testing._mark_bad_programs(progs)).filter(p => !(p.failed === true));
+    await Valence.interpreter.launch_all(progs).then(data => {
+        expect(data.length).toBe(2);
     });
 });

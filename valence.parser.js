@@ -5,7 +5,7 @@ if (typeof module !== 'undefined' && module.exports) {
     const fs = require('node:fs'); // temporary, for testing
 
     Valence.lexicon = require('./valence.lexicon');
-    scanner = require('./valence.scanner');
+    scanner = require('./valence.scanner').scanner;
 }
 
 const parser = (function() {
@@ -373,7 +373,7 @@ const parser = (function() {
             if (complete) {
                 // split into lines and evaluate each
                 let lines = input.split(/\r?\n/);
-                program = lines.map(s => scanner.evaluate_line(s));
+                program = lines.map((s, idx) => scanner.evaluate_line(s, false, idx));
             } else {
                 // evaluate the new line and push to the program
                 program.push(scanner.evaluate_line(input));

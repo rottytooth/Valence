@@ -73,12 +73,27 @@ body {
     margin: 5px;
 }
 
-.output {
-    display: none;
+.status {
+    background-color: var(--body-back);
 
     min-height: 20px;
     border-radius: 0 0 10px 10px;
-    background-color: var(--code-run-back);
+    width: 100%;
+    padding-bottom: 3px;
+    text-align: center;
+    /* background-color: var(--code-run-back); */
+}
+.status-item {
+    display: inline-block;
+    padding: 2px;
+    margin: 2px 5px 2px 5px;
+    background-color: var(--btn-txt-light);
+    border-radius: 5px;
+    min-width: 40px;
+}
+.output {
+    display: none;
+    background-color: var(--btn);
 }
 
 .code-block {
@@ -163,7 +178,7 @@ body {
     margin: 0 5px 5px 5px;
     caret-color: #ec6e2d;
     width: 400px;
-    min-height: 200px;
+    min-height: 196px;
     background-color: var(--code-back);
     color: #ccc;
     line-height: 120%;
@@ -228,6 +243,12 @@ body {
     margin-top: 3px;
     margin-bottom: 3px;
     border-bottom: 1px solid var(--body-back);;
+}
+.menu-item ul li:first-child {
+    padding-top: 8px;
+}
+.menu-item ul li:last-child {
+    padding-bottom: 8px;
 }
 .menu-item .sub-menu {
     display: none;

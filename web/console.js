@@ -71,7 +71,7 @@ const formatProgram = () => {
     run_holder.innerText = ""; // clear it
 
     try {
-        gen_programs = Valence.interpreter.parse_to_proglist(txt.value);
+        gen_programs = Valence.parser.parse(txt.value, true);
     } catch (SyntaxError) {
         return;
     }

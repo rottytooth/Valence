@@ -14,21 +14,21 @@ test('lines count: single line', () => {
 test('lines count: multiple lines', () => {
     let program = "𐆇𐆉𐆇𐅶\n𐅾𐅶𐆉";
     let tree = Valence.parser.parse(program, true);
-    expect(tree.length).toBe(2);
+    expect(tree[0].length).toBe(2);
 });
 
 test('line count: blank line counted', () => {
-    let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉";
+    let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉\n𐅾";
     let tree = Valence.parser.parse(program, true);
-    expect(tree.length).toBe(3);
-});
+    expect(tree[0].length).toBe(4);
+}); // currently this breaks because the blank line generates no valid ASTs
 
 test('ast count: blank line has no ast', () => {
-    let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉";
+    let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉\n𐅾";
     let tree = Valence.parser.parse(program, true);
-    expect(tree[0].asts.length).not.toBeLessThan(1);
-    expect(tree[1].asts.length).toBe(0);
-    expect(tree[2].asts.length).not.toBeLessThan(1);
+    expect(tree[0][0].asts.length).not.toBeLessThan(1);
+    expect(tree[0][1].asts.length).toBe(0);
+    expect(tree[0][2].asts.length).not.toBeLessThan(1);
 });
 
 test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
@@ -224,4 +224,52 @@ test('parse: syntax highlighting', () => {
         ast = tree[0].asts[i];
         expect(['cceevec','cvcccvc','cceedec']).toContain(ast.line_markers);
     }
+});
+
+test('parse_to_proglist: invalid code', () => {
+    let program = "𐆇";
+    let tree = Valence.parser.parse(program);
+    expect(tree.filter(p => p.built == true).length).toBe(0);
+});
+
+
+test('builds pseudocode', () => {
+    let program = "𐆇𐆉𐅶";
+    let tree = Valence.parser.parse(program);
+    expect(tree.length).not.toBe(0);
+    for (let i = 0; i < tree[0].asts.length; i++) {
+        ast = tree[0].asts[i];
+        expect(ast.reading.pseudo).not.toBe("");
+    }
+});
+
+test('uses pseudo when marked', () => {
+    let program = '𐆉[𐆊[𐅾𐆁]]';
+    let tree = Valence.parser.parse(program);
+    expect(tree.length).toBe(1);
+    ast = tree[0].asts[0];
+    expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");
+});
+
+test('parse: stop at too many', () => {
+    let program = "𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶𐅶";
+    expect(Valence.parser._testing._parse_to_proglist(program, true)).toThrow(Error);
+});
+
+test('marking: if / else / end if is valid', () => {
+    let program = "𐆇𐅶\n𐆊\n𐅾";
+    let tree = Valence.parser._testing._parse_to_proglist(program);
+    expect(tree.length).toBe(2);
+    expect(!Object.hasOwn(tree[0],"failed") || tree[0].failed === false).toBe(true);
+    expect(!Object.hasOwn(tree[1],"failed") || tree[0].failed === false).toBe(true);
+});
+
+test('marking: good if / bad if', () => {
+    let program = "𐆇𐅶\n𐆇𐅶\n𐅾";
+    let tree = Valence.parser._testing._parse_to_proglist(program);
+    expect(tree.length).toBe(4);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
+    expect(tree[0].failed === true).toBe(true);
 });

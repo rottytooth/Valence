@@ -313,8 +313,132 @@ const parser = (function() {
     }
 
 
+    const transpile_ast_to_js = (ast, use_pseudo) => {
+        let localstr = ast.reading.js;
+        if (use_pseudo && Object.hasOwn(ast.reading,"pseudo")) {
+            localstr = ast.reading.pseudo;
+        }
+    
+        for(let i = 0; i < ast.params.length; i++) {
+            let name = null;
+            if (Object.hasOwn(ast.reading.params[i],"name"))
+                name = ast.reading.params[i].name;
+            else
+                name = ast.reading.params[i].type;
+    
+            let replacement = transpile_ast_to_js(ast.params[i], use_pseudo);
+            localstr = localstr.replaceAll("{"+name+"}", replacement);
+        }
+        return localstr;
+    };
+
+    const generate_transpilations = (parsed_prog) => {
+    
+        let retstr = "";
+        
+        for(let i = 0; i < parsed_prog.length; i++) {
+            // for each line
+            retstr += parsed_prog[i].line + "\n";
+            for(let j = 0; j < parsed_prog[i].asts.length; j++) {
+                // for each reading of that line
+                retstr += parsed_prog[i].asts[j].line + "\n";
+                if (parsed_prog[i].asts[j].reading.pseudo === undefined) {
+                    parsed_prog[i].asts[j].reading.pseudo = parsed_prog[i].asts[j].reading.js;
+                }
+                parsed_prog[i].asts[j].reading.js = transpile_ast_to_js(parsed_prog[i].asts[j], false);
+                parsed_prog[i].asts[j].reading.pseudo = transpile_ast_to_js(parsed_prog[i].asts[j], true);
+                retstr += parsed_prog[i].asts[j].reading.pseudo + "\n";
+            }
+        }
+        parsed_prog.log = retstr;
+        return parsed_prog;
+    };
+
+    const parse_to_proglist = (program) => {
+        // from a program, generates list of interable programs
+        let parsed = generate_transpilations(program);
+        let progs = [];
+    
+        // first line creates the initial trees
+        for (let q = 0; q < parsed[0].asts.length; q++) {
+            progs.push([JSON.parse(JSON.stringify(parsed[0].asts[q]))]);
+        }
+    
+        for (let p = 1; p < parsed.length; p++) {
+            let progs_new = [];
+            for (let q = 0; q < parsed[p].asts.length; q++) {
+                for (let r = 0; r < progs.length; r++) {
+                    if (progs[r].length > Valence.parser.MAX_ASTS) {
+                        throw new Error("Too many ASTs");
+                    }
+                    new_prog = JSON.parse(JSON.stringify(progs[r]));
+                    new_prog.push(JSON.parse(JSON.stringify(parsed[p].asts[q])));
+                    progs_new.push(new_prog);
+                }
+            }
+            progs = progs_new;
+        }
+
+        for (let p = 0; p < progs.length; p++) {
+            progs[p].id = p;
+        }
+    
+        find_blocks(progs);
+        return progs;
+    };
+
+   const find_blocks = (progs) => {
+        // mark while/if blocks to where they close 
+        // this both modifies progs in place and returns it
+        for (let i = 0; i < progs.length; i++) {
+            var stack = [];
+            for (let ln = 0; ln < progs[i].length; ln++) {
+
+                if (["if", "while", "for"].includes(progs[i][ln].reading.name)) {
+                    stack.push({ line: ln, cmd: progs[i][ln].reading.name});
+                }
+                else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
+                    if (stack.length === 0 || (stack[stack.length-1].cmd !== "if" && stack[stack.length-1].cmd !== "else_if")) {
+                        progs[i].failed = true;
+                        progs[i].bad_line = ln;
+                        break;
+                    } else {
+                        let start = stack.pop();
+                        progs[i][start.line].end = ln;
+                        progs[i][ln].start = start.line;
+                        stack.push({ line: ln, cmd: progs[i][ln].reading.name});
+                    }
+                }
+                else if (["end_block"].includes(progs[i][ln].reading.name)) {
+                    if (stack.length === 0) {
+                        progs[i].failed = true;
+                        progs[i].bad_line = ln;
+                        break;
+                    } else {
+                        let start = stack.pop();
+                        progs[i][start.line].end = ln;
+                        progs[i][ln].start = start.line;
+                    }
+                }
+            }
+            if (stack.length > 0) {
+                progs[i].failed = true;
+                progs[i].bad_line = stack[stack.length-1].line;
+            }
+        }
+        return progs;
+    };
+
+
     return (function () {
         // public functions
+
+        // testing
+        this._testing = {
+            _generate_transpilations: generate_transpilations,
+
+            _parse_to_proglist: parse_to_proglist
+        },
 
         this.print_ast = (ast, inc_markers = false) => {
             // print the ast on a single line with brackets
@@ -364,7 +488,8 @@ const parser = (function() {
         }
 
         this.parse = (input, complete) => {
-            // complete = evaluate as complete program, dropping interpretations with unmatched brackets or other invalid syntax
+            // complete: if true, parse the entire input as complete multi-line program
+            // if false, generate asts for a single line but don't attempt to match brackets or perform other program-wide analysis
 
             program = [];
 
@@ -440,8 +565,11 @@ const parser = (function() {
                     console.log(outstr);
                 }
             }
-            this.program_state = () => {
-                return JSON.stringify(program);
+
+            if (complete) {
+                // if set to complete, mark the failured interpretations and match the blocks
+                let progs = parse_to_proglist(program);
+                program = find_blocks(progs);
             }
      
             return program;

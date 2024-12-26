@@ -8,36 +8,8 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 Valence.interpreter = (function() {
-    // FIXME: Valence.parser generates the various ASTs for each line and their readings, but Valence.interpreter parses those into full, program-long readings as parallel , and where blocks open and close. These should probably move to Valence.parser
 
     let node_delay = 500; 
-
-    const parse_program = (program, to_file=false, outfile = null) => {
-        // parse a program from text, output to either screen or a file
-        if (!to_file) {
-            parse_and_print(program);
-            return;
-        }
-        if (!outfile) {
-            outfile = `output/${program}.txt`;
-        }
-        fs.writeFile(outfile, generate_transpilations(program, true).log, (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-    };
-
-    const parse_file = (infile, to_file=false, outfile = null) => {
-        // parse a .val file (requires node)
-        fs.readFile(infile, 'utf8', (err, program) => {
-            if (err) throw err;
-            if (!to_file) {
-                parse_and_print(program, outfile);
-                return;
-            }
-            parse_program(program, to_file, outfile);
-        });
-    };
 
     const initial_state = () => {
         return [0,1,2,3,4,5,6,7];
@@ -45,6 +17,9 @@ Valence.interpreter = (function() {
 
     const key_to_idx = (key) => {
         return parseInt(Valence.lexicon[key].filter(x => x.type == 'digit')[0]['js']);
+    }
+    const idx_to_key = (idx) => {
+        return Object.keys(Valence.lexicon)[idx];
     }
 
     const launch_interpreter = async (program, callback) => {
@@ -74,14 +49,30 @@ Valence.interpreter = (function() {
     };
 
     // FIXME: seems unfortunate to do this after building the transpilation rules in the lexicon; alternative would be to use eval on the expression part and only hardcode commands here
-    const run_command = (node, state) => {
+    const run_command = (node, state, ln) => {
+        let next_line = ln + 1;
         switch(node.reading.name) {
             case "while":
-                // do we know end of the while?
+                if (!evaluate_to_type(node.params[0], "bool")) {
+                    next_line = node.end;
+                }
+                break;
+        }
+        return next_line;
+    }
+
+    const evaluate_to_type = (node, state, resolve_to) => {
+        switch(resolve_to) {
+            case "bool":
+                return !!(evaluate_exp(node, state));
+            case "var":
+                return state[Math.floor(evaluate_exp(node, state)) % 8];
+            case "digit":
+                return Math.floor(evaluate_exp(node, state)) % 8;
         }
     }
 
-    const evaluate_expression = (node, state, resolve_to) => {
+    const evaluate_exp = (node, state) => {
         switch (node.reading.type) {
             case "var":
                 // if we're looking for a var, return its location in the state array
@@ -99,28 +90,33 @@ Valence.interpreter = (function() {
 
         let output = null;
 
+        // check for end of program
+        if (!Valence.interpreter.is_playing || line >= program.length) {
+
+            // callback one more time to clear highlit row
+            if (callback) callback(program.id, -1, "", state);
+
+            resolve();
+            return;
+        }        
+
         // actually run the line of code
-        run_command(program[line], state);
+        let next_line = run_command(program[line], state, line);
 
         // update output
         if (callback) callback(program.id, line, output, state);
 
         // where to go next in the program
 
-        // check for end of program
-        if (!Valence.interpreter.is_playing || program.line >= program.length) {
-            resolve();
-            return;
-        }
-
         const endTime = performance.now();
         const time_to_wait = node_delay - (endTime - startTime); // sometimes negative
 
-        // // the buffer and call to next step
+        // the buffer and call to next step
         setTimeout(function() {
             const finalEnd = performance.now();
             console.log(`waiting ${time_to_wait}`);
             console.log(`in total, took ${finalEnd - startTime}\n`);
+            interpret_line(program, next_line, state, resolve, callback);
         }, time_to_wait);
     };
     
@@ -131,14 +127,6 @@ Valence.interpreter = (function() {
         node_delay: node_delay, // speed per line of code
 
         is_playing: false,
-
-        // parse_and_print: function(program) {
-        //     console.log(generate_transpilations(program).log);
-        // },
-
-        parse_program: parse_program,
-
-        parse_file: parse_file,
 
         key_to_idx: key_to_idx,
 

@@ -5,7 +5,7 @@ var lex_array = [];
 
 let gen_programs = null;
 
-let is_running = false;
+// let is_running = false;
 
 TOKEN_TYPES = {
     "c": "cmd",
@@ -129,7 +129,7 @@ const formatProgram = () => {
             let output = document.createElement("div");
             output.className = "output";
             output.innerText = "Output";
-            output.style.width = run.offsetWidth + "px";
+            output.style.width = (run.offsetWidth - 16) + "px";
             bigrun.appendChild(output);
 
             let status = document.createElement("div");
@@ -346,13 +346,11 @@ const report = (progid, line, add_to_output, state) => {
     let output = outArray[0];
     output.style.display = "block";
     output.innerHTML = "";
+    output.innerText = "Output";
 
     for (let st = 0; st < state.length; st++) {
         let stat_holder = document.createElement("span");
         stat_holder.className = "status-item";
-        // if (st == 4) {
-        //     status.appendChild(document.createElement("br"));
-        // }
         stat_holder.innerText += `${lex_array[st]}: ${state[st]} `;
         status.appendChild(stat_holder);
     }
@@ -369,8 +367,9 @@ const report = (progid, line, add_to_output, state) => {
 
 // run or stop running programs
 const run_stop = (force_start = false, force_end = false) => {
-    is_running = !is_running;
-    if ((is_running && !force_end) || force_start) {
+    Valence.interpreter.is_playing = !Valence.interpreter.is_playing;
+
+    if ((Valence.interpreter.is_playing && !force_end) || force_start) {
         document.getElementById("run-stop").value = "Stop All";
 
         let runnable_progs = gen_programs.filter(x => !Object.hasOwn(x,"failed") || x.failed !== true);

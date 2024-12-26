@@ -81,7 +81,6 @@ body {
     width: 100%;
     padding-bottom: 3px;
     text-align: center;
-    /* background-color: var(--code-run-back); */
 }
 .status-item {
     display: inline-block;
@@ -94,6 +93,11 @@ body {
 .output {
     display: none;
     background-color: var(--btn);
+    color: #ccc;
+    padding: 8px;
+    min-height: 32px;
+    border-bottom: 1px solid #444;
+    padding-top: 5px;
 }
 
 .code-block {
@@ -215,7 +219,7 @@ body {
     padding-right: 0;
 }
 .menu-item {
-    background-color: var(--btn);
+    background-color: var(--code-run-back);
     color: var(--btn-front);
     width: 200px;
     font-size: 20pt;

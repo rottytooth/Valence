@@ -190,7 +190,7 @@ test('each ast has line and line_marker', () => {
     }
 });
 
-test('lines are correct', () => {
+test('lines are correct: three signs', () => {
     let program = "𐆋𐆉";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
@@ -200,7 +200,7 @@ test('lines are correct', () => {
     }
 });
 
-test('lines are correct', () => {
+test('lines are correct: four signs', () => {
     let program = "𐆋𐆋𐆉";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
@@ -245,7 +245,7 @@ test('builds pseudocode', () => {
 
 test('uses pseudo when marked', () => {
     let program = '𐆉[𐆊[𐅾𐆁]]';
-    let tree = Valence.parser.parse(program);
+    let tree = Valence.parser.parse(program, true);
     expect(tree.length).toBe(1);
     ast = tree[0].asts[0];
     expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");

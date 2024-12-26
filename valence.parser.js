@@ -574,6 +574,33 @@ const parser = (function() {
      
             return program;
         }
+
+        this.parse_program = (program, to_file=false, outfile = null) => {
+            // parse a program from text, output to either screen or a file
+            if (!to_file) {
+                parse_and_print(program);
+                return;
+            }
+            if (!outfile) {
+                outfile = `output/${program}.txt`;
+            }
+            fs.writeFile(outfile, generate_transpilations(program, true).log, (err) => {
+                if (err) throw err;
+                console.log('The file has been saved!');
+            });
+        };
+    
+        this.parse_file = (infile, to_file=false, outfile = null) => {
+            // parse a .val file (requires node)
+            fs.readFile(infile, 'utf8', (err, program) => {
+                if (err) throw err;
+                if (!to_file) {
+                    parse_and_print(program, outfile);
+                    return;
+                }
+                parse_program(program, to_file, outfile);
+            });
+        };
     });
 })();
 

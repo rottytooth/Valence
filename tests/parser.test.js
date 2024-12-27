@@ -21,15 +21,9 @@ test('line count: blank line counted', () => {
     let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉\n𐅾";
     let tree = Valence.parser.parse(program, true);
     expect(tree[0].length).toBe(4);
-}); // currently this breaks because the blank line generates no valid ASTs
-
-test('ast count: blank line has no ast', () => {
-    let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉\n𐅾";
-    let tree = Valence.parser.parse(program, true);
-    expect(tree[0][0].asts.length).not.toBeLessThan(1);
-    expect(tree[0][1].asts.length).toBe(0);
-    expect(tree[0][2].asts.length).not.toBeLessThan(1);
-});
+}); 
+// currently this breaks because the blank line generates no valid ASTs
+// TO FIX: blank lines should simply be ignored
 
 test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
     let program = "𐆇𐆉𐅶";
@@ -247,18 +241,18 @@ test('uses pseudo when marked', () => {
     let program = '𐆉[𐆊[𐅾𐆁]]';
     let tree = Valence.parser.parse(program, true);
     expect(tree.length).toBe(1);
-    ast = tree[0].asts[0];
+    ast = tree[0][0];
     expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");
 });
 
 test('parse: stop at too many', () => {
     let program = "𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶𐅶";
-    expect(Valence.parser._testing._parse_to_proglist(program, true)).toThrow(Error);
+    expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SynaxError", message : "SyntaxError: This program generates too many interpretations"});
 });
 
 test('marking: if / else / end if is valid', () => {
     let program = "𐆇𐅶\n𐆊\n𐅾";
-    let tree = Valence.parser._testing._parse_to_proglist(program);
+    let tree = Valence.parser.parse(program, true);
     expect(tree.length).toBe(2);
     expect(!Object.hasOwn(tree[0],"failed") || tree[0].failed === false).toBe(true);
     expect(!Object.hasOwn(tree[1],"failed") || tree[0].failed === false).toBe(true);
@@ -266,7 +260,7 @@ test('marking: if / else / end if is valid', () => {
 
 test('marking: good if / bad if', () => {
     let program = "𐆇𐅶\n𐆇𐅶\n𐅾";
-    let tree = Valence.parser._testing._parse_to_proglist(program);
+    let tree = Valence.parser.parse(program, true);
     expect(tree.length).toBe(4);
     expect(tree[0].failed === true).toBe(true);
     expect(tree[0].failed === true).toBe(true);

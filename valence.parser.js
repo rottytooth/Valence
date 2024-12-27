@@ -12,6 +12,8 @@ const parser = (function() {
     
     var program = [];
 
+    var skip_block_building = false;
+
     const find_child_in_tree = (tree, num) => {
         // depth-first search for a child with a specific id
 
@@ -97,7 +99,7 @@ const parser = (function() {
                 case "exp":
                     // otherwise, split the ast into two, one for each reading
                     if (line.asts.length > Valence.parser.MAX_ASTS) {
-                        throw new Error("Too many interpretations of this line of code; probably stuck in an infinite loop");
+                        throw {name : "SyntaxError", message : "SyntaxError: Too many interpretations of this line of code; probably stuck in an infinite loop"};
                     }
                     // assign the var reading to the existing ast
                     reading_to_assign = node.params[param_num].reading.filter(x => x.type === "var");
@@ -154,10 +156,10 @@ const parser = (function() {
         }
 
         if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
-            throw new Error(`Could not resolve reading for sign ${node.params[0].symbol}`);
+            throw new {name: "InternalError", message:`Could not resolve reading for sign ${node.params[0].symbol}`};
         }
         if (node.params.length == 2 && Array.isArray(node.params[1].reading)) {
-            throw new Error(`Could not resolve reading for sign ${node.params[1].symbol}`);
+            throw new {name: "InternalError", message:`Could not resolve reading for sign ${node.params[1].symbol}`};
         }
     }
 
@@ -281,7 +283,7 @@ const parser = (function() {
                     break;
                 case "close_bracket":
                     if (open_bracket == -1) {
-                        throw new Error("Unmatched brackets");
+                        throw new {name: "SyntaxError", message:"Unmatched brackets"};
                     }
                     op = line.tokens[open_bracket];
                     op.children = line.tokens.slice(open_bracket + 1, i);
@@ -369,7 +371,7 @@ const parser = (function() {
             for (let q = 0; q < parsed[p].asts.length; q++) {
                 for (let r = 0; r < progs.length; r++) {
                     if (progs[r].length > Valence.parser.MAX_ASTS) {
-                        throw new Error("Too many ASTs");
+                        throw new {name: "SyntaxError", message:"Too many ASTs"};
                     }
                     new_prog = JSON.parse(JSON.stringify(progs[r]));
                     new_prog.push(JSON.parse(JSON.stringify(parsed[p].asts[q])));
@@ -437,7 +439,9 @@ const parser = (function() {
         this._testing = {
             _generate_transpilations: generate_transpilations,
 
-            _parse_to_proglist: parse_to_proglist
+            _parse_to_proglist: parse_to_proglist,
+
+            _skip_block_building: skip_block_building
         },
 
         this.print_ast = (ast, inc_markers = false) => {
@@ -529,6 +533,14 @@ const parser = (function() {
                     build_asts(program[i], program[i].asts[0]);
                     program[i].asts = program[i].asts.slice(1); // remove the original interpretation
 
+                    let ast_count = program[i].asts.length;
+                    for (let chk = 0; chk < i; chk++) {
+                        ast_count *= program[chk].asts.length;
+                        if (ast_count > Valence.parser.MAX_TOTAL_ASTS) {
+                            throw {name : "SynaxError", message : "SyntaxError: This program generates too many interpretations"};
+                        }
+                    }
+
                     // remove incomplete ASTs
                     program[i].asts = program[i].asts.filter(x => x.complete);
                     // remove complete, which has no meaning after this
@@ -569,7 +581,10 @@ const parser = (function() {
             if (complete) {
                 // if set to complete, mark the failured interpretations and match the blocks
                 let progs = parse_to_proglist(program);
-                program = find_blocks(progs);
+
+                if (!Valence.parser._testing._skip_block_building) {
+                    program = find_blocks(progs);
+                }
             }
      
             return program;
@@ -607,6 +622,8 @@ const parser = (function() {
 Valence.parser = new parser();
 
 Valence.parser.MAX_ASTS = 200;
+
+Valence.parser.MAX_TOTAL_ASTS = 300;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.parser;

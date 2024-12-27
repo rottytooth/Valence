@@ -9,6 +9,10 @@ if (typeof module !== 'undefined' && module.exports) {
 
 Valence.interpreter = (function() {
 
+    var print_callback = false;
+
+    var input_callback = false;
+
     let node_delay = 500; 
 
     const initial_state = () => {
@@ -49,14 +53,85 @@ Valence.interpreter = (function() {
     };
 
     // FIXME: seems unfortunate to do this after building the transpilation rules in the lexicon; alternative would be to use eval on the expression part and only hardcode commands here
-    const run_command = (node, state, ln) => {
+    const run_command = (program, state, ln) => {
+        let node = program[ln];
         let next_line = ln + 1;
         switch(node.reading.name) {
+            // flow control
             case "while":
+            case "if":
                 if (!evaluate_to_type(node.params[0], "bool")) {
-                    next_line = node.end;
+                    next_line = node.end + 1;
                 }
                 break;
+            case "else":
+            case "else_if":
+                // need to check if condition first
+                break;
+            case "end_block":
+                if (program[node.start].reading.name === "while") {
+                    next_line = node.start;
+                }
+                break;
+            case "jump":
+                next_line = ln + evaluate_to_type(node.params[0], "int");
+                break;
+            case "goto":
+                // we go to whatever line that variable is set to
+                next_line = state[evaluate_to_type(node.params[0], "var")];
+                break;
+            // case "for":
+            //     if (state[evaluate_to_type(node.params[1])]
+            //     break;
+
+            // assignments
+            case "append": {
+                let varname = evaluate_to_type(node.params[0], "var");
+                if (!Array.isArray(state[varname])) {
+                    state[varname] = [state[varname]];
+                }
+                state[varname].push(evaluate_to_type(node.params[1], "exp"));
+                }
+                break;
+            case "assign":
+                state[evaluate_to_type(node.params[0], "var")] = evaluate_to_type(node.params[1], "exp");
+                break;
+            case "add_assign": {
+                let varname = evaluate_to_type(node.params[0], "var");
+                state[varname] = state[varname] + evaluate_to_type(node.params[1], "exp");
+                }
+                break;
+            case "sub_assign": {
+                let varname = evaluate_to_type(node.params[0], "var");
+                state[varname] = state[varname] - evaluate_to_type(node.params[1], "exp");
+                }
+                break;
+            case "mult_assign":{
+                let varname = evaluate_to_type(node.params[0], "var");
+                state[varname] = state[varname] * evaluate_to_type(node.params[1], "exp");
+                }
+                break;
+            case "mult_by_eight":
+                // may need to check by type
+                state[node.params[0].reading.pseudo] = state[node.params[0].reading.pseudo] * 8;
+            case "label":
+                state[node.params[0].reading.pseudo] = ln;            
+                break;
+
+                // I/O
+            case "print":
+                if (!!print_callback)
+                    print_callback(program.id, evaluate_to_type(node.params[0], "exp"));
+                break;
+            case "input":
+                if (!!input_callback)
+                    state[evaluate_to_type(node.params[0], "var")] = input_callback(program.id);
+                break;
+            case "randomize":
+                break;
+
+            default:
+                throw {name : "InternalError", message : `no handling for command ${node.reading.name}`};
         }
         return next_line;
     }
@@ -66,22 +141,29 @@ Valence.interpreter = (function() {
             case "bool":
                 return !!(evaluate_exp(node, state));
             case "var":
-                return state[Math.floor(evaluate_exp(node, state)) % 8];
+                return state[Math.floor(evaluate_exp(node, state, byref=true)) % 8];
             case "digit":
                 return Math.floor(evaluate_exp(node, state)) % 8;
+            case "int":
+                break;
         }
     }
 
-    const evaluate_exp = (node, state) => {
+    const evaluate_exp = (node, state, byref=false) => {
+        // byref tells us we return the name (loc) of the var rather than its value
+
         switch (node.reading.type) {
             case "var":
                 // if we're looking for a var, return its location in the state array
                 // if we're looking for a value, return the var's value
-                if (resolve_to == "var") 
+                if (byref)
                     return key_to_idx(node.reading.pseudo);
                 return state[key_to_idx(node.reading.pseudo)];
             case "digit":
                 return 0; // TODO
+            case "exp":
+            case "int":
+            case "ratio":
         }
     };
 
@@ -101,7 +183,7 @@ Valence.interpreter = (function() {
         }        
 
         // actually run the line of code
-        let next_line = run_command(program[line], state, line);
+        let next_line = run_command(program, state, line);
 
         // update output
         if (callback) callback(program.id, line, output, state);

@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
     editor.focus();
     editor.addEventListener("input", updateInput);
 
+    Valence.interpreter.print_callback = print_callback;
+    Valence.interpreter.input_callback = input_callback;
+
     // open first menu item on left
     document.querySelectorAll(".menu-item")[4].classList.add("open");
 }, false);
@@ -46,9 +49,11 @@ const updateInput = () => {
             }
         }
     }
+    let pos = txt.selectionStart;
     txt.value = outprog;
-    formatProgram();
+    txt.setSelectionRange(pos + 1, pos + 1);
     run_stop(false, true);
+    generateInterpretations();
 }
 
 const sytaxHighlight = (ast, line_node) => {
@@ -65,7 +70,7 @@ const sytaxHighlight = (ast, line_node) => {
     }
 }
 
-const formatProgram = () => {
+const generateInterpretations = () => {
     let txt = document.getElementById("program-text");
     let run_holder = document.getElementById("programs-running");
     run_holder.innerText = ""; // clear it
@@ -363,6 +368,15 @@ const report = (progid, line, add_to_output, state) => {
         console.log(add_to_output);
     }
 }
+
+const print_callback = (id, content) => {
+    
+}
+
+const intput_callback = (id) => {
+    // TODO    
+}
+
 
 
 // run or stop running programs

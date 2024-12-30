@@ -9,11 +9,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 Valence.interpreter = (function() {
 
-    var print_callback = false;
-
-    var input_callback = false;
-
-    let node_delay = 500; 
+    let node_delay = 1000; 
 
     const initial_state = () => {
         return [0,1,2,3,4,5,6,7];
@@ -25,6 +21,11 @@ Valence.interpreter = (function() {
     const idx_to_key = (idx) => {
         return Object.keys(Valence.lexicon)[idx];
     }
+
+    var print_callback = false;
+
+    var input_callback = false;
+
 
     const launch_interpreter = async (program, callback) => {
         program.line_number = 0;
@@ -60,7 +61,7 @@ Valence.interpreter = (function() {
             // flow control
             case "while":
             case "if":
-                if (!evaluate_to_type(node.params[0], "bool")) {
+                if (!evaluate_to_type(node.params[0], state, "bool")) {
                     next_line = node.end + 1;
                 }
                 break;
@@ -74,11 +75,11 @@ Valence.interpreter = (function() {
                 }
                 break;
             case "jump":
-                next_line = ln + evaluate_to_type(node.params[0], "int");
+                next_line = ln + evaluate_to_type(node.params[0], state, "int");
                 break;
             case "goto":
                 // we go to whatever line that variable is set to
-                next_line = state[evaluate_to_type(node.params[0], "var")];
+                next_line = state[evaluate_to_type(node.params[0], state, "var")];
                 break;
             // case "for":
             //     if (state[evaluate_to_type(node.params[1])]
@@ -90,25 +91,25 @@ Valence.interpreter = (function() {
                 if (!Array.isArray(state[varname])) {
                     state[varname] = [state[varname]];
                 }
-                state[varname].push(evaluate_to_type(node.params[1], "exp"));
+                state[varname].push(evaluate_to_type(node.params[1], state, "exp"));
                 }
                 break;
             case "assign":
-                state[evaluate_to_type(node.params[0], "var")] = evaluate_to_type(node.params[1], "exp");
+                state[evaluate_to_type(node.params[0], state, "var")] = evaluate_to_type(node.params[1], state, "exp");
                 break;
             case "add_assign": {
-                let varname = evaluate_to_type(node.params[0], "var");
-                state[varname] = state[varname] + evaluate_to_type(node.params[1], "exp");
+                let varname = evaluate_to_type(node.params[0], state, "var");
+                state[varname] = state[varname] + evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "sub_assign": {
-                let varname = evaluate_to_type(node.params[0], "var");
-                state[varname] = state[varname] - evaluate_to_type(node.params[1], "exp");
+                let varname = evaluate_to_type(node.params[0], state, "var");
+                state[varname] = state[varname] - evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "mult_assign":{
-                let varname = evaluate_to_type(node.params[0], "var");
-                state[varname] = state[varname] * evaluate_to_type(node.params[1], "exp");
+                let varname = evaluate_to_type(node.params[0], state, "var");
+                state[varname] = state[varname] * evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "mult_by_eight":
@@ -119,13 +120,15 @@ Valence.interpreter = (function() {
                 break;
 
                 // I/O
-            case "print":
-                if (!!print_callback)
-                    print_callback(program.id, evaluate_to_type(node.params[0], "exp"));
+            case "print": {
+                if (!!Valence.interpreter.print_callback) {
+                    let content = evaluate_to_type(node.params[0], state, "exp");
+                    Valence.interpreter.print_callback(program.id, content);
+                }}
                 break;
             case "input":
-                if (!!input_callback)
-                    state[evaluate_to_type(node.params[0], "var")] = input_callback(program.id);
+                if (!!Valence.interpreter.input_callback)
+                    state[evaluate_to_type(node.params[0], state, "var")] = Valence.interpreter.input_callback(program.id);
                 break;
             case "randomize":
                 break;
@@ -136,16 +139,30 @@ Valence.interpreter = (function() {
         return next_line;
     }
 
-    const evaluate_to_type = (node, state, resolve_to) => {
+    const evaluate_to_type = (node, state, resolve_to, byref=false) => {
         switch(resolve_to) {
+            case "exp":
+                return evaluate_exp(node, state);
             case "bool":
                 return !!(evaluate_exp(node, state));
             case "var":
-                return state[Math.floor(evaluate_exp(node, state, byref=true)) % 8];
+                return Math.floor(evaluate_exp(node, state, byref=true)) % 8;
             case "digit":
                 return Math.floor(evaluate_exp(node, state)) % 8;
-            case "int":
-                break;
+            case "int": {
+                let retval = evaluate_exp(node, state);
+                switch(typeof(retval)) {
+                    case "number":
+                        return Math.floor(retval);
+                    case "string":
+                        if (retval.length === 1) {
+                            return retval.getCharCodeAt(0);
+                        }
+                        return parseInt(retval);
+                    default:
+                        throw {name: "TypeError", message: `cannot convert ${retval} to int`};
+                }
+                } break;
         }
     }
 
@@ -160,23 +177,27 @@ Valence.interpreter = (function() {
                     return key_to_idx(node.reading.pseudo);
                 return state[key_to_idx(node.reading.pseudo)];
             case "digit":
-                return 0; // TODO
+                return parseInt(node.reading.name);
+            case "type":
+                return node.reading.name;
             case "exp":
-            case "int":
-            case "ratio":
+                switch(node.reading.name) {
+                    case "read_as_int":
+                        return evaluate_to_type(node.params[0], state, "int", byref);
+                    case "to_str":
+                        return String(evaluate_to_type(node.params[0], state, "exp", byref));
+                }
         }
     };
 
     const interpret_line = async (program, line, state, resolve, callback) => {
         const startTime = performance.now();
 
-        let output = null;
-
         // check for end of program
         if (!Valence.interpreter.is_playing || line >= program.length) {
 
             // callback one more time to clear highlit row
-            if (callback) callback(program.id, -1, "", state);
+            if (callback) callback(program.id, -1, state);
 
             resolve();
             return;
@@ -186,7 +207,7 @@ Valence.interpreter = (function() {
         let next_line = run_command(program, state, line);
 
         // update output
-        if (callback) callback(program.id, line, output, state);
+        if (callback) callback(program.id, line, state);
 
         // where to go next in the program
 
@@ -196,8 +217,9 @@ Valence.interpreter = (function() {
         // the buffer and call to next step
         setTimeout(function() {
             const finalEnd = performance.now();
-            console.log(`waiting ${time_to_wait}`);
-            console.log(`in total, took ${finalEnd - startTime}\n`);
+            // console logging for debug
+            // console.log(`waiting ${time_to_wait}`);
+            // console.log(`in total, took ${finalEnd - startTime}\n`);
             interpret_line(program, next_line, state, resolve, callback);
         }, time_to_wait);
     };
@@ -209,6 +231,8 @@ Valence.interpreter = (function() {
         node_delay: node_delay, // speed per line of code
 
         is_playing: false,
+
+        initial_state: initial_state,
 
         key_to_idx: key_to_idx,
 

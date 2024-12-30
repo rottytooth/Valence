@@ -2,6 +2,7 @@ var program = "";
 var curr_line = "";
 var hit_return = false;
 var lex_array = [];
+var prev_state = [];
 
 let gen_programs = null;
 
@@ -75,16 +76,20 @@ const generateInterpretations = () => {
     let run_holder = document.getElementById("programs-running");
     run_holder.innerText = ""; // clear it
 
+    intpt_msg = document.getElementById("intpt-msg");
+
     try {
         gen_programs = Valence.parser.parse(txt.value, true);
-    } catch (SyntaxError) {
+    } catch (e) {
+        if (e.name == "SyntaxError" && e.message.includes("too many interpretations")) {
+            intpt_msg.innerText = "Too many interpretations";
+        }
         return;
     }
 
     let runnable = gen_programs.length - gen_programs.filter(x => x.failed === true).length;
     if (!runnable) runnable = 0; // for NaN, undefined, etc.
 
-    intpt_msg = document.getElementById("intpt-msg");
     intpt_msg.innerText = `${gen_programs.length} interpretation${gen_programs.length === 1 ? "" : "s"}, ${runnable} runnable`;
 
     for (let r = 0; r < gen_programs.length; r++) {
@@ -139,7 +144,7 @@ const generateInterpretations = () => {
 
             let status = document.createElement("div");
             status.className = "status";
-            status.style.width = run.offsetWidth + "px";
+            status.style.width = (run.offsetWidth - 16) + "px";
             bigrun.appendChild(status);
         }
     }
@@ -310,16 +315,9 @@ const run_hide_progs = () => {
     }
 }
 
-
-// const update_display_by_running_state = () => {
-//     if (is_running) {
-
-//     }
-// }
-
 // callback function for interpreter
 // updates state in the ui
-const report = (progid, line, add_to_output, state) => {
+const report = (progid, line, state) => {
 
     if (gen_programs === undefined || gen_programs === null) {
         console.error("No program to report on");
@@ -332,8 +330,8 @@ const report = (progid, line, add_to_output, state) => {
     rows.forEach(x => x.classList.remove("running"));
 
     // get status pane
-    // NOTE: this depends very closely on not changing the div structure here
-    // assumption is that the prog-0, prog-1 code-block is sibling to its status div
+    // NOTE: this depends on not changing the div structure
+    // Assumes that the prog-0, prog-1 code-block is sibling to its status div
     let outerCodeBlock = document.getElementById(`prog-${progid}`).parentElement;
     let statArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("status"));
     if (statArray.length == 0) {
@@ -343,20 +341,28 @@ const report = (progid, line, add_to_output, state) => {
     let status = statArray[0];
     status.innerHTML = "";
 
-    let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
-    if (outArray.length == 0) {
-        console.error("Could not find output pane for program");
-        return;
-    }
-    let output = outArray[0];
-    output.style.display = "block";
-    output.innerHTML = "";
-    output.innerText = "Output";
+    let state_lbl = document.createElement("div");
+    state_lbl.innerText = "State";
+    state_lbl.className = "status-label";
+    status.appendChild(state_lbl);
+    status.appendChild(document.createElement("br"));
 
     for (let st = 0; st < state.length; st++) {
+        let state_value = document.createTextNode(state[st]);
+
         let stat_holder = document.createElement("span");
         stat_holder.className = "status-item";
-        stat_holder.innerText += `${lex_array[st]}: ${state[st]} `;
+
+        // compare state to previous
+        if (prev_state[progid] !== undefined && prev_state[progid][st] !== state[st]) {
+            state_value = document.createElement("span");
+            state_value.className = "status-item-changed";
+            state_value.innerText = state[st];
+
+            stat_holder.classList.add("status-changed-outline");
+        }
+        stat_holder.innerText += `${lex_array[st]}:`;
+        stat_holder.appendChild(state_value);
         status.appendChild(stat_holder);
     }
 
@@ -364,16 +370,20 @@ const report = (progid, line, add_to_output, state) => {
         rows[line].classList.add("running");
     }
 
-    if (add_to_output) {
-        console.log(add_to_output);
+    prev_state[progid] = state.slice();
+}
+
+const print_callback = (progid, content) => {
+    let outerCodeBlock = document.getElementById(`prog-${progid}`).parentElement;
+    let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
+    let out_txt = Array.from(outArray[0].children).filter(x => x.classList.contains("output-text"));
+    if (out_txt.length == 0) {
+        console.error(`Could not find output text program ${progid}`);
     }
+    out_txt[0].innerText += content;
 }
 
-const print_callback = (id, content) => {
-    
-}
-
-const intput_callback = (id) => {
+const input_callback = (id) => {
     // TODO    
 }
 
@@ -382,6 +392,7 @@ const intput_callback = (id) => {
 // run or stop running programs
 const run_stop = (force_start = false, force_end = false) => {
     Valence.interpreter.is_playing = !Valence.interpreter.is_playing;
+    prev_state = [];
 
     if ((Valence.interpreter.is_playing && !force_end) || force_start) {
         document.getElementById("run-stop").value = "Stop All";
@@ -391,6 +402,32 @@ const run_stop = (force_start = false, force_end = false) => {
         Valence.interpreter.launch_all(runnable_progs, report).then(d => {
             run_stop(false, true);
         });
+
+        for (let i = 0; i < runnable_progs.length; i++) {
+            let prog = runnable_progs[i];
+            // get status pane
+            // NOTE: this depends on not changing the div structure
+            // Assumes that the prog-0, prog-1 code-block is sibling to its status div
+            let outerCodeBlock = document.getElementById(`prog-${prog.id}`).parentElement;
+
+            let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
+            if (outArray.length == 0) {
+                console.error("Could not find output pane for program");
+                return;
+            }
+            let output = outArray[0];
+            output.style.display = "block";
+            output.innerHTML = "";
+
+            let output_lbl = document.createElement("div");
+            output_lbl.className = "output-label";
+            output_lbl.innerText = "Output";
+            output.appendChild(output_lbl);
+
+            let out_txt = document.createElement("pre");
+            out_txt.className = "output-text";
+            output.appendChild(out_txt);
+        }    
     } else {
         document.getElementById("run-stop").value = "Run All";
     }

@@ -247,7 +247,7 @@ test('uses pseudo when marked', () => {
 
 test('parse: stop at too many', () => {
     let program = "𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶\n𐅶𐅶\n𐅶𐅶𐅶𐅶𐅶𐅶𐅶𐅶";
-    expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SynaxError", message : "SyntaxError: This program generates too many interpretations"});
+    expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SyntaxError", message : "SyntaxError: This program generates too many interpretations"});
 });
 
 test('marking: if / else / end if is valid', () => {

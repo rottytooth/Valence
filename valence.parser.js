@@ -537,7 +537,7 @@ const parser = (function() {
                     for (let chk = 0; chk < i; chk++) {
                         ast_count *= program[chk].asts.length;
                         if (ast_count > Valence.parser.MAX_TOTAL_ASTS) {
-                            throw {name : "SynaxError", message : "SyntaxError: This program generates too many interpretations"};
+                            throw {name : "SyntaxError", message : "SyntaxError: This program generates too many interpretations"};
                         }
                     }
 

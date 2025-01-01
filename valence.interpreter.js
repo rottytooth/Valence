@@ -37,8 +37,10 @@ Valence.interpreter = (function() {
         // (these will be re-evaluated when we hit the label)
         for (let ln= 0; ln < program.length; ln++) {
             if (program[ln].reading.name === "label") {
-                let loc = evaluate_expression(program[ln].params[0], state, "var");
-                state[loc] = ln; // assign the location of the label to its var
+                // FIXME: this needs to be added once the label command is evaluable
+
+                // let loc = evaluate_expression(program[ln].params[0], state, "var");
+                // state[loc] = ln; // assign the location of the label to its var
             }
         }
 
@@ -53,7 +55,6 @@ Valence.interpreter = (function() {
         return curr_promise;
     };
 
-    // FIXME: seems unfortunate to do this after building the transpilation rules in the lexicon; alternative would be to use eval on the expression part and only hardcode commands here
     const run_command = (program, state, ln) => {
         let node = program[ln];
         let next_line = ln + 1;
@@ -79,8 +80,9 @@ Valence.interpreter = (function() {
                 break;
             case "goto":
                 // we go to whatever line that variable is set to
-                next_line = state[evaluate_to_type(node.params[0], state, "var")];
+                next_line = evaluate_to_type(node.params[0], state, "int");
                 break;
+            
             // case "for":
             //     if (state[evaluate_to_type(node.params[1])]
             //     break;
@@ -116,7 +118,7 @@ Valence.interpreter = (function() {
                 // may need to check by type
                 state[node.params[0].reading.pseudo] = state[node.params[0].reading.pseudo] * 8;
             case "label":
-                state[node.params[0].reading.pseudo] = ln;            
+                state[key_to_idx(node.params[0].reading.pseudo)] = ln;            
                 break;
 
                 // I/O
@@ -146,7 +148,7 @@ Valence.interpreter = (function() {
             case "bool":
                 return !!(evaluate_exp(node, state));
             case "var":
-                return Math.floor(evaluate_exp(node, state, byref=true)) % 8;
+                return Math.floor(evaluate_exp(node, state, byref)) % 8;
             case "digit":
                 return Math.floor(evaluate_exp(node, state)) % 8;
             case "int": {
@@ -186,6 +188,8 @@ Valence.interpreter = (function() {
                         return evaluate_to_type(node.params[0], state, "int", byref);
                     case "to_str":
                         return String(evaluate_to_type(node.params[0], state, "exp", byref));
+                    case "read_as_var":
+                        return evaluate_to_type(node.params[0], state, "var", byref);
                 }
         }
     };
@@ -237,26 +241,29 @@ Valence.interpreter = (function() {
         key_to_idx: key_to_idx,
 
         // exposing private methods for testing
-        _testing : {
+        // _testing : {
 
-            _launch_interpreter: launch_interpreter
-        },
+        //     _launch_interpreter: launch_interpreter,
 
-        interpret: async function(program, wait = false) {
-            Valence.interpreter.is_playing = true;
+        //     _interpret_line: interpret_line
+        // },
 
+        run: async function(program, wait = false) {
+            
             // parse and keep only the runnable programs
             let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
             // return promise for each valid program
             if (!wait) {
-                return Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
+                return this.launch_all(progs);
             } else {
-                await Promise.all(progs.map(prog => { return launch_interpreter(prog); }));
+                await this.launch_all(progs);
             }
         },
 
         launch_all: async function(progs, callback = false) {
+            Valence.interpreter.is_playing = true;
+
             // return promise for each valid program
             return Promise.all(progs.map(prog => { return launch_interpreter(prog, callback); }));
         }

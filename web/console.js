@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // open first menu item on left
     document.querySelectorAll(".menu-item")[4].classList.add("open");
+
+    document.getElementById("additional-controls").innerText = Valence.interpreter.node_delay;
 }, false);
 
 const updateInput = () => {
@@ -162,7 +164,7 @@ const add_foot_to_good_programs = () => {
 
     Array.from(document.getElementsByClassName("code-block")).filter(x => !x.classList.contains("failed")).forEach(x => x.classList.add("running-block"));
 
-    unfailedOuterBlocks.forEach(x => Array.from(x.children).filter(x => x.classList.contains("status"))[0].style.backgroundColor = "var(--code-run-back)");
+    unfailedOuterBlocks.forEach(x => Array.from(x.children).filter(x => x.classList.contains("status"))[0].style.backgroundColor = "var(--state-back)");
 }
 
 function insertTextAtCursor(textareaId, text) {
@@ -320,7 +322,7 @@ const run_hide_progs = () => {
 const report = (progid, line, state) => {
 
     if (gen_programs === undefined || gen_programs === null) {
-        console.error("No program to report on");
+        console.error("InterfaceError: No program to report on");
         run_stop(false, true);
         return;
     }
@@ -335,7 +337,7 @@ const report = (progid, line, state) => {
     let outerCodeBlock = document.getElementById(`prog-${progid}`).parentElement;
     let statArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("status"));
     if (statArray.length == 0) {
-        console.error("Could not find status pane for program");
+        console.error("InterfaceError: Could not find status pane for program");
         return;
     }
     let status = statArray[0];
@@ -345,25 +347,30 @@ const report = (progid, line, state) => {
     state_lbl.innerText = "State";
     state_lbl.className = "status-label";
     status.appendChild(state_lbl);
-    status.appendChild(document.createElement("br"));
 
     for (let st = 0; st < state.length; st++) {
-        let state_value = document.createTextNode(state[st]);
+        let state_item = document.createElement("span");
+        state_item.className = "status-item";
 
-        let stat_holder = document.createElement("span");
-        stat_holder.className = "status-item";
+        let state_var = document.createElement("span");
+        state_var.className = "status-item-var";
+        state_var.innerText += lex_array[st];
+        state_item.appendChild(state_var);
+
+        let separator = document.createTextNode(":");
+        state_item.appendChild(separator);
+
+        state_value = document.createElement("span");
+        state_value.innerText = state[st];
+        state_value.className = "status-item-value";
 
         // compare state to previous
         if (prev_state[progid] !== undefined && prev_state[progid][st] !== state[st]) {
-            state_value = document.createElement("span");
-            state_value.className = "status-item-changed";
-            state_value.innerText = state[st];
-
-            stat_holder.classList.add("status-changed-outline");
+            // state_value.className = "status-item-value-changed";
+            state_item.classList.add("status-changed-outline");
         }
-        stat_holder.innerText += `${lex_array[st]}:`;
-        stat_holder.appendChild(state_value);
-        status.appendChild(stat_holder);
+        state_item.appendChild(state_value);
+        status.appendChild(state_item);
     }
 
     if (line > -1) {
@@ -378,7 +385,7 @@ const print_callback = (progid, content) => {
     let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
     let out_txt = Array.from(outArray[0].children).filter(x => x.classList.contains("output-text"));
     if (out_txt.length == 0) {
-        console.error(`Could not find output text program ${progid}`);
+        console.error(`InterfaceError: Could not find output text program ${progid}`);
     }
     out_txt[0].innerText += content;
 }
@@ -412,7 +419,7 @@ const run_stop = (force_start = false, force_end = false) => {
 
             let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
             if (outArray.length == 0) {
-                console.error("Could not find output pane for program");
+                console.error("InterfaceError: Could not find output pane for program");
                 return;
             }
             let output = outArray[0];

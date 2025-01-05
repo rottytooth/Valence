@@ -7,7 +7,7 @@ if (typeof module !== 'undefined' && module.exports) {
 class scanner {
 
     static convert(line) {
-        // convert Toman chars to valid Valence signs
+        // convert Roman chars to valid Valence signs
         line = [...line];
 
         for(let c = 0; c < line.length; c++) {
@@ -74,6 +74,17 @@ class scanner {
         return open === close;
     }
 
+    static remove_non_valence_chars(line) {
+        line = Array.from(line);
+        let new_line = "";
+        for (let i = 0; i < line.length; i++) {
+            if (Object.keys(Valence.lexicon).includes(line[i]) || line[i] === '[' || line[i] === ']') {
+                new_line += line[i];
+            }
+        }
+        return new_line;
+    }
+
     static evaluate_line(line, read_roman_chars = true, ln = -1) {
         line = line.trim();
 
@@ -83,10 +94,10 @@ class scanner {
             else
                 throw new {name: "SyntaxError", message: `Brackets do not match`};
         }
-
         if (read_roman_chars) {
             line = scanner.convert(line);
         }
+        line = scanner.remove_non_valence_chars(line);
         return {
             line: line,
             tokens: scanner.scan(line),

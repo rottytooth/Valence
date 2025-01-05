@@ -49,7 +49,7 @@ test('run(): launch_interpreter called twice', async () => {
     });
 });
 
-test('label is assigned at start of program', async () => {
+test('label: assigned at start of program', async () => {
     let program = "𐅾[𐅾𐅻]\n𐆉𐅻";
 
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
@@ -103,4 +103,106 @@ test('state: label, goto, jump', async () => {
     };
 
     await Valence.interpreter.launch_all(progs, callback);
+});
+
+
+test('state: assignment and addition', async () => {
+    let program = `[𐆇]𐅶[𐆇[𐅶]]
+𐆋[𐅾[𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]
+𐆋[𐅾[𐅾𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]
+𐆋[𐅾[𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]`;
+
+/*
+    𐆇 = (𐆇 + 0)
+    print(𐆇);
+    let 𐅻 = (𐆇);
+    𐆇 = (𐆇 + 1)
+    print(𐆇);
+    let 𐅻 = (𐆇);
+    𐆇 = (𐆇 + 1)
+    print(𐆇);
+    let 𐅻 = (𐆇);
+    𐆇 = (𐆇 + 1)
+*/
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    // test final_state    
+    expect(final_state[1]).toBe(4); //  𐆇 should be 4
+    expect(final_state[5]).toBe(3); //  𐅻 should be 3
+});
+
+test('print', async () => {
+    let program = `[𐆇]𐅶[𐆇[𐅶]]
+𐆋[𐅾[𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]
+𐆋[𐅾[𐅾𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]
+𐆋[𐅾[𐆇]]
+[𐅻]𐆉[𐅾𐆇]
+[𐆇]𐅶[𐆇[𐆇]]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let output = "";
+    Valence.interpreter.print_callback = (id, print) => {
+        output += print;
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
+
+    // test final_state    
+    expect(output).toBe("123");
+});
+
+test('print: on first line', async () => {
+    let program = '𐆋[𐅾𐆉]';
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let output = "";
+    Valence.interpreter.print_callback = (id, print) => {
+        output += print;
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
+
+    // test final_state    
+    expect(output).toBe("4");
+});
+
+test('print: after value updated', async () => {
+    let program = `𐆋[𐅾𐆉]
+[𐆉]𐅶[𐅾𐆁]
+𐆋[𐆇𐆉]
+𐆋[𐅾𐆉]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let output = "";
+    Valence.interpreter.print_callback = (id, print) => {
+        output += print;
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
+
+    // test final_state    
+    expect(output).toBe("4411");
+
 });

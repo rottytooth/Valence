@@ -9,8 +9,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
 Valence.interpreter = (function() {
 
-    let node_delay = 1000; 
-
     const initial_state = () => {
         return [0,1,2,3,4,5,6,7];
     }
@@ -27,7 +25,7 @@ Valence.interpreter = (function() {
     var input_callback = false;
 
 
-    const launch_interpreter = async (program, callback) => {
+    const launch_interpreter = async (program, callback, delay) => {
         program.line_number = 0;
 
         // find initial state of all variables
@@ -50,7 +48,7 @@ Valence.interpreter = (function() {
         }
 
         let curr_promise = new Promise(function(resolve, reject) {
-            interpret_line(program, 0, state, resolve, callback);
+            interpret_line(program, 0, state, resolve, callback, delay);
         });
         return curr_promise;
     };
@@ -89,7 +87,7 @@ Valence.interpreter = (function() {
 
             // assignments
             case "append": {
-                let varname = evaluate_to_type(node.params[0], "var");
+                let varname = evaluate_to_type(node.params[0], "var", byref=true);
                 if (!Array.isArray(state[varname])) {
                     state[varname] = [state[varname]];
                 }
@@ -97,20 +95,20 @@ Valence.interpreter = (function() {
                 }
                 break;
             case "assign":
-                state[evaluate_to_type(node.params[0], state, "var")] = evaluate_to_type(node.params[1], state, "exp");
+                state[evaluate_to_type(node.params[0], state, "var", byref=true)] = evaluate_to_type(node.params[1], state, "exp");
                 break;
             case "add_assign": {
-                let varname = evaluate_to_type(node.params[0], state, "var");
+                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
                 state[varname] = state[varname] + evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "sub_assign": {
-                let varname = evaluate_to_type(node.params[0], state, "var");
+                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
                 state[varname] = state[varname] - evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "mult_assign":{
-                let varname = evaluate_to_type(node.params[0], state, "var");
+                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
                 state[varname] = state[varname] * evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
@@ -130,7 +128,7 @@ Valence.interpreter = (function() {
                 break;
             case "input":
                 if (!!Valence.interpreter.input_callback)
-                    state[evaluate_to_type(node.params[0], state, "var")] = Valence.interpreter.input_callback(program.id);
+                    state[evaluate_to_type(node.params[0], state, "var", byref=true)] = Valence.interpreter.input_callback(program.id);
                 break;
             case "randomize":
                 break;
@@ -148,7 +146,7 @@ Valence.interpreter = (function() {
             case "bool":
                 return !!(evaluate_exp(node, state));
             case "var":
-                return Math.floor(evaluate_exp(node, state, byref)) % 8;
+                return Math.floor(evaluate_exp(node, state, byref));
             case "digit":
                 return Math.floor(evaluate_exp(node, state)) % 8;
             case "int": {
@@ -164,7 +162,7 @@ Valence.interpreter = (function() {
                     default:
                         throw {name: "TypeError", message: `cannot convert ${retval} to int`};
                 }
-                } break;
+                }
         }
     }
 
@@ -194,7 +192,7 @@ Valence.interpreter = (function() {
         }
     };
 
-    const interpret_line = async (program, line, state, resolve, callback) => {
+    const interpret_line = async (program, line, state, resolve, callback, delay) => {
         const startTime = performance.now();
 
         // check for end of program
@@ -216,7 +214,7 @@ Valence.interpreter = (function() {
         // where to go next in the program
 
         const endTime = performance.now();
-        const time_to_wait = node_delay - (endTime - startTime); // sometimes negative
+        const time_to_wait = delay - (endTime - startTime); // sometimes negative
 
         // the buffer and call to next step
         setTimeout(function() {
@@ -224,7 +222,7 @@ Valence.interpreter = (function() {
             // console logging for debug
             // console.log(`waiting ${time_to_wait}`);
             // console.log(`in total, took ${finalEnd - startTime}\n`);
-            interpret_line(program, next_line, state, resolve, callback);
+            interpret_line(program, next_line, state, resolve, callback, delay);
         }, time_to_wait);
     };
     
@@ -232,24 +230,16 @@ Valence.interpreter = (function() {
 
     return {
 
-        node_delay: node_delay, // speed per line of code
-
         is_playing: false,
 
         initial_state: initial_state,
 
         key_to_idx: key_to_idx,
 
-        // exposing private methods for testing
-        // _testing : {
-
-        //     _launch_interpreter: launch_interpreter,
-
-        //     _interpret_line: interpret_line
-        // },
+        node_delay: 1000,
 
         run: async function(program, wait = false) {
-            
+
             // parse and keep only the runnable programs
             let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
@@ -261,11 +251,11 @@ Valence.interpreter = (function() {
             }
         },
 
-        launch_all: async function(progs, callback = false) {
+        launch_all: async function(progs, callback = false, delay = Valence.interpreter.node_delay) {
             Valence.interpreter.is_playing = true;
 
             // return promise for each valid program
-            return Promise.all(progs.map(prog => { return launch_interpreter(prog, callback); }));
+            return Promise.all(progs.map(prog => { return launch_interpreter(prog, callback, delay); }));
         }
     };
 })();

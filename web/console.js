@@ -53,8 +53,10 @@ const updateInput = () => {
         }
     }
     let pos = txt.selectionStart;
-    txt.value = outprog;
-    txt.setSelectionRange(pos + 1, pos + 1);
+    if (txt.value !== outprog) {
+        txt.value = outprog;
+        txt.setSelectionRange(pos + 1, pos + 1);    
+    }
     run_stop(false, true);
     generateInterpretations();
 }
@@ -79,12 +81,14 @@ const generateInterpretations = () => {
     run_holder.innerText = ""; // clear it
 
     intpt_msg = document.getElementById("intpt-msg");
+    intpt_msg.style.fontWeight = "normal";
 
     try {
         gen_programs = Valence.parser.parse(txt.value, true);
     } catch (e) {
         if (e.name == "SyntaxError" && e.message.includes("too many interpretations")) {
             intpt_msg.innerText = "Too many interpretations";
+            intpt_msg.style.fontWeight = "bold";
         }
         return;
     }
@@ -348,6 +352,12 @@ const report = (progid, line, state) => {
     state_lbl.className = "status-label";
     status.appendChild(state_lbl);
 
+    // FIXME: The interpreter ought to return which values are assigned to, even if they are assigned what they already have, rather than doing this comparison
+    if (line === -1 && !state && prev_state[progid] === undefined) {
+        state = Valence.interpreter.initial_state();
+        prev_state[progid] = Valence.interpreter.initial_state();
+    }
+
     for (let st = 0; st < state.length; st++) {
         let state_item = document.createElement("span");
         state_item.className = "status-item";
@@ -365,7 +375,7 @@ const report = (progid, line, state) => {
         state_value.className = "status-item-value";
 
         // compare state to previous
-        if (prev_state[progid] !== undefined && prev_state[progid][st] !== state[st]) {
+        if (prev_state[progid][st] !== state[st]) {
             // state_value.className = "status-item-value-changed";
             state_item.classList.add("status-changed-outline");
         }
@@ -386,8 +396,9 @@ const print_callback = (progid, content) => {
     let out_txt = Array.from(outArray[0].children).filter(x => x.classList.contains("output-text"));
     if (out_txt.length == 0) {
         console.error(`InterfaceError: Could not find output text program ${progid}`);
+    } else {
+        out_txt[0].innerText += content;
     }
-    out_txt[0].innerText += content;
 }
 
 const input_callback = (id) => {
@@ -406,9 +417,11 @@ const run_stop = (force_start = false, force_end = false) => {
 
         let runnable_progs = gen_programs.filter(x => !Object.hasOwn(x,"failed") || x.failed !== true);
 
-        Valence.interpreter.launch_all(runnable_progs, report).then(d => {
-            run_stop(false, true);
-        });
+        setTimeout(() => {
+            Valence.interpreter.launch_all(runnable_progs, report).then(d => {
+                run_stop(false, true);
+            });
+        }, 10); // give a moment to draw the programs
 
         for (let i = 0; i < runnable_progs.length; i++) {
             let prog = runnable_progs[i];

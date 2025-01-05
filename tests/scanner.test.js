@@ -16,3 +16,15 @@ test('bracket matching: incorrectly matched', () => {
         Valence.scanner.evaluate_line(program, false);
     }).toThrow(Valence.syntaxError);
 });
+
+test('remove invalid chars', () => {
+    let program = "𐆇apokfda𐆉𐆇asd𐅶";
+    let cleaned = Valence.scanner.remove_non_valence_chars(program);
+    expect(cleaned).toBe("𐆇𐆉𐆇𐅶");
+});
+
+test('remove invalid chars', () => {
+    let program = "lkghg";
+    let cleaned = Valence.scanner.remove_non_valence_chars(program);
+    expect(cleaned).toBe("");
+});

@@ -95,6 +95,7 @@ body {
     min-width: 40px;
     color: var(--exp);
     font-size: 16pt;
+    vertical-align: bottom;
 }
 .status-changed-outline {
     background-color: var(--failed-back);
@@ -116,6 +117,8 @@ body {
     border-radius: 0 0 5px 5px;
     color: var(--exp);
     margin-right: 10px;
+    width: 70px;
+    text-align: center;
 }
 .output {
     display: none;
@@ -123,12 +126,11 @@ body {
     color: #999;
     padding: 8px;
     min-height: 32px;
-    border-bottom: 2px solid var(--code-back);
+    border-bottom: 8px solid var(--code-back);
     padding-top: 5px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 14pt;
-    /* border-left: 2px solid var(--state-back);
-    border-right: 2px solid var(--state-back); */
+    overflow: hidden;
 }
 .output-text {
     padding-left: 4px;
@@ -140,6 +142,8 @@ body {
     margin-top: -5px;
     border-radius: 0 0 5px 5px;
     color: var(--exp);
+    width: 70px;
+    text-align: center;
 }
 .code-block {
     display: table;
@@ -268,6 +272,7 @@ body {
     color: var(--btn-front);
     width: 200px;
     font-size: 20pt;
+    cursor: pointer;
 }
 .menu-item::before {
     display: inline-block;
@@ -364,6 +369,10 @@ body {
     background-color: var(--btn);
     border-radius: 12px;
     color: var(--btn-front);
+    border: 1px solid #666;
+}
+.btn:hover {
+    background-color: var(--btn-txt-light);
 }
 .add-btn {
     width: 40px;
@@ -377,6 +386,10 @@ body {
     font-size: 12pt;
     padding: 0 10px 0 10px;
     font-family: 'Ubuntu Mono', monospace;
+}
+#run-stop {
+    background-color: var(--code-back);
+    border: #ccc 1px solid;
 }
 .control-btn {
     width: 90px;

@@ -503,9 +503,13 @@ const parser = (function() {
                 // split into lines and evaluate each
                 let lines = input.split(/\r?\n/);
                 program = lines.map((s, idx) => scanner.evaluate_line(s, false, idx));
+                program = program.filter(x => x.line !== "");
             } else {
                 // evaluate the new line and push to the program
-                program.push(scanner.evaluate_line(input));
+                let line = scanner.evaluate_line(input);
+                if (line.line !== "") {
+                    program.push(line);
+                }
             }
 
             // first put the nodes in a tree for each line
@@ -565,16 +569,17 @@ const parser = (function() {
 
                     // filter out those without valid readings
                     program[i].asts = program[i].asts.filter(x => x.reading !== undefined && x.reading.length !== 0);
-                    
-                    complete_time = Date.now();
-                    seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
-                    if (seconds > 0 ) {
-                        outstr = `\parsed in ${seconds} seconds`;
-                    } else {
-                        outstr = `\parsed in ${complete_time - start_time} milliseconds`;
-                    }
 
-                    console.log(outstr);
+                    // DEBUG: Parsing Time
+                    // complete_time = Date.now();
+                    // seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
+                    // if (seconds > 0 ) {
+                    //     outstr = `\parsed in ${seconds} seconds`;
+                    // } else {
+                    //     outstr = `\parsed in ${complete_time - start_time} milliseconds`;
+                    // }
+
+                    // console.log(outstr);
                 }
             }
 

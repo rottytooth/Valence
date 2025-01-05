@@ -17,10 +17,10 @@ test('lines count: multiple lines', () => {
     expect(tree[0].length).toBe(2);
 });
 
-test('line count: blank line counted', () => {
+test('line count: blank line ignored', () => {
     let program = "𐆇𐆉𐆇𐅶\n\n𐅾𐅶𐆉\n𐅾";
     let tree = Valence.parser.parse(program, true);
-    expect(tree[0].length).toBe(4);
+    expect(tree[0].length).toBe(3);
 }); 
 // currently this breaks because the blank line generates no valid ASTs
 // TO FIX: blank lines should simply be ignored

@@ -375,7 +375,7 @@ const report = (progid, line, state) => {
         state_value.className = "status-item-value";
 
         // compare state to previous
-        if (prev_state[progid][st] !== state[st]) {
+        if (prev_state.includes(progid) && prev_state[progid][st] !== state[st]) {
             // state_value.className = "status-item-value-changed";
             state_item.classList.add("status-changed-outline");
         }

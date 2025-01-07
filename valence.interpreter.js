@@ -37,14 +37,14 @@ Valence.interpreter = (function() {
             if (program[ln].reading.name === "label") {
                 // FIXME: this needs to be added once the label command is evaluable
 
-                // let loc = evaluate_expression(program[ln].params[0], state, "var");
-                // state[loc] = ln; // assign the location of the label to its var
+                // does not do callback or delay for pre-loading labels
+                let loc = interpret_line(program, ln, state, null, null, 0, preload=true);
             }
         }
 
         // if there's a callback, call it with initial state
         if (callback) {
-            callback(program.id, -1, "", state);
+            callback(program.id, -1, state);
         }
 
         let curr_promise = new Promise(function(resolve, reject) {
@@ -192,7 +192,7 @@ Valence.interpreter = (function() {
         }
     };
 
-    const interpret_line = async (program, line, state, resolve, callback, delay) => {
+    const interpret_line = async (program, line, state, resolve, callback, delay, preload=false) => {
         const startTime = performance.now();
 
         // check for end of program
@@ -201,7 +201,9 @@ Valence.interpreter = (function() {
             // callback one more time to clear highlit row
             if (callback) callback(program.id, -1, state);
 
-            resolve();
+            if (resolve)
+                resolve();
+
             return;
         }        
 
@@ -215,6 +217,9 @@ Valence.interpreter = (function() {
 
         const endTime = performance.now();
         const time_to_wait = delay - (endTime - startTime); // sometimes negative
+
+        if (preload)
+            return;
 
         // the buffer and call to next step
         setTimeout(function() {

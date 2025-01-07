@@ -44,22 +44,56 @@ test('run(): launch_interpreter called twice', async () => {
         }
     };
     
-    await Valence.interpreter.launch_all(progs, callback).then(d =>{
+    await Valence.interpreter.launch_all(progs, callback, 0).then(d =>{
         expect(called.length).toBe(2);
     });
 });
 
 test('label: assigned at start of program', async () => {
-    let program = "𐅾[𐅾𐅻]\n𐆉𐅻";
+    let program = `𐅾[𐅾𐅻]
+[𐅶]𐅶[𐆇𐆋]
+𐆉𐅻`;
 
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
     const callback = (id, ln, state) => {
-        expect(state[5]).toBe(0);
+        expect(state[0]).toBe(0); // second line assignment should be skipped, leaving this 0
+        expect(state[5]).toBe(2); // label has been assigned its line number
     };
 
-    await Valence.interpreter.launch_all(progs, callback);
-}); // FIXME: this is in progress
+    await Valence.interpreter.launch_all(progs, callback, 0);
+});
+
+test('label: all', async () => {
+    let program = `𐆉𐅻
+𐆉𐆊
+𐆉𐆁
+𐆉𐆊
+𐆉𐆉
+𐆉𐆁
+𐆉𐅾
+𐆉𐆋
+𐆉𐆉
+𐆉𐅶
+𐆉𐆇`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+    let final_state = [];
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[0]).toBe(9);
+    expect(final_state[1]).toBe(10);
+    expect(final_state[2]).toBe(6);
+    expect(final_state[3]).toBe(7);
+    expect(final_state[4]).toBe(8);
+    expect(final_state[5]).toBe(0);
+    expect(final_state[6]).toBe(3);
+    expect(final_state[7]).toBe(5);
+});
 
 test('line order: label, goto, jump', async () => {
     let program = `𐆉𐆉
@@ -78,7 +112,7 @@ test('line order: label, goto, jump', async () => {
         curr_line++;
     };
 
-    await Valence.interpreter.launch_all(progs, callback);
+    await Valence.interpreter.launch_all(progs, callback, 0);
 
 });
 

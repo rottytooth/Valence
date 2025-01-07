@@ -112,9 +112,6 @@ Valence.interpreter = (function() {
                 state[varname] = state[varname] * evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
-            case "mult_by_eight":
-                // may need to check by type
-                state[node.params[0].reading.pseudo] = state[node.params[0].reading.pseudo] * 8;
             case "label":
                 state[key_to_idx(node.params[0].reading.pseudo)] = ln;            
                 break;
@@ -188,7 +185,19 @@ Valence.interpreter = (function() {
                         return String(evaluate_to_type(node.params[0], state, "exp", byref));
                     case "read_as_var":
                         return evaluate_to_type(node.params[0], state, "var", byref);
-                }
+                    case "not":
+                        return !(evaluate_to_type(node.params[0], state, "bool", byref));
+                    case "sub":
+                        return evaluate_to_type(node.params[0], state, "int", byref) - evaluate_to_type(node.params[1], state, "int", byref);
+                    case "add":
+                        return evaluate_to_type(node.params[0], state, "int", byref) + evaluate_to_type(node.params[1], state, "int", byref);
+                    case "mul":
+                        return evaluate_to_type(node.params[0], state, "int", byref) * evaluate_to_type(node.params[1], state, "int", byref);
+                    case "mult_by_eight":
+                        // may need to check by type
+                        return evaluate_to_type(node.params[0], state, "int", byref) * 8;
+            
+                    }
         }
     };
 

@@ -26,7 +26,7 @@ test('run(): launches only successful builds', async () => {
 });
 
 test('run(): two-line program', async () => {
-    let program = "𐆇𐆉[𐅾𐅶]\n𐅾𐅾𐆋";
+    let program = "𐆇𐆉[𐅾𐅶]\n𐅾𐆋";
     await Valence.interpreter.run(program).then(data => {
         expect(data.length).toBe(2);
     });
@@ -238,5 +238,26 @@ test('print: after value updated', async () => {
 
     // test final_state    
     expect(output).toBe("4411");
+
+});
+
+test('alt progs: two with while loop', async () => {
+    let program = `𐅶[𐅶[𐅾𐅶]𐆇[[𐅻[𐆇𐆁]]𐅶[𐆇𐆋]]]
+[𐅶]𐅶𐅾
+[𐅾]𐅶[𐆇𐆇]
+𐆋[𐅾𐅶]
+𐅾`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let output = [];
+    Valence.interpreter.print_callback = (id, print) => {
+        if (!(output.includes(id))) {
+            output[id] = "";
+        }
+        output[id] += print;
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
 
 });

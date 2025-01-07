@@ -60,7 +60,7 @@ test('parse: range identifier resolves', () => {
 });
 
 test('ast: all interpretations are unique, longer example', () => {
-    let program = "𐅶𐆇𐅾𐆊𐆁𐆋𐆉𐅻";
+    let program = "𐅶𐆇𐅾𐆋𐆉𐅻";
     let tree = Valence.parser.parse(program, false);
 
     let unique = tree[0].asts.filter((value, index, self) => {
@@ -70,10 +70,10 @@ test('ast: all interpretations are unique, longer example', () => {
     expect(tree[0].asts.length).toBe(unique.length);
 });
 
-test('ast count: 3 instructions -> 4 asts, alternate', () => {
-    let program = "𐅻𐆊𐆁";
+test('ast count: longer', () => {
+    let program = "𐆉𐆋𐆇𐅶𐆋𐆊";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(4);
+    expect(tree[0].asts.length).toBe(13);
 });
 
 test('int: end node is both var and digit', () => {
@@ -238,11 +238,11 @@ test('builds pseudocode', () => {
 });
 
 test('uses pseudo when marked', () => {
-    let program = '𐆉[𐆊[𐅾𐆁]]';
+    let program = '𐆉[𐅾𐆁]';
     let tree = Valence.parser.parse(program, true);
     expect(tree.length).toBe(1);
     ast = tree[0][0];
-    expect(ast.reading.pseudo).toBe("set_label((𐆁 > 0))");
+    expect(ast.reading.pseudo).toBe("set_label(𐆁)");
 });
 
 test('parse: stop at too many', () => {

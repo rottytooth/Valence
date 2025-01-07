@@ -25,7 +25,7 @@ Valence.lexicon = {
             name: "not",
             type: "exp",
             params: [{type: "exp"}],
-            js: "(!({exp}))"
+            js: "!({exp})"
         },
         {
             name: "add",
@@ -130,12 +130,6 @@ Valence.lexicon = {
             params: [{type: "exp"}],
             js: "goto({exp})"
         },
-        {
-            name: "randomize",
-            type: "cmd",
-            params: [{type: "var"},{type: "var", name: "range"}],
-            js: "{var} = {var} * (Math.floor(Math.random() * {range}[1]) + {range}[0]);"
-        },
     ],
     '𐆋': [
         {
@@ -161,7 +155,7 @@ Valence.lexicon = {
             name: "equals",
             type: "exp",
             params: [{type: "exp"},{type: "exp", name:"exp2"}],
-            js: "(({exp}) == ({exp2}))"
+            js: "({exp} == {exp2})"
         },
         {
             name: "print",
@@ -249,10 +243,10 @@ Valence.lexicon = {
             js: "({exp}*8)"
         },
         {
-            name: "mod",
+            name: "random",
             type: "exp",
-            params: [{type: "exp"},{type: "exp", name:"exp2"}],
-            js: "({exp}%{exp2})"
+            params: [{type: "type"},{type: "exp"}],
+            js: "rand({type},{exp})"
         },
         {
             name: "jump",
@@ -281,12 +275,6 @@ Valence.lexicon = {
             params: [],
             js: "Z",
             pseudo: "𐆊"
-        },
-        {
-            name: "greater_zero",
-            type: "exp",
-            params: [{type: "exp"}],
-            js: "({exp} > 0)"
         },
         {
             name: "or",
@@ -326,12 +314,6 @@ Valence.lexicon = {
             params: [],
             js: "X",
             pseudo: "𐆁"
-        },
-        {
-            name: "random",
-            type: "exp",
-            params: [{type: "var", name: "range"}],
-            js: "rnd({range})"
         },
         {
             name: "mul",

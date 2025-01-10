@@ -213,7 +213,7 @@ Valence.lexicon = {
             name: "assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "let {var} = ({exp});"
+            js: "let {var} = {exp};"
         }
     ],
     '𐅻': [

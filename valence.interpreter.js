@@ -80,35 +80,35 @@ Valence.interpreter = (function() {
                 // we go to whatever line that variable is set to
                 next_line = evaluate_to_type(node.params[0], state, "int");
                 break;
-            
-            // case "for":
-            //     if (state[evaluate_to_type(node.params[1])]
-            //     break;
 
             // assignments
             case "append": {
-                let varname = evaluate_to_type(node.params[0], "var", byref=true);
+                let varname = evaluate_to_type(node.params[0], state, "var");
+                if (typeof(state[varname]) == "string") {
+                    state[varname] += evaluate_to_type(node.params[1], state, "string")
+                    break;
+                }
                 if (!Array.isArray(state[varname])) {
                     state[varname] = [state[varname]];
                 }
-                state[varname].push(evaluate_to_type(node.params[1], state, "exp"));
+                state[varname] += evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "assign":
-                state[evaluate_to_type(node.params[0], state, "var", byref=true)] = evaluate_to_type(node.params[1], state, "exp");
+                state[evaluate_to_type(node.params[0], state, "var")] = evaluate_to_type(node.params[1], state, "exp");
                 break;
             case "add_assign": {
-                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
+                let varname = evaluate_to_type(node.params[0], state, "var");
                 state[varname] = add_params(state[varname], node.params[1], state);
                 }
                 break;
             case "sub_assign": {
-                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
+                let varname = evaluate_to_type(node.params[0], state, "var");
                 state[varname] = state[varname] - evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
             case "mult_assign":{
-                let varname = evaluate_to_type(node.params[0], state, "var", byref=true);
+                let varname = evaluate_to_type(node.params[0], state, "var");
                 state[varname] = state[varname] * evaluate_to_type(node.params[1], state, "exp");
                 }
                 break;
@@ -136,22 +136,45 @@ Valence.interpreter = (function() {
         return next_line;
     }
 
-    const evaluate_to_type = (node, state, resolve_to, byref=false) => {
+    const evaluate_to_type = (node, state, resolve_to) => {
         // resolve_to could be from lexicon or from type()
         
         switch(resolve_to) {
             case "exp":
+                // no definitive type yet, just return what comes
                 return evaluate_exp(node, state);
+
+            case "var":
+                // if the node is a var, return the LOCATION of the var as an int
+                if (node.reading.type == "var") {
+                    return key_to_idx(node.reading.pseudo);
+                }
+
+                // for anything else, interpret like any expression, and convert to an int mod 8 and return
+                return (evaluate_to_type(node, state, "int") % 8);
+
+            case "type":
+                // find the relevant type
+                break;
+
+            // resolve to a particular type
             case "bool":
                 return !!(evaluate_exp(node, state));
-            case "var":
-                return evaluate_to_type(node, state, "int", byref);
             case "digit":
                 return Math.floor(evaluate_exp(node, state)) % 8;
             case "char":
-                return String.fromCharCode(evaluate_to_type(node, state, "int"));
+            case "string": 
+                let val = evaluate_exp(node, state);
+                switch(typeof(val)) {
+                    case "char":
+                        return val;
+                    case "number":
+                        return String.fromCharCode(val);
+                    case "string":
+                        return val[0];
+                }
             case "int": {
-                let retval = evaluate_exp(node, state, byref);
+                let retval = evaluate_exp(node, state);
                 switch(typeof(retval)) {
                     case "number":
                         return Math.floor(retval);
@@ -172,35 +195,26 @@ Valence.interpreter = (function() {
     }
 
     const add_params = (first_param, second_param, state) => {
-        // param_one = a value
+        // param_one = a value. The TYPE of this value (a JS value, not a node), determines what the second one turns into
         // param_two = a node to be evaluated in terms of param_one's type
 
         switch(typeof(first_param)) {
             case "number":
-                return first_param + evaluate_to_type(second_param, state, "int", byref);
+                return first_param + evaluate_to_type(second_param, state, "int");
             case "string":
-                return first_param + evaluate_to_type(second_param, state, "string", byref);
             case "char":
-                if (typeof(second_param) == "number") {
-                    return first_param + String.fromCharCode(evaluate_to_type(second_param, state, "int", byref));
+                if (typeof(second_param) == "number" || typeof(second_param) == "number") {
+                    return String.fromCharCode(first_param.charCodeAt(0) + evaluate_to_type(second_param, state, "int"));
                 }
-                // if (second_param.reading.name === "char") 
-                return first_param + evaluate_to_type(second_param, state, "int", byref);
-            default:
-                return first_param + evaluate_to_type(second_param, state, "int", byref);
+                return first_param + evaluate_to_type(second_param, state, "int");
         }
-
     } 
 
-    const evaluate_exp = (node, state, byref=false) => {
-        // byref tells us we return the name (loc) of the var rather than its value
+    const evaluate_exp = (node, state) => {
 
         switch (node.reading.type) {
             case "var":
-                // if we're looking for a var, return its location in the state array
-                // if we're looking for a value, return the var's value
-                if (byref)
-                    return key_to_idx(node.reading.pseudo);
+                // if we make it here, we're looking for the var's value and should return that
                 return state[key_to_idx(node.reading.pseudo)];
             case "digit":
                 return parseInt(node.reading.name);
@@ -209,24 +223,24 @@ Valence.interpreter = (function() {
             case "exp":
                 switch(node.reading.name) {
                     case "read_as_int":
-                        return evaluate_to_type(node.params[0], state, "int", byref);
+                        return evaluate_to_type(node.params[0], state, "int");
                     case "to_str":
-                        return String(evaluate_to_type(node.params[0], state, "exp", byref));
+                        return String(evaluate_to_type(node.params[0], state, "exp"));
                     case "read_as_var":
                         // ref
-                        return evaluate_to_type(node.params[0], state, "exp", true);
+                        return key_to_idx(node.params[0].reading.pseudo);
                     case "not":
-                        return !(evaluate_to_type(node.params[0], state, "bool", byref));
+                        return !(evaluate_to_type(node.params[0], state, "bool"));
                     case "sub":
-                        return evaluate_to_type(node.params[0], state, "int", byref) - evaluate_to_type(node.params[1], state, "int", byref);
+                        return evaluate_to_type(node.params[0], state, "int") - evaluate_to_type(node.params[1], state, "int");
                     case "add": {
-                        return add_params(evaluate_to_type(node.params[0], state, "int", byref), node.params[1], state);
+                        return add_params(evaluate_to_type(node.params[0], state, "int"), node.params[1], state);
                     }
                     case "mul":
-                        return evaluate_to_type(node.params[0], state, "int", byref) * evaluate_to_type(node.params[1], state, "int", byref);
+                        return evaluate_to_type(node.params[0], state, "int") * evaluate_to_type(node.params[1], state, "int");
                     case "mult_by_eight":
                         // may need to check by type
-                        return evaluate_to_type(node.params[0], state, "int", byref) * 8;
+                        return evaluate_to_type(node.params[0], state, "int") * 8;
                     case "value":
                         // deref and convert to type specified in first child node
                         return evaluate_to_type(node.params[1], state, node.params[0].reading.name, false);

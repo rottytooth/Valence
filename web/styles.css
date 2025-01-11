@@ -273,6 +273,7 @@ body {
     width: 200px;
     font-size: 20pt;
     cursor: pointer;
+    font-family: 'Symbola';
 }
 .menu-item::before {
     display: inline-block;
@@ -361,6 +362,7 @@ body {
     width: 50px;
     padding-top: 10px;
     pointer-events: none;
+    font-family: 'Ubuntu Mono';
 }
 .btn {
     padding: 6px;
@@ -396,6 +398,7 @@ body {
     text-align: left;
     padding-left: 20px;
     margin-bottom: 10px;
+    font-family: 'Symbola';
 }
 .control-btn-key {
     font-size: 12pt;

@@ -413,6 +413,11 @@ const run_stop = (force_start = false, force_end = false) => {
     prev_state = [];
 
     if ((Valence.interpreter.is_playing && !force_end) || force_start) {
+
+        if (gen_programs == null) {
+            return;
+        }
+
         document.getElementById("run-stop").value = "Stop All";
 
         let runnable_progs = gen_programs.filter(x => !Object.hasOwn(x,"failed") || x.failed !== true);

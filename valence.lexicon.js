@@ -43,7 +43,7 @@ Valence.lexicon = {
             name: "add_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = ({var} + {exp})"
+            js: "{var} += {exp}"
         }
     ],
     '𐆇': [ 
@@ -82,7 +82,7 @@ Valence.lexicon = {
             name: "sub_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = ({var} - {exp})"
+            js: "{var} -= {exp}"
         }
     ],
     '𐅾': [
@@ -161,13 +161,13 @@ Valence.lexicon = {
             name: "print",
             type: "cmd",
             params: [{type: "exp"}],
-            js: "print({exp});"
+            js: "print({exp})"
         },
         {
-            name: "for",
+            name: "add_assign",
             type: "cmd",
-            params: [{type: "var"},{type: "var", name: "range"}],
-            js: "for ({var} = {range}[0]; {var} < {range}[1]; {var}+={range}[1] >= {range}[0]) {"
+            params: [{type: "var"},{type: "exp"}],
+            js: "{var} += {exp}"
         }
     ],
     '𐆉': [
@@ -213,7 +213,7 @@ Valence.lexicon = {
             name: "assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "let {var} = {exp};"
+            js: "{var} = {exp}"
         }
     ],
     '𐅻': [
@@ -259,7 +259,7 @@ Valence.lexicon = {
             name: "append",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} += {exp};"
+            js: "{var} APPEND {exp};"
         }
     ],
     '𐆊': [
@@ -298,7 +298,7 @@ Valence.lexicon = {
             name: "assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "let {var} = ({exp});"
+            js: "{var} = {exp}"
         }
     ],
     '𐆁': [
@@ -325,13 +325,13 @@ Valence.lexicon = {
             name: "input",
             type: "cmd",
             params: [{type: "var"}],
-            js: "{var} = input();"
+            js: "{var} = input()"
         },
         {
             name: "mul_assign",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} = mul({exp});"
+            js: "{var} *= {exp}"
         }
     ]
 };

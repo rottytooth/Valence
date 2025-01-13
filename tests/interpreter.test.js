@@ -6,7 +6,7 @@ Valence.lexicon = require('../valence.lexicon');
 Valence.parser = require('../valence.parser');
 Valence.interpreter = require('../valence.interpreter');
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => jest.restoreAllMocks());
 
 test('run(): completes', async () => {
     let program = "𐆇𐆉𐅶";
@@ -187,7 +187,7 @@ test('print', async () => {
 𐆋[𐅾[𐆇]]
 [𐅻]𐆉[𐅾𐆇]
 [𐆇]𐅶[𐆇[𐆇]]
-𐆋[𐅾[𐅾𐆇]]
+𐆋[𐅾𐆇]
 [𐅻]𐆉[𐅾𐆇]
 [𐆇]𐅶[𐆇[𐆇]]
 𐆋[𐅾[𐆇]]
@@ -244,7 +244,7 @@ test('print: after value updated', async () => {
 });
 
 test('alt progs: two with while loop', async () => {
-    let program = `𐅶[𐅶[𐅾𐅶]𐆇[[𐅻[𐆇𐆁]]𐅶[𐆇𐆋]]]
+    let program = `𐅶[𐅶[𐅾𐅶]𐆇[[𐅻[𐆇𐆇]]𐅶[𐆇𐆋]]]
 [𐅶]𐅶𐅾
 [𐅾]𐅶[𐆇𐆇]
 𐆋[𐅾𐅶]
@@ -252,15 +252,15 @@ test('alt progs: two with while loop', async () => {
 
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
-    let output = [];
+    let output = ["",""];
     Valence.interpreter.print_callback = (id, print) => {
-        if (!(output.includes(id))) {
-            output[id] = "";
-        }
         output[id] += print.value;
     };
 
     await Valence.interpreter.launch_all(progs, false, 0);
+
+    expect(output[0]).toBe("25914"); // counts in 3s from 2
+    expect(output[1]).toBe("24681012"); // counts in 2s
 
 }); // FIXME: Waiting on Bool implementation
 
@@ -289,8 +289,8 @@ test('hello world', async () => {
 
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
+    Valence.interpreter.print_callback = {};
     Valence.interpreter.print_callback = (id, print) => {
-
         expect(print.value).toBe("Hello World");
     };
 

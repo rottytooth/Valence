@@ -135,6 +135,15 @@ const parser = (function() {
             node.params = [];
         }
 
+
+        // if no potential reading with the same number of params as we have, reject
+        if (node.reading.length === 0 || 
+            (Array.isArray(node.reading) && node.reading.filter(x => x.params.length == node.params.length) === 0) ||
+            (!Array.isArray(node.reading) && node.reading.params.length !== node.params.length))
+        {
+            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
+        }
+
         for (let i = 0; i < node.params.length; i++) {
             interpret_node(line, ast, node.params[i], false, original_idx);
         }
@@ -149,6 +158,10 @@ const parser = (function() {
                 node.reading = node.reading[0];
             }
         }
+
+        if (node.reading.length === 0) {
+            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
+        }
         
         // if any of the children are end nodes, resolve them
         for (let j = 0; j < 2; j++) {
@@ -156,10 +169,10 @@ const parser = (function() {
         }
 
         if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
-            throw new {name: "InternalError", message:`Could not resolve reading for sign ${node.params[0].symbol}`};
+            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[0].symbol}`};
         }
         if (node.params.length == 2 && Array.isArray(node.params[1].reading)) {
-            throw new {name: "InternalError", message:`Could not resolve reading for sign ${node.params[1].symbol}`};
+            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[1].symbol}`};
         }
     }
 
@@ -283,7 +296,7 @@ const parser = (function() {
                     break;
                 case "close_bracket":
                     if (open_bracket == -1) {
-                        throw new {name: "SyntaxError", message:"Unmatched brackets"};
+                        throw {name: "SyntaxError", message:"Unmatched brackets"};
                     }
                     op = line.tokens[open_bracket];
                     op.children = line.tokens.slice(open_bracket + 1, i);
@@ -371,7 +384,7 @@ const parser = (function() {
             for (let q = 0; q < parsed[p].asts.length; q++) {
                 for (let r = 0; r < progs.length; r++) {
                     if (progs[r].length > Valence.parser.MAX_ASTS) {
-                        throw new {name: "SyntaxError", message:"Too many ASTs"};
+                        throw {name: "SyntaxError", message:"Too many ASTs"};
                     }
                     new_prog = JSON.parse(JSON.stringify(progs[r]));
                     new_prog.push(JSON.parse(JSON.stringify(parsed[p].asts[q])));
@@ -396,7 +409,7 @@ const parser = (function() {
             var stack = [];
             for (let ln = 0; ln < progs[i].length; ln++) {
 
-                if (["if", "while", "for"].includes(progs[i][ln].reading.name)) {
+                if (["if", "while", "while_queue"].includes(progs[i][ln].reading.name)) {
                     stack.push({ line: ln, cmd: progs[i][ln].reading.name});
                 }
                 else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {

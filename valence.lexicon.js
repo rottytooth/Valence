@@ -61,7 +61,7 @@ Valence.lexicon = {
             pseudo: "𐆇"
         },
         {
-            name: "read_as_int",
+            name: "read_as_digit",
             type: "exp",
             params: [{type: "digit"}],
             js: "{digit}"
@@ -79,10 +79,10 @@ Valence.lexicon = {
             js: "if ({exp}) {"
         },
         {
-            name: "sub_assign",
+            name: "while_queue",
             type: "cmd",
-            params: [{type: "var"},{type: "exp"}],
-            js: "{var} -= {exp}"
+            params: [{type: "var"},{type: "var", name: "var2"}],
+            js: "while {var2} = DEQUEUE {var} {"
         }
     ],
     '𐅾': [
@@ -98,12 +98,6 @@ Valence.lexicon = {
             params: [],
             js: "E",
             pseudo: "𐅾"
-        },
-        {
-            name: "ratio",
-            type: "type",
-            params: [],
-            js: "ratio"
         },
         {
             /* forces the var reading */
@@ -130,6 +124,18 @@ Valence.lexicon = {
             params: [{type: "exp"}],
             js: "goto({exp})"
         },
+        {
+            name: "trade_op",
+            type: "cmd",
+            params: [{type: "var"},{type: "meta_exp"}],
+            js: "trade_ops({var},{meta_exp})"
+        },
+        {
+            name: "op",
+            type: "meta_exp",
+            params: [{type: "var"},{type: "exp"}],
+            js: "<{var},{exp}>"
+        }
     ],
     '𐆋': [
         {
@@ -146,11 +152,17 @@ Valence.lexicon = {
             pseudo: "𐆋"
         },
         {
-            name: "to_str",
-            type: "exp",
-            params: [{type: "exp"}],
-            js: "str({exp})"
+            name: "queue",
+            type: "type",
+            params: [],
+            js: "queue"
         },
+        // {
+        //     name: "to_str",
+        //     type: "exp",
+        //     params: [{type: "exp"}],
+        //     js: "str({exp})"
+        // },
         {
             name: "equals",
             type: "exp",
@@ -162,12 +174,12 @@ Valence.lexicon = {
             type: "cmd",
             params: [{type: "exp"}],
             js: "print({exp})"
-        },
-        {
-            name: "add_assign",
-            type: "cmd",
-            params: [{type: "var"},{type: "exp"}],
-            js: "{var} += {exp}"
+        // },
+        // {
+        //     name: "queue_value",
+        //     type: "cmd",
+        //     params: [{type: "var"},{type: "exp"}],
+        //     js: "{var} QUEUE {exp}"
         }
     ],
     '𐆉': [
@@ -197,10 +209,10 @@ Valence.lexicon = {
             js: "int({exp})"
         },
         {
-            name: "value",
+            name: "cast",
             type: "exp",
             params: [{type: "type"},{type: "exp"}],
-            js: "value({type},{exp})"
+            js: "cast({type},{exp})"
         },
         {
             name: "label",
@@ -243,10 +255,10 @@ Valence.lexicon = {
             js: "({exp}*8)"
         },
         {
-            name: "random",
+            name: "get_element",
             type: "exp",
-            params: [{type: "type"},{type: "exp"}],
-            js: "rand({type},{exp})"
+            params: [{type: "var"},{type: "exp"}],
+            js: "{type}[{exp}]"
         },
         {
             name: "jump",
@@ -276,6 +288,19 @@ Valence.lexicon = {
             js: "Z",
             pseudo: "𐆊"
         },
+        {
+            name: "bool",
+            type: "type",
+            params: [],
+            js: "char"
+        },
+
+        // {
+        //     name: "get_element",
+        //     type: "exp",
+        //     params: [{type: "exp"}],
+        //     js: "get_z_element({exp})"
+        // },
         {
             name: "or",
             type: "exp",
@@ -314,6 +339,18 @@ Valence.lexicon = {
             params: [],
             js: "X",
             pseudo: "𐆁"
+        },
+        {
+            name: "ratio",
+            type: "type",
+            params: [],
+            js: "char"
+        },
+        {
+            name: "dequeue",
+            type: "exp",
+            params: [{type: "var"}],
+            js: "DEQUEUE ({var})"
         },
         {
             name: "mul",

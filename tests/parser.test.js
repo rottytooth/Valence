@@ -34,7 +34,7 @@ test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
 test('ast count: 4 instructions (one to_int) -> 4 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(4);
+    expect(tree[0].asts.length).toBe(3);
 });
 
 test('ast: all interpretations are unique', () => {
@@ -60,7 +60,7 @@ test('parse: range identifier resolves', () => {
 });
 
 test('ast: all interpretations are unique, longer example', () => {
-    let program = "𐅶𐆇𐅾𐆋𐆉𐅻";
+    let program = "𐅶𐆇𐅾𐆉𐅻";
     let tree = Valence.parser.parse(program, false);
 
     let unique = tree[0].asts.filter((value, index, self) => {
@@ -71,9 +71,9 @@ test('ast: all interpretations are unique, longer example', () => {
 });
 
 test('ast count: longer', () => {
-    let program = "𐆉𐆋𐆇𐅶𐆋𐆊";
+    let program = "𐆉𐆇𐆇𐆇𐆇𐆇𐆇𐅶𐆊";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(13);
+    expect(tree[0].asts.length).toBe(18);
 });
 
 test('int: end node is both var and digit', () => {
@@ -126,16 +126,16 @@ test('lex: brackets force a single reading', () => {
 });
 
 test('lex: brackets force a single reading, longer', () => {
-    let program = "𐆋[𐆋[𐆋[𐆋[𐅾[𐅾𐅻]]]]]";
+    let program = "𐆋[𐅾[𐅾𐅻]]";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(1);
 });
 
-test('lex: brackets force a single reading', () => {
-    let program = "[𐅻]𐆋[[𐅾𐆉]𐆋[𐅾𐆋]]";
+test('lex: brackets force a single reading, 2', () => {
+    let program = "[𐅻]𐆉[[𐅾𐆉]𐆉[𐅾𐆋]]";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(1);
-}); // 𐅾𐆉 seems to fail and 𐆉 alone leads to two readings
+}); 
 
 test('lex: roman equivalent', () => {
     let program = "AS";
@@ -165,7 +165,7 @@ test('parse: multiple peaks, all brackets', () => {
 });
 
 test('parse: multiple peaks, no brackets', () => {
-    let program = "𐆋𐆉𐅻𐅻𐆇𐆇𐅶𐆇𐆊";
+    let program = "𐆉𐅻𐅻𐆇𐆇𐅶𐆇𐆊";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
 });
@@ -195,36 +195,34 @@ test('lines are correct: three signs', () => {
 });
 
 test('lines are correct: four signs', () => {
-    let program = "𐆋𐆋𐆉";
+    let program = "𐆋𐆇𐆉";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
     for (let a = 0; a < tree[0].asts.length; a++) {
         ast = tree[0].asts[a];
-        expect(['[𐆋]𐆋[𐆉]','𐆋[𐆋[𐆉]]']).toContain(ast.line);
+        expect(['[𐆋]𐆇[𐆉]','𐆋[𐆇[𐆉]]']).toContain(ast.line);
     }
 });
 
-test('bad reading has no asts', () => {
+test('bad parse_to_proglist: invalid code, 1', () => {
     let program = "𐆋";
-    let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(0);
-});
+    expect(() => {Valence.parser.parse(program, false);}).toThrow({name : "SyntaxError", message: "No valid reading for this use of 𐆋"});
+}); // FIXME: would be nice to not match exact wording
 
 test('parse: syntax highlighting', () => {
-    let program = "𐆋𐆋𐆋";
+    let program = "𐆋𐆇𐆉";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(3);
+    expect(tree[0].asts.length).toBe(2);
     for (let i = 0; i < tree[0].asts.length; i++) {
         ast = tree[0].asts[i];
-        expect(['cceevec','cvcccvc','cceedec']).toContain(ast.line_markers);
+        expect(['cceedec','cvcccvc']).toContain(ast.line_markers);
     }
 });
 
-test('parse_to_proglist: invalid code', () => {
+test('parse_to_proglist: invalid code, 2', () => {
     let program = "𐆇";
-    let tree = Valence.parser.parse(program);
-    expect(tree.filter(p => p.built == true).length).toBe(0);
-});
+    expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SyntaxError", message : "No valid reading for this use of 𐆇"});
+}); 
 
 
 test('builds pseudocode', () => {

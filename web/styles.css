@@ -1,9 +1,12 @@
 :root {
+    color-scheme: dark;
+    
     --cmd: #7ecb54;
     --exp: #616f8c;
     --var:  #ec6e2d;
     --digit:#f6df56;
     --type: #ccc;
+    --meta-exp: #24d6dd;
 
     --btn: #333;
     --btn-txt-light: #757575;
@@ -199,6 +202,9 @@ body {
 .code-cmd {
     color: var(--cmd);
 }
+.code-meta_exp {
+    color: var(--meta-exp);
+}
 .code-none {
     background-color: var(--code-back);
 }
@@ -274,6 +280,7 @@ body {
     font-size: 20pt;
     cursor: pointer;
     font-family: 'Symbola';
+    list-style-type: none;
 }
 .menu-item::before {
     display: inline-block;
@@ -309,6 +316,7 @@ body {
 .menu-item .sub-menu {
     display: none;
     padding: 5px 0 2px 10px;
+    font-family: 'Ubuntu Mono', monospace;
 }
 .open .sub-menu {
     display: block;
@@ -338,9 +346,12 @@ body {
 .sub-menu-cmd {
     background-color: var(--cmd);
 }
-.sub-menu-none {
-    background-color: var(--code-back);
+.sub-menu-meta_exp {
+    background-color: var(--meta-exp);
 }
+/* .sub-menu-none {
+    background-color: var(--code-back);
+} */
 
 /* Control menu */
 
@@ -372,6 +383,7 @@ body {
     border-radius: 12px;
     color: var(--btn-front);
     border: 1px solid #666;
+    height: 45px;
 }
 .btn:hover {
     background-color: var(--btn-txt-light);
@@ -380,6 +392,8 @@ body {
     width: 40px;
     font-size: 20pt;
     margin-right: 10px;
+    margin-bottom: 10px;
+    font-family: 'Ubuntu Mono', monospace;
 }
 .other-btn {
     font-size: 18pt;
@@ -397,16 +411,15 @@ body {
     width: 90px;
     text-align: left;
     padding-left: 20px;
-    margin-bottom: 10px;
     font-family: 'Symbola';
 }
 .control-btn-key {
     font-size: 12pt;
     pointer-events: none;
     font-family: 'Ubuntu Mono', monospace;
-    position: absolute;
-    top: 25px;
+    top: -15px;
     padding-left: 33px;
+    position: relative;
 }
 .control-lt {
     color: var(--btn-txt-light);

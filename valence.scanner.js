@@ -62,7 +62,7 @@ class scanner {
                 });
             } else {
                 // we should never get here
-                throw new {name: "InternalError", message: `Unknown character: ${curr_char}`};
+                throw {name: "InternalError", message: `Unknown character: ${curr_char}`};
             }
         }
         return instructions;
@@ -90,9 +90,9 @@ class scanner {
 
         if (!scanner.do_brackets_match(line)) {
             if (ln > -1)
-                throw new {name: "SyntaxError", message: `Brackets do not match on line ${ln+1}`};
+            throw {name: "SyntaxError", message: `Brackets do not match on line ${ln+1}`};
             else
-                throw new {name: "SyntaxError", message: `Brackets do not match`};
+                throw {name: "SyntaxError", message: `Brackets do not match`};
         }
         if (read_roman_chars) {
             line = scanner.convert(line);

@@ -13,7 +13,8 @@ TOKEN_TYPES = {
     "e": "exp",
     "v": "var",
     "d": "digit",
-    "t": "type"
+    "t": "type",
+    "m": "meta_exp"
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -200,16 +201,20 @@ const buildButton = (term, typedas) => {
         controlKey.className = "control-btn-key";
 
         let bracket1 = document.createElement("span");
-        bracket1.textContent = "[";
-        bracket1.className = "control-lt";
-        controlKey.appendChild(bracket1);
+        if (typedas) {
+            bracket1.textContent = "[";
+            bracket1.className = "control-lt";
+            controlKey.appendChild(bracket1);
 
-        controlKey.appendChild(document.createTextNode(typedas));
+            controlKey.appendChild(document.createTextNode(typedas));
 
-        let bracket2 = document.createElement("span");
-        bracket2.textContent = "]";
-        bracket2.className = "control-lt";
-        controlKey.appendChild(bracket2);
+            let bracket2 = document.createElement("span");
+            bracket2.textContent = "]";
+            bracket2.className = "control-lt";
+            controlKey.appendChild(bracket2);
+        } else {
+            controlKey.appendChild(document.createTextNode("\u00A0"));
+        }
 
         addBtn.appendChild(controlKey);
         addBtn.className += " control-btn";
@@ -265,7 +270,7 @@ const buildLeftControl = (term, typedas, values) => {
 
         let menuText = val.name;
         if (val.type == "var") {
-            menuText = `the var ${term}`;
+            menuText = `the var ${term}`; // FIXME: font should change for term
         }
         if (val.type == "digit") {
             menuText = `0o${val.name}`;
@@ -304,9 +309,9 @@ const buildControlList = () => {
 
         buildLeftControl(key, value.filter(x => x.type=="var")[0].name, value);
     }
-    buildButton("[");
-    buildButton("]");
-    buildButton("\u21B5");
+    buildButton("[", null);
+    buildButton("]", null);
+    buildButton("\u21B5", null);
 }
 
 const run_hide_progs = () => {
@@ -371,11 +376,12 @@ const report = (progid, line, state) => {
         state_item.appendChild(separator);
 
         state_value = document.createElement("span");
-        state_value.innerText = state[st];
+        if (state[st])
+            state_value.innerText = state[st].toDisplay();
         state_value.className = "status-item-value";
 
         // compare state to previous
-        if (prev_state.includes(progid) && prev_state[progid][st] !== state[st]) {
+        if (Object.hasOwn(prev_state,progid) && typeof(prev_state[progid][st]) == typeof(state[st]) && prev_state[progid][st].toString() !== state[st].toString()) {
             // state_value.className = "status-item-value-changed";
             state_item.classList.add("status-changed-outline");
         }

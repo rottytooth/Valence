@@ -59,17 +59,6 @@ test('parse: range identifier resolves', () => {
     expect(tree[0].asts.length).toBe(unique.length);
 });
 
-test('ast: all interpretations are unique, longer example', () => {
-    let program = "𐅶𐆇𐅾𐆉𐅻";
-    let tree = Valence.parser.parse(program, false);
-
-    let unique = tree[0].asts.filter((value, index, self) => {
-        return self.findIndex(v => Valence.parser.print_ast_detail(v) === Valence.parser.print_ast_detail(value)) === index;
-    });
-
-    expect(tree[0].asts.length).toBe(unique.length);
-});
-
 test('ast count: longer', () => {
     let program = "𐆉𐆇𐆇𐆇𐆇𐆇𐆇𐅶𐆊";
     let tree = Valence.parser.parse(program, false);

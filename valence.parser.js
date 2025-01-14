@@ -93,7 +93,7 @@ const parser = (function() {
                 switch(node.reading.params[param_num].type) {
                 case "var":
                 case "digit":
-                    // if it's a var or a digit, adopt that reading
+                        // if it's a var or a digit, adopt that reading
                     reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
                     break;
                 case "exp":
@@ -135,7 +135,6 @@ const parser = (function() {
             node.params = [];
         }
 
-
         // if no potential reading with the same number of params as we have, reject
         if (node.reading.length === 0 || 
             (Array.isArray(node.reading) && node.reading.filter(x => x.params.length == node.params.length) === 0) ||
@@ -162,6 +161,8 @@ const parser = (function() {
         if (node.reading.length === 0) {
             throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
         }
+
+        // if it's expecting meta_exp
         
         // if any of the children are end nodes, resolve them
         for (let j = 0; j < 2; j++) {

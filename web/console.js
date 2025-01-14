@@ -84,6 +84,8 @@ const generateInterpretations = () => {
     intpt_msg = document.getElementById("intpt-msg");
     intpt_msg.style.fontWeight = "normal";
 
+    intpt_msg.innerText = "0 interpretations";
+
     try {
         gen_programs = Valence.parser.parse(txt.value, true);
     } catch (e) {

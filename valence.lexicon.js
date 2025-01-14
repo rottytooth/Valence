@@ -123,18 +123,18 @@ Valence.lexicon = {
             type: "cmd",
             params: [{type: "exp"}],
             js: "goto({exp})"
-        },
-        {
-            name: "trade_op",
-            type: "cmd",
-            params: [{type: "var"},{type: "meta_exp"}],
-            js: "trade_ops({var},{meta_exp})"
-        },
-        {
-            name: "op",
-            type: "meta_exp",
-            params: [{type: "var"},{type: "exp"}],
-            js: "<{var},{exp}>"
+        // },
+        // {
+        //     name: "trade_op",
+        //     type: "cmd",
+        //     params: [{type: "var"},{type: "meta_exp"}],
+        //     js: "trade_ops({var},{meta_exp})"
+        // },
+        // {
+        //     name: "op",
+        //     type: "meta_exp",
+        //     params: [{type: "var"},{type: "exp"}],
+        //     js: "{var}:{exp}"
         }
     ],
     '𐆋': [
@@ -344,7 +344,7 @@ Valence.lexicon = {
             name: "ratio",
             type: "type",
             params: [],
-            js: "char"
+            js: "ratio"
         },
         {
             name: "dequeue",

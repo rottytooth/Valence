@@ -93,7 +93,10 @@ Valence.interpreter = (function() {
             // flow control
             case "goto":
                 // we go to whatever line that variable is set to
-                next_line = state[evaluate_exp(node.params[0], state).value].value;
+                let val = evaluate_exp(node.params[0], state).value;
+                if (val < 0) val = 0 - val;
+                if (val > 7) val = val % 8;
+                next_line = state[val].value;
                 break;
             case "jump":
                 next_line = ln + new v.Int(v.Int.cast(evaluate_exp(node.params[0], state))).value;
@@ -102,12 +105,17 @@ Valence.interpreter = (function() {
             case "if":
                 if (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value) {
                     next_line = node.end + 1;
+                    node.test = true;
+                } else {
+                    node.test = false;
                 }
                 break;
             case "while_queue":
                 break; // TODO
             case "else":
             case "else_if":
+                let already_ran = program[node.start].test;
+                break;  
                 // need to check if condition first
                 break; // TODO
             case "end_block":
@@ -193,6 +201,8 @@ Valence.interpreter = (function() {
                 return evaluate_exp(node.params[0], state).mul(new v.Int(8));
             case "cast":
                 return v.build_val_obj(evaluate_to_type(node.params[0]), evaluate_exp(node.params[1], state))
+            case "equals":
+                return evaluate_exp(node.params[0], state).equals(evaluate_exp(node.params[1], state));                
         }
     }
 

@@ -52,7 +52,7 @@ class Int {
             case "string":
                 return parseInt(value.value);
             case "ratio":
-                return Math.floor(value.num / value.den);
+                return Math.floor(value.value.num / value.value.den);
             case "queue":
                 return Int.cast(value.dequeue());
         }
@@ -77,9 +77,12 @@ class Int {
     div(value) {
         return new Int(this.value / Int.cast(value));
     };
-    not(value) {
+    not() {
         return new Int(0 - this.value);
     }
+    equals(value) {
+        return new Bool(this.value == Int.cast(value));
+    };
     append(value) {
         return this.add(value);
     }
@@ -112,9 +115,12 @@ class Char extends Int {
     div(value) {
         return new Char(super.div(value));
     };
-    not(value) {
-        return new Char(super.not(value));
+    not() {
+        return new Char(super.not(this.value));
     }
+    equals(value) {
+        return new Bool(this.value == Bool.cast(value));
+    };
     append(value) {
         if (value.type == "char" || value.type == "int") {
             return new v_String(
@@ -162,17 +168,20 @@ class v_String {
 
     // no change for sub, mul, div, not
     sub(value) {
-        return new v_String(value);
+        return new v_String(this.value);
     };
     mul(value) {
-        return new v_String(value);
+        return new v_String(this.value);
     };
     div(value) {
-        return new v_String(value);
+        return new v_String(this.value);
     };
-    not(value) {
-        return new v_String(value);
+    not() {
+        return new v_String(this.value);
     }
+    equals(value) {
+        return new Bool(this.value == v_String.cast(value));
+    };
     append(value) {
         return this.add(value);
     }
@@ -195,40 +204,134 @@ class Bool {
             case "string":
                 return value.value.toLower().trim() == "true";
             case "ratio":
-                return value.num / value.den > 0;
+                return value.value.num / value.value.den > 0;
             case "queue":
                 return Int.cast(value.dequeue()).value > 0;
         }
     }
 
     toString() {
-        return this.value;
+        return this.value.toString();
     }
     toDisplay() {
-        return '"' + this.value + '"';
+        return this.value.toString();
     }
 
     add(value) {
-        return new v_String(this.value + v_String.cast(value));
+        return new Bool(this.value + Bool.cast(value));
     };
-
-    // no change for sub, mul, div, not
+    // no change for sub, mul, div
     sub(value) {
-        return new v_String(value);
+        return new Bool(value);
     };
     mul(value) {
-        return new v_String(value);
+        return new Bool(value);
     };
     div(value) {
-        return new v_String(value);
+        return new Bool(value);
     };
-    not(value) {
-        return new v_String(value);
+    not() {
+        return new Bool(value);
     }
+    equals(value) {
+        return new Bool(this.value == Bool.cast(value));
+    };
     append(value) {
         return this.add(value);
     }
 }
+
+class Ratio {
+    constructor(initial_value) {
+        this.value = initial_value;
+        this.type = "ratio";
+    }
+
+    static cast(value) {
+        switch (value.type) {
+            case "int":
+                return {"num": value.value, "den": 1};
+            case "char":
+                return {"num": value.value.charCodeAt(0), "den": 1};
+            case "bool":
+                return {"num": value.value ? 1 : 0, "den": 1};
+            case "string":
+                try {
+                    let split = value.split('/');
+                    return {"num": parseInt(split[0].trim()), "den": parseInt(split[1].trim())};
+                } catch {
+                    return {"num": 0, "den": 1};
+                }
+            case "ratio":
+                return {"num": value.num, "den": value.den}
+            case "queue":
+                return Ratio.cast(value.dequeue()).value;
+        }
+    }
+
+
+    toString() {
+        return `${this.value.num}/${this.value.den}`;
+    }
+    toDisplay() {
+        return `${this.value.num}/${this.value.den}`;
+    }
+
+    reduce(num, den){
+        var gcd = function gcd(a,b){
+          return b ? gcd(b, a%b) : a;
+        };
+        gcd = gcd(num, den);
+        return new Ratio({"num": num/gcd, "den": den/gcd});
+      }
+
+    frac_math(first, second, op) {
+        let commonDen = first.den * second.den;
+        let newNum1 = first.num * (commonDen / first.den);
+        let newNum2 = second.num * (commonDen / second.den);
+
+        let res = 0
+        if (op === "sub") {
+            res = newNum1 - newNum2
+        }
+        if (op === "add") {
+            res = newNum1 + newNum2
+        }
+        return this.reduce(res, commonDen);
+    }
+
+    add(value) {
+        return this.frac_math(this.value, Ratio.cast(value), "add");
+    };
+
+    // no change for sub, mul, div, not
+    sub(value) {
+        return this.frac_math(this.value, Ratio.cast(value), "sub");
+    };
+    mul(value) {
+        value = Ratio.cast(value);
+        let num = this.value.num * value.num;
+        let den = this.value.den * value.den;
+        return this.reduce(num, den);
+    };
+    div(value) {
+        value = Ratio.cast(value);
+        let num = this.value.num * value.den;
+        let den = this.value.den * value.num;
+        return this.reduce(num, den);
+    };
+    not() {
+        return new Ratio({"num": 0 - this.value.num, "den": this.value.den});
+    }
+    equals(value) {
+        let compvals = Ratio.cast(value);
+        return new Bool(this.value.num == compvals.num && this.value.den == compvals.den);
+    };
+    append(value) {
+        return this.add(value);
+    }
+}
+
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {

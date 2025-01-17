@@ -258,7 +258,7 @@ Valence.lexicon = {
             name: "get_element",
             type: "exp",
             params: [{type: "var"},{type: "exp"}],
-            js: "{type}[{exp}]"
+            js: "{var}[{exp}]"
         },
         {
             name: "jump",

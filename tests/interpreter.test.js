@@ -289,13 +289,16 @@ test('hello world', async () => {
 
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
+    let called_print = false;
+
     Valence.interpreter.print_callback = {};
     Valence.interpreter.print_callback = (id, print) => {
         expect(print.value).toBe("Hello World");
+        called_print = true;
     };
 
     await Valence.interpreter.launch_all(progs, false, 0);
-
+    expect(called_print).toBe(true);
 });
 
 test('calc goto: two alternatives', async () => {

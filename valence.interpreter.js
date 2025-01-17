@@ -177,7 +177,7 @@ Valence.interpreter = (function() {
         switch(node.reading.name) {
             case "read_as_digit":
                 if (node.params[0].reading.type !== "digit") {
-                    throw {name : "TypeError", message : `cannot convert ${node.params[0].reading.type} to digit`};
+                    return new v.Int(evaluate_exp(node.params[0], state).value % 8);
                 }
                 return new v.Int(node.params[0].reading.name);
             case "read_as_var":
@@ -202,7 +202,9 @@ Valence.interpreter = (function() {
             case "cast":
                 return v.build_val_obj(evaluate_to_type(node.params[0]), evaluate_exp(node.params[1], state))
             case "equals":
-                return evaluate_exp(node.params[0], state).equals(evaluate_exp(node.params[1], state));                
+                return evaluate_exp(node.params[0], state).equals(evaluate_exp(node.params[1], state));      
+            case "int_or_floor":
+                return new v.Int(v.Int.cast(evaluate_exp(node.params[0], state)));          
         }
     }
 

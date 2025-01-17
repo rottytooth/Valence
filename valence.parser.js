@@ -36,13 +36,17 @@ const parser = (function() {
     }
 
     const check_complete = (tree) => {
-        if (Object.hasOwn(tree, 'children')) {
-            return false;
-        }
-        if (Array.isArray(tree) && tree.length > 0) {
+        // returns true when all nodes are built into tree structure
+
+        // no params should be a list of more than two, each holding one
+        if (Array.isArray(tree) && tree.length > 1) {
             return false;
         }
         if (Object.hasOwn(tree, 'params')) {
+            if (tree.params.length > 2) {
+                // this should not happen
+                throw {name: "InternalError", message: "Too many params left after building tree"};
+            }
             for (let i = 0; i < tree.params.length; i++) {
                 let complete = check_complete(tree.params[i]);
                 if (!complete) return false;
@@ -51,26 +55,26 @@ const parser = (function() {
         return true;
     }
 
-    const children_to_params = (tokens, idx) => {
-        // makes one child the operator and all the other 
-        // children its parameters
+    // const children_to_params = (tokens, idx) => {
+    //     // makes one child the operator and all the other 
+    //     // children its parameters
 
-        pre_fix = tokens.slice(0,idx);
-        post_fix = tokens.slice(idx+1);
+    //     pre_fix = tokens.slice(0,idx);
+    //     post_fix = tokens.slice(idx+1);
 
-        if (pre_fix.length == 1 && pre_fix[0].symbol == "[") {
-            pre_fix = pre_fix[0].children;
-        }
-        if (post_fix.length == 1 && post_fix[0].symbol == "[") {
-            post_fix = post_fix[0].children;
-        }
+    //     if (pre_fix.length == 1 && pre_fix[0].symbol == "[") {
+    //         pre_fix = pre_fix[0].children;
+    //     }
+    //     if (post_fix.length == 1 && post_fix[0].symbol == "[") {
+    //         post_fix = post_fix[0].children;
+    //     }
 
-        if (pre_fix.length == 0) {  
-            return [post_fix]; //  param 1
-        } else {
-            return [pre_fix, post_fix]; // params 1 and 2
-        }
-    }
+    //     if (pre_fix.length == 0) {  
+    //         return [post_fix]; //  param 1
+    //     } else {
+    //         return [pre_fix, post_fix]; // params 1 and 2
+    //     }
+    // }
 
     const resolve_param_end_node = (line, ast, node, param_num, original_idx) => {
         // an end node has special potential_readings: a var or digit can be an exp
@@ -88,7 +92,7 @@ const parser = (function() {
         } else {
             reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
 
-            // if there is no exp, then duplicate the ast, one with var, the other with int
+            // if it demands var or digit, return that, otherwise split and return both
             if (!reading_to_assign || reading_to_assign.length === 0) {
                 switch(node.reading.params[param_num].type) {
                 case "var":
@@ -105,7 +109,7 @@ const parser = (function() {
                     reading_to_assign = node.params[param_num].reading.filter(x => x.type === "var");
 
                     // dupe the ast and assign digit to the other
-                    new_tree = JSON.parse(JSON.stringify(ast));
+                    let new_tree = JSON.parse(JSON.stringify(ast));
                     new_tree.forked_from = original_idx;
                     line.asts.push(new_tree);
                     new_token = find_child_in_tree(new_tree, node.id);
@@ -118,167 +122,190 @@ const parser = (function() {
         node.params[param_num].reading = reading_to_assign;
     }
 
-    const interpret_node = (line, ast, node, isCommand, original_idx) => {
-        if (!Object.hasOwn(node, 'potential_readings')) {
+    // build all valid ASTs for a given line and add to line.asts
+    const build_trees = (
+        line, // to add to asts list
+        parentnode, // the new parent, chosen among siblings
+        parentidx,  // index of the new parent
+        siblings, // the parent and its siblings 
+        tree // the base of the current tree (if it's complete, we'll add to asts list)
+    ) => {
+
+        if (!tree) {
+            // if not provided, assume we are at the top of the tree
+            tree = parentnode;
+        }
+
+        if (tree.complete) {
+            // if it's verified already, return
             return;
         }
-        if (node.reading == undefined || (Array.isArray(node.reading) && node.reading.length !== 1)) {
-            // if reading is already resolved, don't do this
-            if (isCommand) {
-                node.reading = node.potential_readings.filter(x => x.type === "cmd");
-            } else {
-                node.reading = node.potential_readings.filter(x => x.type !== "cmd");
-            }
-        }
-
-        if (node.params === undefined) {
-            node.params = [];
-        }
-
-        // if no potential reading with the same number of params as we have, reject
-        if (node.reading.length === 0 || 
-            (Array.isArray(node.reading) && node.reading.filter(x => x.params.length == node.params.length) === 0) ||
-            (!Array.isArray(node.reading) && node.reading.params.length !== node.params.length))
-        {
-            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
-        }
-
-        for (let i = 0; i < node.params.length; i++) {
-            interpret_node(line, ast, node.params[i], false, original_idx);
-        }
-
-        // filter by number of params
-        if (Array.isArray(node.reading)) {
-            node.reading = node.reading.filter(
-                x => x.params.length === node.params.length);
-
-            // if only one reading is left, de-arrayify it
-            if (node.reading.length === 1) {
-                node.reading = node.reading[0];
-            }
-        }
-
-        if (node.reading.length === 0) {
-            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
-        }
-
-        // if it's expecting meta_exp
         
-        // if any of the children are end nodes, resolve them
-        for (let j = 0; j < 2; j++) {
-            resolve_param_end_node(line, ast, node, j, original_idx);
-        }
-
-        if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
-            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[0].symbol}`};
-        }
-        if (node.params.length == 2 && Array.isArray(node.params[1].reading)) {
-            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[1].symbol}`};
-        }
-    }
-
-    const build_asts = (line, intpt, token = intpt) => {
-        // build all valid ASTs for a given line
-
-        if (!Object.hasOwn(token, 'params')) {
-            token.params = [];
-        }
-
-        // A token will have either children or params
-        // CHILDREN are not yet grouped, may have brackets
-        // PARAMS are children broken down into parameters to the token
-
-        // FIRST we deal with any children, moving them to params
-        if ((!Object.hasOwn(token, 'children') || token.children.length === 0) 
-            && token.params.length === 0) {
-            
-            if (check_complete(intpt)) {
-                intpt.complete = true;
+        if (siblings.length == 0 || (siblings.length == 1 && siblings[0].id == parentnode.id)) {
+            if (check_complete(tree)) {
+                tree.complete = true;
+                line.asts.push(tree);
             }
             return;
         }
-        if (Object.hasOwn(token, 'children') && token.children !== undefined) {
-            // if we get this far, there are multiple children or params to break out
 
-            // check for a command that has no params
-            if (token == intpt // is a command
-                && token.children.length == 1 // has no siblings
-                // has no children:
-                && (token.children[0].children === undefined || token.children[0].children.length === 0)
-                && (token.children[0].params === undefined || token.children[0].params.length === 0)
-            ) {
-                token.children[0].complete = true; // forcing this; as we know there are no other nodes to check
-                line.asts.push(token.children[0]);
-                return;
-            }
-
-            for (let i = 0; i < token.children.length - 1; i++) {
-                if (token.children[i].symbol == "[") {
-                    continue; // can't have bracket as command
-                }
-                // copy the tree
-                // FIXME: Why does this always duplicate, when below (for params) we test for whether its nec with split_yet? Don't want to make this more complex unnecessarily. Perhaps the unfinished are just being dropped as incomplete anyway
-                new_tree = JSON.parse(JSON.stringify(intpt));
-                new_token = find_child_in_tree(new_tree, token.id);
-                new_token.children[i].params = children_to_params(new_token.children, i);
-                new_token.params.push(new_token.children[i]);
-                delete new_token.children;
-
-                // if this list begins with a bracket, remove it
-                if (new_tree.symbol == "[") {
-                    new_tree = new_tree.params[0];
-                }
-                line.asts.push(new_tree);
-
-                build_asts(line, new_tree, new_token);
-            }
-
+        if (!Object.hasOwn(parentnode, 'params')) {
+            parentnode.params = [];
         }
-        // SECOND, process those params: 
-        // * either they are already single nodes and should be sent to this func
-        // * or they are arrays
-        //   * if so, reorganize into params, for each valid command and split this ast into two
-        for (let i = 0; i < token.params.length; i++) { 
-            if (!Array.isArray(token.params[i])) {
-                build_asts(line, intpt, token.params[i]);
+
+        let param_one_nodes = [];
+        let param_two_nodes = [];
+
+        if (parentidx > 0) {
+            param_one_nodes = siblings.slice(0, parentidx);
+        }
+        if (param_one_nodes.length > 0) {
+            param_two_nodes = siblings.slice(parentidx + 1);
+        } else {
+            param_one_nodes = siblings.slice(parentidx + 1);
+        }
+        if (param_one_nodes.length == 1 && param_one_nodes[0].symbol == "[") {
+            param_one_nodes = param_one_nodes[0].children;
+        }
+        if (param_two_nodes.length == 1 && param_two_nodes[0].symbol == "[") {
+            param_two_nodes = param_two_nodes[0].children;
+        }
+
+        // loop through possibilties for first child
+        let i_split = false;
+        for (let i = 0; i < 1 || i < param_one_nodes.length - 1; i++) {
+            if (param_one_nodes.symbol == '[')
                 continue;
+            if (i_split) {
+                tree = JSON.parse(JSON.stringify(tree));
+                parentnode = find_child_in_tree(tree, parentnode.id);
             }
-            if (token.params[i].length == 1) {
-                // single element gets broken out of array
-                token.params[i] = token.params[i][0];
-                build_asts(line, intpt, token.params[i]);
-                continue;
-            }
+            parentnode.params.push(param_one_nodes[i]);
+            build_trees(line, param_one_nodes[i], i, param_one_nodes, tree);
+            i_split = true;
 
-            let split_yet = false;
-            for(let j = 0; j < token.params[i].length - 1; j++) {
-                // if more than one, we need to try each (but the last) as the parent node (for cmd or exp). For each possible parent, copy the ast, make that the parent, take the preceeding nodes its first param and its following siblings its second
-                if (token.params[i][j].symbol == "[") {
-                    continue; // can't have bracket as operator
-                }
-
-                if (!split_yet) {
-                    split_yet = true;
-
-                    token.params[i][j].params = children_to_params(token.params[i], j);
-                    token.params[i] = token.params[i][j];
-                    delete token.children;
-
-                    build_asts(line, intpt, token); // rerun new token
-                } else {    
-                    new_tree = JSON.parse(JSON.stringify(intpt));
-                    new_token = find_child_in_tree(new_tree, token.id);
-                    new_token.params[i][j].params = children_to_params(new_token.params[i], j);
-                    new_token.params[i] = new_token.params[i][j];
-                    delete new_token.children;
-
-                    line.asts.push(new_tree);
-
-                    build_asts(line, new_tree, new_token); // rerun new token after it was reorganized
+            // for each possible first, find the second
+            let j_split = false;
+            if (param_two_nodes.length > 0) {
+                for (let j = 0; j < 1 || j < param_two_nodes.length - 1; j++) {
+                    if (param_two_nodes.symbol == '[')
+                        continue;
+                    if (j_split) {
+                        tree = JSON.parse(JSON.stringify(tree));
+                        parentnode = find_child_in_tree(tree, parentnode.id);
+                    }
+                    parentnode.params.push(param_two_nodes[j]);
+                    build_trees(line, param_two_nodes[j], j, param_two_nodes, tree);
+                    j_split = true;
                 }
             }
         }
     }
+
+    // const build_asts = (line, intpt, token = intpt) => {
+    //     // build all valid ASTs for a given line
+
+    //     if (!Object.hasOwn(token, 'params')) {
+    //         token.params = [];
+    //     }
+
+    //     // A token will have either children or params
+    //     // CHILDREN are not yet grouped, may have brackets
+    //     // PARAMS are children broken down into parameters to the token
+
+    //     // FIRST we deal with any children, moving them to params
+    //     if ((!Object.hasOwn(token, 'children') || token.children.length === 0) 
+    //         && token.params.length === 0) {
+            
+    //         if (check_complete(intpt)) {
+    //             intpt.complete = true;
+    //         }
+    //         return;
+    //     }
+
+    //     if (Object.hasOwn(token, 'children') && token.children !== undefined) {
+    //         // if we get this far, there are multiple children or params to break out
+
+    //         // check for an operator that has no params
+    //         if (token == intpt // is a operator
+    //             && token.children.length == 1 // has no siblings
+    //             // has no children:
+    //             && (token.children[0].children === undefined || token.children[0].children.length === 0)
+    //             && (token.children[0].params === undefined || token.children[0].params.length === 0)
+    //         ) {
+    //             token.children[0].complete = true; // forcing this; as we know there are no other nodes to check
+    //             line.asts.push(token.children[0]);
+    //             return;
+    //         }
+
+    //         for (let i = 0; i < token.children.length - 1; i++) {
+    //             if (token.children[i].symbol == "[") {
+    //                 continue; // can't have bracket as operator
+    //             }
+    //             // copy the tree
+    //             // FIXME: Why does this always duplicate, when below (for params) we test for whether its nec with split_yet? Don't want to make this more complex unnecessarily. Perhaps the unfinished are just being dropped as incomplete anyway
+    //             new_tree = JSON.parse(JSON.stringify(intpt));
+    //             new_token = find_child_in_tree(new_tree, token.id);
+    //             new_token.children[i].params = children_to_params(new_token.children, i);
+    //             new_token.params.push(new_token.children[i]);
+    //             delete new_token.children;
+
+    //             // if this list begins with a bracket, remove it
+    //             if (new_tree.symbol == "[") {
+    //                 if (new_tree === new_token) {
+    //                     new_token = new_tree.params[0];
+    //                 }
+    //                 new_tree = new_tree.params[0];
+    //             }
+    //             line.asts.push(new_tree);
+
+    //             build_asts(line, new_tree, new_token);
+    //         }
+
+    //     }
+    //     // SECOND, process those params: 
+    //     // * either they are already single nodes and should be sent to this func
+    //     // * or they are arrays
+    //     //   * if so, reorganize into params, for each valid operator and split this ast into two
+    //     for (let i = 0; i < token.params.length; i++) { 
+    //         if (!Array.isArray(token.params[i])) {
+    //             build_asts(line, intpt, token.params[i]);
+    //             continue;
+    //         }
+    //         if (token.params[i].length == 1) {
+    //             // single element gets broken out of array
+    //             token.params[i] = token.params[i][0];
+    //             build_asts(line, intpt, token.params[i]);
+    //             continue;
+    //         }
+
+    //         let split_yet = false;
+
+    //         for(let j = 0; j < token.params[i].length - 1; j++) {
+    //             // if more than one, we need to try each (but the last) as the parent node (for cmd or exp). For each possible parent, copy the ast, make that the parent, take the preceeding nodes its first param and its following siblings its second
+    //             if (token.params[i][j].symbol == "[") {
+    //                 continue; // can't have bracket as operator
+    //             }
+
+    //             let new_tree = JSON.parse(JSON.stringify(intpt));
+    //             new_token = find_child_in_tree(new_tree, token.id);
+    //             new_token.params[i][j].params = children_to_params(new_token.params[i], j);
+    //             new_token.params[i] = new_token.params[i][j];
+    //             delete new_token.children;
+
+    //             if (!split_yet) {
+    //                 split_yet = true;
+    //                 const index = line.asts.indexOf(intpt);
+    //                 line.asts.splice(index, 1);
+    //             }
+
+    //             line.asts.push(new_tree);
+
+    //             build_asts(line, new_tree, new_token); // rerun new token after it was reorganized
+
+    //         }
+    //     }
+    // }
 
     // organize the line into a tree based on existing brackets
     // and number (give IDs to) the symbols for later processing
@@ -403,7 +430,66 @@ const parser = (function() {
         return progs;
     };
 
-   const find_blocks = (progs) => {
+    const interpret_node = (line, ast, node, isCommand, original_idx) => {
+        if (!Object.hasOwn(node, 'potential_readings')) {
+            return;
+        }
+        if (node.reading == undefined || (Array.isArray(node.reading) && node.reading.length !== 1)) {
+            // if reading is already resolved, don't do this
+            if (isCommand) {
+                node.reading = node.potential_readings.filter(x => x.type === "cmd");
+            } else {
+                node.reading = node.potential_readings.filter(x => x.type !== "cmd");
+            }
+        }
+
+        if (node.params === undefined) {
+            node.params = [];
+        }
+
+        // if no potential reading with the same number of params as we have, reject
+        if (node.reading.length === 0 || 
+            (Array.isArray(node.reading) && node.reading.filter(x => x.params.length == node.params.length) === 0) ||
+            (!Array.isArray(node.reading) && node.reading.params.length !== node.params.length))
+        {
+            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
+        }
+
+        for (let i = 0; i < node.params.length; i++) {
+            interpret_node(line, ast, node.params[i], false, original_idx);
+        }
+
+        // filter by number of params
+        if (Array.isArray(node.reading)) {
+            node.reading = node.reading.filter(
+                x => x.params.length === node.params.length);
+
+            // if only one reading is left, de-arrayify it
+            if (node.reading.length === 1) {
+                node.reading = node.reading[0];
+            }
+        }
+
+        if (node.reading.length === 0) {
+            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
+        }
+
+        // FIXME: if it's expecting meta_exp, handle here
+        
+        // if any of the children are end nodes, resolve them
+        for (let j = 0; j < 2; j++) {
+            resolve_param_end_node(line, ast, node, j, original_idx);
+        }
+
+        if (node.params.length > 0 && Array.isArray(node.params[0].reading)) {
+            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[0].symbol}`};
+        }
+        if (node.params.length == 2 && Array.isArray(node.params[1].reading)) {
+            throw {name: "InternalError", message:`Could not resolve reading for sign ${node.params[1].symbol}`};
+        }
+    }
+
+    const find_blocks = (progs) => {
         // mark while/if blocks to where they close 
         // this both modifies progs in place and returns it
         for (let i = 0; i < progs.length; i++) {
@@ -464,6 +550,10 @@ const parser = (function() {
             let retstr = "";
             let retmarkers = "";
 
+            if (Array.isArray(ast.reading)) {
+                throw {name: "InternalError", message: "reading is an array"};
+            }
+
             let code = ast.reading.type[0];
 
             if (ast.params.length == 2) {
@@ -505,7 +595,7 @@ const parser = (function() {
             return retstr;
         }
 
-        this.parse = (input, complete) => {
+        this.parse = (input, complete, roman_chars = false) => {
             // complete: if true, parse the entire input as complete multi-line program
             // if false, generate asts for a single line but don't attempt to match brackets or perform other program-wide analysis
 
@@ -516,11 +606,11 @@ const parser = (function() {
             if (complete) {
                 // split into lines and evaluate each
                 let lines = input.split(/\r?\n/);
-                program = lines.map((s, idx) => scanner.evaluate_line(s, false, idx));
+                program = lines.map((s, idx) => scanner.evaluate_line(s, roman_chars, idx));
                 program = program.filter(x => x.line !== "");
             } else {
                 // evaluate the new line and push to the program
-                let line = scanner.evaluate_line(input);
+                let line = scanner.evaluate_line(input, roman_chars, -1);
                 if (line.line !== "") {
                     program.push(line);
                 }
@@ -545,11 +635,19 @@ const parser = (function() {
                         program[i].asts = [];
                     }
                     let token = JSON.parse(JSON.stringify(program[i].tokens));
-                    program[i].asts.push(token);
+                    // program[i].asts.push(token);
                     
                     // build out program[i].asts
-                    build_asts(program[i], program[i].asts[0]);
-                    program[i].asts = program[i].asts.slice(1); // remove the original interpretation
+                    // build_asts(program[i], program[i].asts[0]);
+                    // program[i].asts = program[i].asts.slice(1); // remove the original interpretation
+
+                    for(let tokenidx = 0; tokenidx < 1 || tokenidx < token.children.length - 1; tokenidx++) {
+                        newparent = JSON.parse(JSON.stringify(token.children[tokenidx]));
+                        build_trees(program[i], // line of code
+                            newparent, // copy of the new parent
+                            tokenidx, // location of that parent among siblings
+                            JSON.parse(JSON.stringify(token.children))); // copy of it and its siblings
+                    }
 
                     let ast_count = program[i].asts.length;
                     for (let chk = 0; chk < i; chk++) {
@@ -559,20 +657,37 @@ const parser = (function() {
                         }
                     }
 
-                    // remove incomplete ASTs
-                    program[i].asts = program[i].asts.filter(x => x.complete);
-                    // remove complete, which has no meaning after this
-                    for (let j = 0; j < program[i].asts.length; j++) {
-                        delete program[i].asts[j].complete;
-                    }
+                    // // remove incomplete ASTs
+                    // program[i].asts = program[i].asts.filter(x => x.complete);
+                    // // remove complete, which has no meaning after this
+                    // for (let j = 0; j < program[i].asts.length; j++) {
+                    //     delete program[i].asts[j].complete;
+                    // }
 
                     // fill out the reading field of each ast
                     // asts will multiply when an end node can be read in multiple ways
                     for (let j = 0; j < program[i].asts.length; j++) {
+                        try {
                         interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
+                        } catch (e) {
+                            if (Object.hasOwn(e, "name"))  {
+                                console.error(`${e.name}: ${e.message}`);
+
+                                // clear its top node's reading so it will be wiped
+                                program[i].asts[j].reading = [];
+                            } else
+                                console.error(e);
+                        }
 
                         if (program[i].asts[j].reading !== undefined && program[i].asts[j].reading.length !== 0) {
-                            retset = this.print_ast(program[i].asts[j], true);
+                            try {
+                                retset = this.print_ast(program[i].asts[j], true);
+                            } catch (e) {
+                                if (Object.hasOwn(e, "name")) 
+                                    console.error(`${e.name}: ${e.message}`);
+                                else
+                                    console.error(e);
+                            }
                             program[i].asts[j].line = retset[0];
                             program[i].asts[j].line_markers = retset[1];
                         }

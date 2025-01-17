@@ -34,7 +34,7 @@ test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
 test('ast count: 4 instructions (one to_int) -> 4 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(3);
+    expect(tree[0].asts.length).toBe(7);
 });
 
 test('ast: all interpretations are unique', () => {
@@ -122,7 +122,7 @@ test('lex: brackets force a single reading, longer', () => {
 
 test('lex: brackets force a single reading, 2', () => {
     let program = "[𐅻]𐆉[[𐅾𐆉]𐆉[𐅾𐆋]]";
-    let tree = Valence.parser.parse(program, false);
+    let tree = Valence.parser.parse(program, false, true);
     expect(tree[0].asts.length).toBe(1);
 }); 
 
@@ -173,7 +173,7 @@ test('each ast has line and line_marker', () => {
     }
 });
 
-test('lines are correct: three signs', () => {
+test('lines are correct: two signs', () => {
     let program = "𐆋𐆉";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
@@ -183,7 +183,7 @@ test('lines are correct: three signs', () => {
     }
 });
 
-test('lines are correct: four signs', () => {
+test('lines are correct: three signs', () => {
     let program = "𐆋𐆇𐆉";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
@@ -226,7 +226,7 @@ test('builds pseudocode', () => {
 
 test('uses pseudo when marked', () => {
     let program = '𐆉[𐅾𐆁]';
-    let tree = Valence.parser.parse(program, true);
+    let tree = Valence.parser.parse(program, false, true);
     expect(tree.length).toBe(1);
     ast = tree[0][0];
     expect(ast.reading.pseudo).toBe("set_label(𐆁)");
@@ -254,3 +254,15 @@ test('marking: good if / bad if', () => {
     expect(tree[0].failed === true).toBe(true);
     expect(tree[0].failed === true).toBe(true);
 });
+
+test('parse: long line, no brackets', () => {
+    let program = "𐆋𐆉𐅻𐆉𐅻𐅻𐆇𐆇𐅶𐅻𐆇𐆇";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+});
+
+test('parse: correct set of asts', () => {
+    let program = "𐆋𐅻𐆉𐆊";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBeGreaterThan(4);
+}); // test here for the char interpretation

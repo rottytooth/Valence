@@ -90,7 +90,7 @@ class scanner {
 
         if (!scanner.do_brackets_match(line)) {
             if (ln > -1)
-            throw {name: "SyntaxError", message: `Brackets do not match on line ${ln+1}`};
+            throw {name: "SyntaxError", message: `Brackets do not match on lineln+1}`};
             else
                 throw {name: "SyntaxError", message: `Brackets do not match`};
         }

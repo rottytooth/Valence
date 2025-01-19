@@ -9,10 +9,30 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 const parser = (function() {
+
+    var DEBUG = true;
     
     var program = [];
 
     var skip_block_building = false;
+
+    const print_ast_detail = (ast, level = 0) => {
+        // draw the ast as a tree, indented by level
+        let retstr = "";
+        if (level == 0 && Object.hasOwn(ast, "line")) {
+            retstr += ast.line + "\n"; 
+        }
+        for(let i = 0; i < level; i++) {
+            retstr += "\t";
+        }
+        retstr += `${ast.symbol} ${(Object.hasOwn(ast, "reading") ? ast.reading.name : "")} id:${ast.id}\n`;
+        if (Object.hasOwn(ast, 'params')) {
+            for(let j = 0; j < ast.params.length; j++) {
+                retstr += print_ast_detail(ast.params[j], level + 1);
+            }
+        }
+        return retstr;
+    }
 
     const find_child_in_tree = (tree, num) => {
         // depth-first search for a child with a specific id
@@ -95,6 +115,12 @@ const parser = (function() {
             tree = parentnode;
         }
 
+        if (DEBUG) {
+            console.log(print_ast_detail(tree)); 
+            console.log(`siblings: ${siblings.map(x => " " + x.symbol + " " + x.id)}\n`);
+        }
+
+
         if (siblings.length == 0 || (siblings.length == 1 && siblings[0].id == parentnode.id)) {
             return;
         }
@@ -156,7 +182,7 @@ const parser = (function() {
 
     // organize the line into a tree based on existing brackets
     // and number (give IDs to) the symbols for later processing
-    const parse_brackets_and_number_nodes = (line) => {
+    const parse_brackets_and_id_nodes = (line) => {
         let open_bracket = -1;
         let symbol_count = 1; // parent folder will be 0
 
@@ -426,22 +452,6 @@ const parser = (function() {
             return retstr;
         }
 
-        this.print_ast_detail = (ast, level = 0) => {
-            // draw the ast as a tree, indented by level
-            retstr = "";
-            if (level == 0) {
-                retstr += ast.line + "\n"; 
-            }
-            for(let i = 0; i < level; i++) {
-                retstr += "\t";
-            }
-            retstr += `${ast.symbol} ${ast.reading.name} id:${ast.id}\n`;
-            for(let j = 0; j < ast.params.length; j++) {
-                retstr += this.print_ast_detail(ast.params[j], level + 1);
-            }
-            return retstr;
-        }
-
         this.parse = (input, complete, roman_chars = false) => {
             // complete: if true, parse the entire input as complete multi-line program
             // if false, generate asts for a single line but don't attempt to match brackets or perform other program-wide analysis
@@ -466,7 +476,7 @@ const parser = (function() {
             // first put the nodes in a tree for each line
             for (let a = 0; a < program.length; a++) {
                 if (!program[a].built) {
-                    program[a] = parse_brackets_and_number_nodes(program[a]);
+                    program[a] = parse_brackets_and_id_nodes(program[a]);
                 }
             }
 
@@ -482,11 +492,6 @@ const parser = (function() {
                         program[i].asts = [];
                     }
                     let token = JSON.parse(JSON.stringify(program[i].tokens));
-                    // program[i].asts.push(token);
-                    
-                    // build out program[i].asts
-                    // build_asts(program[i], program[i].asts[0]);
-                    // program[i].asts = program[i].asts.slice(1); // remove the original interpretation
 
                     for(let tokenidx = 0; tokenidx < 1 || tokenidx < token.children.length - 1; tokenidx++) {
                         if (token.children[tokenidx].symbol == '[') {
@@ -543,16 +548,17 @@ const parser = (function() {
                     // filter out those without valid readings
                     program[i].asts = program[i].asts.filter(x => x.reading !== undefined && x.reading.length !== 0);
 
-                    // DEBUG: Parsing Time
-                    // complete_time = Date.now();
-                    // seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
-                    // if (seconds > 0 ) {
-                    //     outstr = `\parsed in ${seconds} seconds`;
-                    // } else {
-                    //     outstr = `\parsed in ${complete_time - start_time} milliseconds`;
-                    // }
+                    if (DEBUG) {
+                        complete_time = Date.now();
+                        seconds = Math.floor(complete_time/1000) - Math.floor(start_time/1000);
+                        if (seconds > 0 ) {
+                            outstr = `\parsed in ${seconds} seconds`;
+                        } else {
+                            outstr = `\parsed in ${complete_time - start_time} milliseconds`;
+                        }
+                    }
 
-                    // console.log(outstr);
+                    console.log(outstr);
                 }
             }
 

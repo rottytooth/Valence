@@ -55,50 +55,33 @@ const parser = (function() {
         return null;
     }
 
-    const resolve_param_end_node = (line, ast, node, param_num, original_idx) => {
-        // an end node has special potential_readings: a var or digit can be an exp
-
-        if (!(node.params.length > param_num && node.params[param_num].params && node.params[param_num].params.length === 0)) 
-            return;
-
-        if (node.params[param_num].reading.length === 1) {
-            node.params[param_num].reading = node.params[param_num].reading[0];
+    const find_blocks_to_place = (sibs, retset) => {
+        // return all ids in an un-parsed tree (meaning a tree only in terms of branckets), excluding the brackets themselves
+        if (retset === undefined) {
+            retset = [];
         }
-
-        let reading_to_assign = null;
-        if (!Array.isArray(node.params[param_num].reading)) {
-            reading_to_assign = node.params[param_num].reading
-        } else {
-            reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
-
-            // if it demands var or digit, return that, otherwise split and return both
-            if (!reading_to_assign || reading_to_assign.length === 0) {
-                switch(node.reading.params[param_num].type) {
-                case "var":
-                case "digit":
-                        // if it's a var or a digit, adopt that reading
-                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
-                    break;
-                case "exp":
-                    // otherwise, split the ast into two, one for each reading
-                    if (line.asts.length > Valence.parser.MAX_ASTS) {
-                        throw {name : "SyntaxError", message : "SyntaxError: Too many interpretations of this line of code; probably stuck in an infinite loop"};
-                    }
-                    // assign the var reading to the existing ast
-                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === "var");
-
-                    // dupe the ast and assign digit to the other
-                    let new_tree = JSON.parse(JSON.stringify(ast));
-                    new_tree.forked_from = original_idx;
-                    line.asts.push(new_tree);
-                    new_token = find_child_in_tree(new_tree, node.id);
-                    new_token.params[param_num].reading = new_token.params[param_num].reading.filter(x => x.type === "digit")[0];
-                    break;
-                }
+        for(let i = 0; i < sibs.length; i++) {
+            if (sibs[i].symbol === '[') {
+                retset = find_blocks_to_place(sibs[i].children, retset);
+            } else {
+                retset.push(sibs[i].id);
             }
         }
-        if (Array.isArray(reading_to_assign)) reading_to_assign = reading_to_assign[0];
-        node.params[param_num].reading = reading_to_assign;
+        return retset;
+    }
+
+    const check_complete = (node, ids_to_place, ids_placed) => {
+        if (!(node.id in ids_placed)) {
+            ids_placed.push(node.id);
+        }
+        if (Object.hasOwn(node, 'params')) {
+            for (let i = 0; i < node.params.length; i++) {
+                check_complete(node.params[i], ids_to_place, ids_placed);
+            }
+        }
+        if (ids_to_place.filter(x => !ids_placed.includes(x)).length === 0) {
+            return true;
+        }
     }
 
     // build all valid ASTs for a given line and add to line.asts
@@ -107,21 +90,27 @@ const parser = (function() {
         parentnode, // the new parent, chosen among siblings
         parentidx,  // index of the new parent
         siblings, // the parent and its siblings 
-        tree // the base of the current tree (if it's complete, we'll add to asts list)
+        tree, // the base of the current tree
+        ids_to_place // the whole set of ids to place
     ) => {
 
         if (!tree) {
             // if not provided, assume we are at the top of the tree
             tree = parentnode;
+            ids_to_place = find_blocks_to_place(siblings);
         }
 
         if (DEBUG) {
-            console.log(print_ast_detail(tree)); 
-            console.log(`siblings: ${siblings.map(x => " " + x.symbol + " " + x.id)}\n`);
+            console.log(print_ast_detail(tree));
+            console.log(`siblings: ${siblings.map(x => " " + x.symbol + " " + x.id)}\n`);                    
         }
 
-
         if (siblings.length == 0 || (siblings.length == 1 && siblings[0].id == parentnode.id)) {
+            if (check_complete(tree, ids_to_place, [])) {
+                if (!line.asts.includes(tree)) {
+                    line.asts.push(tree);
+                }
+            }
             return;
         }
 
@@ -134,12 +123,12 @@ const parser = (function() {
 
         if (parentidx > 0) {
             param_one_nodes = siblings.slice(0, parentidx);
-        }
-        if (param_one_nodes.length > 0) {
             param_two_nodes = siblings.slice(parentidx + 1);
         } else {
             param_one_nodes = siblings.slice(parentidx + 1);
+            param_two_nodes = [];
         }
+
         if (param_one_nodes.length == 1 && param_one_nodes[0].symbol == "[") {
             param_one_nodes = param_one_nodes[0].children;
         }
@@ -147,34 +136,37 @@ const parser = (function() {
             param_two_nodes = param_two_nodes[0].children;
         }
 
-        // loop through possibilties for first child
-        let i_split = false;
+
         for (let i = 0; i < 1 || i < param_one_nodes.length - 1; i++) {
             if (param_one_nodes[i].symbol == '[')
                 continue;
-            if (i_split) {
-                tree = JSON.parse(JSON.stringify(tree));
-                line.asts.push(tree);
-                parentnode = find_child_in_tree(tree, parentnode.id);
-            }
+
+            tree = JSON.parse(JSON.stringify(tree));
+            parentnode = find_child_in_tree(tree, parentnode.id);
+            parentnode.params = [];
+
             parentnode.params.push(param_one_nodes[i]);
-            build_trees(line, param_one_nodes[i], i, param_one_nodes, tree);
-            i_split = true;
+            build_trees(line, param_one_nodes[i], i, param_one_nodes, tree, ids_to_place);
 
             // for each possible first, find the second
             let j_split = false;
             if (param_two_nodes.length > 0) {
                 for (let j = 0; j < 1 || j < param_two_nodes.length - 1; j++) {
+                    
                     if (param_two_nodes[j].symbol == '[')
                         continue;
-                    if (j_split) {
-                        tree = JSON.parse(JSON.stringify(tree));
-                        line.asts.push(tree);
-                        parentnode = find_child_in_tree(tree, parentnode.id);
-                    }
+
+                    // let tree_bkup = JSON.parse(JSON.stringify(tree));
+                    // let parent_bkup = find_child_in_tree(tree, parentnode.id);
+            
                     parentnode.params.push(param_two_nodes[j]);
-                    build_trees(line, param_two_nodes[j], j, param_two_nodes, tree);
-                    j_split = true;
+                    build_trees(line, param_two_nodes[j], j, param_two_nodes, tree, ids_to_place);
+
+                    // if (j_split) {
+                    //     tree = tree_bkup;
+                    //     parentnode = parent_bkup;
+                    // }
+                    // j_split = true;
                 }
             }
         }
@@ -228,6 +220,51 @@ const parser = (function() {
         return line;
     }
 
+    const resolve_param_end_node = (line, ast, node, param_num, original_idx) => {
+        // an end node has special potential_readings: a var or digit can be an exp
+
+        if (!(node.params.length > param_num && node.params[param_num].params && node.params[param_num].params.length === 0)) 
+            return;
+
+        if (node.params[param_num].reading.length === 1) {
+            node.params[param_num].reading = node.params[param_num].reading[0];
+        }
+
+        let reading_to_assign = null;
+        if (!Array.isArray(node.params[param_num].reading)) {
+            reading_to_assign = node.params[param_num].reading
+        } else {
+            reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+
+            // if it demands var or digit, return that, otherwise split and return both
+            if (!reading_to_assign || reading_to_assign.length === 0) {
+                switch(node.reading.params[param_num].type) {
+                case "var":
+                case "digit":
+                        // if it's a var or a digit, adopt that reading
+                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
+                    break;
+                case "exp":
+                    // otherwise, split the ast into two, one for each reading
+                    if (line.asts.length > Valence.parser.MAX_ASTS) {
+                        throw {name : "SyntaxError", message : "SyntaxError: Too many interpretations of this line of code; probably stuck in an infinite loop"};
+                    }
+                    // assign the var reading to the existing ast
+                    reading_to_assign = node.params[param_num].reading.filter(x => x.type === "var");
+
+                    // dupe the ast and assign digit to the other
+                    let new_tree = JSON.parse(JSON.stringify(ast));
+                    new_tree.forked_from = original_idx;
+                    line.asts.push(new_tree);
+                    new_token = find_child_in_tree(new_tree, node.id);
+                    new_token.params[param_num].reading = new_token.params[param_num].reading.filter(x => x.type === "digit")[0];
+                    break;
+                }
+            }
+        }
+        if (Array.isArray(reading_to_assign)) reading_to_assign = reading_to_assign[0];
+        node.params[param_num].reading = reading_to_assign;
+    }
 
     const transpile_ast_to_js = (ast, use_pseudo) => {
         let localstr = ast.reading.js;
@@ -480,8 +517,6 @@ const parser = (function() {
                 }
             }
 
-            const programs = []; // list of combatible asts of each line
-
             for (let i = 0; i < program.length; i++) { // each line of code
 
                 if (!program[i].built) {
@@ -498,7 +533,7 @@ const parser = (function() {
                             continue;
                         }
                         newparent = JSON.parse(JSON.stringify(token.children[tokenidx]));
-                        program[i].asts.push(newparent);
+                        // program[i].asts.push(newparent);
                         build_trees(program[i], // line of code
                             newparent, // copy of the new parent
                             tokenidx, // location of that parent among siblings
@@ -517,7 +552,7 @@ const parser = (function() {
                     // asts will multiply when an end node can be read in multiple ways
                     for (let j = 0; j < program[i].asts.length; j++) {
                         try {
-                        interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
+                            interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
                         } catch (e) {
                             if (Object.hasOwn(e, "name"))  {
                                 console.error(`${e.name}: ${e.message}`);

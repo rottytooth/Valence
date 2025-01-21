@@ -129,7 +129,7 @@ test('lex: brackets force a single reading, 2', () => {
 test('lex: roman equivalent', () => {
     let program = "AS";
     // FIXME: expand to test all by looping through lexicon
-    let tree = Valence.parser.parse(program, false);
+    let tree = Valence.parser.parse(program, false, true);
     expect(tree[0].asts.length).toBe(2);
 });
 
@@ -228,8 +228,8 @@ test('uses pseudo when marked', () => {
     let program = '𐆉[𐅾𐆁]';
     let tree = Valence.parser.parse(program, false, true);
     expect(tree.length).toBe(1);
-    ast = tree[0][0];
-    expect(ast.reading.pseudo).toBe("set_label(𐆁)");
+    ast = tree[0].asts[0];
+    expect(ast.reading.pseudo).toBe("set_label({var})");
 });
 
 test('parse: stop at too many', () => {

@@ -34,7 +34,7 @@ test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
 test('ast count: 4 instructions (one to_int) -> 4 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(7);
+    expect(tree[0].asts.length).toBe(5);
 });
 
 test('ast: all interpretations are unique', () => {
@@ -62,8 +62,8 @@ test('parse: range identifier resolves', () => {
 test('ast count: longer', () => {
     let program = "𐆉𐆇𐆇𐆇𐆇𐆇𐆇𐅶𐆊";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(18);
-});
+    expect(tree[0].asts.length).toBe(131);
+}); // FIXME: This is a bad test that will continue to break with any small tweak to the grammar
 
 test('int: end node is both var and digit', () => {
     let program = "𐆇𐆉";
@@ -193,10 +193,11 @@ test('lines are correct: three signs', () => {
     }
 });
 
-test('bad parse_to_proglist: invalid code, 1', () => {
-    let program = "𐆋";
-    expect(() => {Valence.parser.parse(program, false);}).toThrow({name : "SyntaxError", message: "No valid reading for this use of 𐆋"});
-}); // FIXME: would be nice to not match exact wording
+// FIXME: For the moment, we are not throwing exception for this type of syntax error (which would block the creation of valid programs)
+// test('bad parse_to_proglist: invalid code, 1', () => {
+//     let program = "𐆋";
+//     expect(() => {Valence.parser.parse(program, false);}).toThrow({name : "SyntaxError", message: "No valid reading for this use of 𐆋"});
+// }); // FIXME: would be nice to not match exact wording
 
 test('parse: syntax highlighting', () => {
     let program = "𐆋𐆇𐆉";
@@ -208,10 +209,11 @@ test('parse: syntax highlighting', () => {
     }
 });
 
-test('parse_to_proglist: invalid code, 2', () => {
-    let program = "𐆇";
-    expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SyntaxError", message : "No valid reading for this use of 𐆇"});
-}); 
+// FIXME: For the moment, we are not throwing exception for this type of syntax error (which would block the creation of valid programs)
+// test('parse_to_proglist: invalid code, 2', () => {
+//     let program = "𐆇";
+//     expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SyntaxError", message : "No valid reading for this use of 𐆇"});
+// }); 
 
 
 test('builds pseudocode', () => {

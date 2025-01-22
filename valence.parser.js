@@ -55,14 +55,14 @@ const parser = (function() {
         return null;
     }
 
-    const find_blocks_to_place = (sibs, retset) => {
+    const find_ids_in_tree = (sibs, retset) => {
         // return all ids in an un-parsed tree (meaning a tree only in terms of branckets), excluding the brackets themselves
         if (retset === undefined) {
             retset = [];
         }
         for(let i = 0; i < sibs.length; i++) {
             if (sibs[i].symbol === '[') {
-                retset = find_blocks_to_place(sibs[i].children, retset);
+                retset = find_ids_in_tree(sibs[i].children, retset);
             } else {
                 retset.push(sibs[i].id);
             }
@@ -97,7 +97,7 @@ const parser = (function() {
         if (!tree) {
             // if not provided, assume we are at the top of the tree
             tree = parentnode;
-            ids_to_place = find_blocks_to_place(siblings);
+            ids_to_place = find_ids_in_tree(siblings);
         }
 
         if (DEBUG) {
@@ -111,7 +111,7 @@ const parser = (function() {
                     line.asts.push(tree);
                 }
             }
-            return;
+            return tree;
         }
 
         if (!Object.hasOwn(parentnode, 'params')) {
@@ -136,7 +136,6 @@ const parser = (function() {
             param_two_nodes = param_two_nodes[0].children;
         }
 
-
         for (let i = 0; i < 1 || i < param_one_nodes.length - 1; i++) {
             if (param_one_nodes[i].symbol == '[')
                 continue;
@@ -146,30 +145,46 @@ const parser = (function() {
             parentnode.params = [];
 
             parentnode.params.push(param_one_nodes[i]);
-            build_trees(line, param_one_nodes[i], i, param_one_nodes, tree, ids_to_place);
+
+            try {
+                tree = build_trees(line, param_one_nodes[i], i, param_one_nodes, tree, ids_to_place);
+            } catch(err) {
+                console.error("InternalError in build_trees() call");
+                console.error(print_ast_detail(tree));
+                console.error(`ID: ${parentnode.id}`);
+                console.error(err);
+            }
+            parentnode = find_child_in_tree(tree, parentnode.id); // in case we are in a new copy
+
+            let j_split = false;
+            let tree_bkup = JSON.parse(JSON.stringify(tree));
+            let parentnode_bkup = find_child_in_tree(tree_bkup, parentnode.id);
 
             // for each possible first, find the second
-            let j_split = false;
-            if (param_two_nodes.length > 0) {
-                for (let j = 0; j < 1 || j < param_two_nodes.length - 1; j++) {
-                    
-                    if (param_two_nodes[j].symbol == '[')
-                        continue;
+            for (let j = 0; param_two_nodes.length > 0 && (j < 1 || j < param_two_nodes.length - 1); j++) {
+                
+                if (param_two_nodes[j].symbol == '[')
+                    continue;
 
-                    // let tree_bkup = JSON.parse(JSON.stringify(tree));
-                    // let parent_bkup = find_child_in_tree(tree, parentnode.id);
-            
-                    parentnode.params.push(param_two_nodes[j]);
-                    build_trees(line, param_two_nodes[j], j, param_two_nodes, tree, ids_to_place);
-
-                    // if (j_split) {
-                    //     tree = tree_bkup;
-                    //     parentnode = parent_bkup;
-                    // }
-                    // j_split = true;
+                if (j_split) {
+                    tree = tree_bkup;
+                    parentnode = parentnode_bkup;
                 }
+                j_split = true;
+
+                parentnode.params.push(param_two_nodes[j]);
+                try {
+                    tree = build_trees(line, param_two_nodes[j], j, param_two_nodes, tree, ids_to_place);
+                } catch(err) {
+                    console.error("InternalError in build_trees() call");
+                    console.error(print_ast_detail(tree));
+                    console.error(`ID: ${parentnode.id}`);
+                    console.error(err);
+                }
+                parentnode = find_child_in_tree(tree, parentnode.id); // in case we are in a new copy
             }
         }
+        return tree;
     }
 
     // organize the line into a tree based on existing brackets
@@ -454,6 +469,8 @@ const parser = (function() {
             _skip_block_building: skip_block_building
         },
 
+        this.print_ast_detail = print_ast_detail,
+
         this.print_ast = (ast, inc_markers = false) => {
             // print the ast on a single line with brackets
 
@@ -642,7 +659,7 @@ Valence.parser = new parser();
 
 Valence.parser.MAX_ASTS = 200;
 
-Valence.parser.MAX_TOTAL_ASTS = 300;
+Valence.parser.MAX_TOTAL_ASTS = 1000;
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Valence.parser;

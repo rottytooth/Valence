@@ -244,7 +244,7 @@ test('print: after value updated', async () => {
 });
 
 test('alt progs: two with while loop', async () => {
-    let program = `𐅶[𐅶[𐅾𐅶]𐆇[[𐅻[𐆇𐆇]]𐅶[𐆇𐆋]]]
+    let program = `𐅶[𐅶[[𐅾[𐅶]]𐆇[[𐅻[𐆇[𐆇]]]𐅶[𐆇[𐆋]]]]]
 [𐅶]𐅶𐅾
 [𐅾]𐅶[𐆇𐆇]
 𐆋[𐅾𐅶]

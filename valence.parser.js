@@ -10,7 +10,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 const parser = (function() {
 
-    var DEBUG = true;
+    var DEBUG = false;
     
     var program = [];
 

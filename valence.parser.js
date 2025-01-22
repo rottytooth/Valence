@@ -610,7 +610,9 @@ const parser = (function() {
                         }
                     }
 
-                    console.log(outstr);
+                    if (DEBUG) {
+                        console.log(outstr);
+                    }
                 }
             }
 

@@ -328,3 +328,32 @@ test('calc goto: two alternatives', async () => {
     expect(final_state[1][7].value).toBe(0);
 
 });
+
+test('if/else: basic', async () => {
+    let program = `[𐅶]𐆉[𐆇𐆇]
+𐆇[𐅶]
+𐆋[[𐅻]𐆉[[[𐅻[𐅻[𐆇[𐆇]]]]𐅶[𐅻[𐆇[𐆇]]]]𐅶[𐆇[𐆊]]]]
+𐆊
+𐆋[[𐅻]𐆉[[[𐅻[𐅻[𐆇[𐆇]]]]𐅶[𐅻[𐆇[𐆋]]]]𐅶[𐆇[𐆇]]]]
+𐅾
+`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let n = 0;
+    let y = 0;
+
+    Valence.interpreter.print_callback = (id, print) => {
+        if (print.value === 'N' || print.value === 78) {
+            n++;
+        }
+        if (print.value === 'Y' || print.value === 89) {
+            y++;
+        }
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
+
+    expect(n).toBe(1);
+    expect(y).toBe(1);
+});

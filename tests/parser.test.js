@@ -194,6 +194,7 @@ test('lines are correct: three signs', () => {
 });
 
 // FIXME: For the moment, we are not throwing exception for this type of syntax error (which would block the creation of valid programs)
+
 // test('bad parse_to_proglist: invalid code, 1', () => {
 //     let program = "𐆋";
 //     expect(() => {Valence.parser.parse(program, false);}).toThrow({name : "SyntaxError", message: "No valid reading for this use of 𐆋"});
@@ -210,6 +211,7 @@ test('parse: syntax highlighting', () => {
 });
 
 // FIXME: For the moment, we are not throwing exception for this type of syntax error (which would block the creation of valid programs)
+
 // test('parse_to_proglist: invalid code, 2', () => {
 //     let program = "𐆇";
 //     expect(() => {Valence.parser.parse(program, true);}).toThrow({name : "SyntaxError", message : "No valid reading for this use of 𐆇"});
@@ -268,3 +270,9 @@ test('parse: correct set of asts', () => {
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBeGreaterThan(4);
 }); // test here for the char interpretation
+
+test('parse: double peaked expression', () => {
+    let program = "𐆋𐅻𐆉𐅶[[[𐆇𐆉]𐅶[𐆇𐆇]]𐆇[𐅾𐆊]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+});

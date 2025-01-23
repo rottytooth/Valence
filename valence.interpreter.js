@@ -105,17 +105,27 @@ Valence.interpreter = (function() {
             case "if":
                 if (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value) {
                     next_line = node.end + 1;
-                    node.test = true;
+                    node.passed = false;
                 } else {
-                    node.test = false;
+                    node.passed = true;
                 }
                 break;
             case "while_queue":
                 break; // TODO
             case "else":
             case "else_if":
-                let already_ran = program[node.start].test;
-                break;  
+                let already_ran = program[node.start].passed;
+                program[node.start].elses.forEach(element => {
+                    already_ran = already_ran || element.passed;
+                });
+                if (already_ran || 
+                    (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value)) {
+                    next_line = node.end + 1;
+                    node.passed = true;
+                } else {
+                    node.passed = false;
+                }
+                break;
                 // need to check if condition first
                 break; // TODO
             case "end_block":

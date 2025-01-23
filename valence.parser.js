@@ -423,6 +423,9 @@ const parser = (function() {
 
                 if (["if", "while", "while_queue"].includes(progs[i][ln].reading.name)) {
                     stack.push({ line: ln, cmd: progs[i][ln].reading.name});
+                    if (progs[i][ln].reading.name === "if") {
+                        progs[i][ln].elses = [];
+                    }
                 }
                 else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
                     if (stack.length === 0 || (stack[stack.length-1].cmd !== "if" && stack[stack.length-1].cmd !== "else_if")) {
@@ -433,6 +436,7 @@ const parser = (function() {
                         let start = stack.pop();
                         progs[i][start.line].end = ln;
                         progs[i][ln].start = start.line;
+                        progs[i][start.line].elses.push(ln);
                         stack.push({ line: ln, cmd: progs[i][ln].reading.name});
                     }
                 }

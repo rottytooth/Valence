@@ -71,7 +71,7 @@ const parser = (function() {
     }
 
     const check_complete = (node, ids_to_place, ids_placed) => {
-        if (!(node.id in ids_placed)) {
+        if (!(ids_placed.includes(node.id))) {
             ids_placed.push(node.id);
         }
         if (Object.hasOwn(node, 'params')) {
@@ -82,6 +82,7 @@ const parser = (function() {
         if (ids_to_place.filter(x => !ids_placed.includes(x)).length === 0) {
             return true;
         }
+        return false;
     }
 
     // build all valid ASTs for a given line and add to line.asts
@@ -256,7 +257,9 @@ const parser = (function() {
                 switch(node.reading.params[param_num].type) {
                 case "var":
                 case "digit":
-                        // if it's a var or a digit, adopt that reading
+                    // if it's a var or a digit, adopt that reading
+                case "type":
+                    // NOTE: we probably will only end up here if there is no "type" but "type" is expected
                     reading_to_assign = node.params[param_num].reading.filter(x => x.type === node.reading.params[param_num].type);
                     break;
                 case "exp":
@@ -279,6 +282,11 @@ const parser = (function() {
         }
         if (Array.isArray(reading_to_assign)) reading_to_assign = reading_to_assign[0];
         node.params[param_num].reading = reading_to_assign;
+
+        // this might happen for type of "type" for a sign that has no type value
+        if (reading_to_assign === undefined) {
+            throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
+        }
     }
 
     const transpile_ast_to_js = (ast, use_pseudo) => {

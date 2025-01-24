@@ -31,7 +31,7 @@ test('ast count: 3 instructions (no var or int force) -> 4 asts', () => {
     expect(tree[0].asts.length).toBe(4);
 });
 
-test('ast count: 4 instructions (one to_int) -> 4 asts', () => {
+test('ast count: 4 instructions (one to_int) -> 5 asts', () => {
     let program = "𐆇𐆉𐆇𐅶";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(5);
@@ -60,9 +60,9 @@ test('parse: range identifier resolves', () => {
 });
 
 test('ast count: longer', () => {
-    let program = "𐆉𐆇𐆇𐆇𐆇𐆇𐆇𐅶𐆊";
+    let program = "𐆉𐆇𐆇𐆇𐆇𐆇𐅶𐆊";
     let tree = Valence.parser.parse(program, false);
-    expect(tree[0].asts.length).toBe(131);
+    expect(tree[0].asts.length).toBe(134);
 }); // FIXME: This is a bad test that will continue to break with any small tweak to the grammar
 
 test('int: end node is both var and digit', () => {

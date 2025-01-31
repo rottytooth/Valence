@@ -31,7 +31,7 @@ Valence.interpreter = (function() {
     var input_callback = false;
 
 
-    const launch_interpreter = async (program, callback, delay) => {
+    const launch_interpreter = async (program, callback) => {
         program.line_number = 0;
 
         // find initial state of all variables
@@ -44,7 +44,7 @@ Valence.interpreter = (function() {
                 // FIXME: this needs to be added once the label command is evaluable
 
                 // does not do callback or delay for pre-loading labels
-                let loc = interpret_line(program, ln, state, null, null, 0, preload=true);
+                let loc = interpret_line(program, ln, state, null, null, false, true);
             }
         }
 
@@ -54,7 +54,7 @@ Valence.interpreter = (function() {
         }
 
         let curr_promise = new Promise(function(resolve, reject) {
-            interpret_line(program, 0, state, resolve, callback, delay);
+            interpret_line(program, 0, state, resolve, callback, true);
         });
         return curr_promise;
     };
@@ -103,8 +103,21 @@ Valence.interpreter = (function() {
                 break;
             case "while":
             case "if":
+                // reset all the "elses" to false
+                if (Object.hasOwn(node, "elses")) {
+                    node.elses.forEach(element => {
+                        program[element].passed = false;
+                    });
+                }
+
                 if (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value) {
-                    next_line = node.end + 1;
+                    if (node.reading.name === "while") {
+                        // NOTE: for while, we skip the closing bracket to avoid infinite loops
+                        next_line = node.end + 1;
+                    } else {
+                        // for if, we do not, since the end might be an else / else if
+                        next_line = node.end;
+                    }
                     node.passed = false;
                 } else {
                     node.passed = true;
@@ -115,24 +128,25 @@ Valence.interpreter = (function() {
             case "else":
             case "else_if":
                 let already_ran = program[node.start].passed;
+                // find beginning of if
                 program[node.start].elses.forEach(element => {
-                    already_ran = already_ran || element.passed;
+                    already_ran = already_ran || program[element].passed;
                 });
                 if (already_ran || 
-                    (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value)) {
-                    next_line = node.end + 1;
-                    node.passed = true;
-                } else {
+                    node.params.length > 0 && (!(new v.Bool(v.Bool.cast(evaluate_exp(node.params[0], state)))).value)) {
+                    next_line = node.end;
                     node.passed = false;
+                } else {
+                    node.passed = true;
                 }
                 break;
-                // need to check if condition first
-                break; // TODO
             case "end_block":
                 if (program[node.start].reading.name === "while") {
                     next_line = node.start;
-                }
-                break;    
+                } else {
+                    next_line = ln + 1;
+                }                
+                break;
 
             // I/O
             case "print": {
@@ -218,7 +232,7 @@ Valence.interpreter = (function() {
         }
     }
 
-    const interpret_line = async (program, line, state, resolve, callback, delay, preload=false) => {
+    const interpret_line = async (program, line, state, resolve, callback, to_delay, preload=false) => {
         const startTime = performance.now();
 
         // check for end of program
@@ -232,6 +246,12 @@ Valence.interpreter = (function() {
 
             return;
         }        
+
+        if (to_delay) {
+            delay = Valence.interpreter.node_delay;
+        } else {
+            delay = 0;
+        }
 
         // actually run the line of code
         let next_line = run_command(program, state, line);
@@ -253,7 +273,7 @@ Valence.interpreter = (function() {
             // console logging for debug
             // console.log(`waiting ${time_to_wait}`);
             // console.log(`in total, took ${finalEnd - startTime}\n`);
-            interpret_line(program, next_line, state, resolve, callback, delay);
+            interpret_line(program, next_line, state, resolve, callback, to_delay);
         }, time_to_wait);
     };
     
@@ -284,6 +304,8 @@ Valence.interpreter = (function() {
 
         launch_all: async function(progs, callback = false, delay = Valence.interpreter.node_delay) {
             Valence.interpreter.is_playing = true;
+
+            Valence.interpreter.node_delay = delay;
 
             // return promise for each valid program
             return Promise.all(progs.map(prog => { return launch_interpreter(prog, callback, delay); }));

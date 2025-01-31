@@ -30,8 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // open first menu item on left
     document.querySelectorAll(".menu-item")[4].classList.add("open");
 
-    document.getElementById("additional-controls").innerText = Valence.interpreter.node_delay;
+    // document.getElementById("additional-controls").innerText = Valence.interpreter.node_delay;
 }, false);
+
+const setIntSpeed = () => {
+    let speed = document.getElementById("speed_select").value;
+    Valence.interpreter.node_delay = speed;
+}
 
 const updateInput = () => {
     let txt = document.getElementById("program-text");

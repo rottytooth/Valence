@@ -436,16 +436,19 @@ const parser = (function() {
                     }
                 }
                 else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
-                    if (stack.length === 0 || (stack[stack.length-1].cmd !== "if" && stack[stack.length-1].cmd !== "else_if")) {
+                    if (stack.length === 0 || stack[stack.length-1].cmd !== "if") {
                         progs[i].failed = true;
                         progs[i].bad_line = ln;
                         break;
                     } else {
-                        let start = stack.pop();
-                        progs[i][start.line].end = ln;
+                        let start = stack.slice(-1)[0]; // peek
+                        let recent_start = start
+                        if (progs[i][start.line].elses.length > 0) {
+                            recent_start = {line: progs[i][start.line].elses.slice(-1)[0]};
+                        }
+                        progs[i][recent_start.line].end = ln;
                         progs[i][ln].start = start.line;
                         progs[i][start.line].elses.push(ln);
-                        stack.push({ line: ln, cmd: progs[i][ln].reading.name});
                     }
                 }
                 else if (["end_block"].includes(progs[i][ln].reading.name)) {
@@ -455,8 +458,12 @@ const parser = (function() {
                         break;
                     } else {
                         let start = stack.pop();
-                        progs[i][start.line].end = ln;
+                        let recent_start = start;
+                        if (Object.hasOwn(progs[i][start.line], "elses") && progs[i][start.line].elses.length > 0) {
+                            recent_start = {line: progs[i][start.line].elses.slice(-1)[0]};
+                        }                            
                         progs[i][ln].start = start.line;
+                        progs[i][recent_start.line].end = ln;
                     }
                 }
             }

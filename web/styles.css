@@ -406,6 +406,7 @@ body {
 #run-stop {
     background-color: var(--code-back);
     border: #ccc 1px solid;
+    margin-bottom: 10px;
 }
 .control-btn {
     width: 90px;

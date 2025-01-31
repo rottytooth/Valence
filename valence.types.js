@@ -34,25 +34,24 @@ class Int {
         }
         this.type = "int";
         if (Object.hasOwn(initial_value, 'type')) {
-            this.value = Int.cast(initial_value);
+            this.value = Math.round(Int.cast(initial_value));
         } else {
             // assumes a direct assignment will be in interpreter, and of correct type
-            this.value = initial_value;
+            this.value = Math.round(initial_value);
         }
     }
 
     static cast(value) {
         switch (value.type) {
             case "int":
-                return value.value;
             case "char":
-                return value.value.charCodeAt(0);
+                return value.value;
             case "bool":
                 return value.value > 0 ? 1 : 0;
             case "string":
                 return parseInt(value.value);
             case "ratio":
-                return Math.floor(value.value.num / value.value.den);
+                return Math.round(value.value.num / value.value.den);
             case "queue":
                 return Int.cast(value.dequeue());
         }
@@ -263,7 +262,7 @@ class Ratio {
                     return {"num": 0, "den": 1};
                 }
             case "ratio":
-                return {"num": value.num, "den": value.den}
+                return {"num": value.value.num, "den": value.value.den}
             case "queue":
                 return Ratio.cast(value.dequeue()).value;
         }

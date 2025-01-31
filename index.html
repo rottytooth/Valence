@@ -27,8 +27,18 @@
             <div id="top-row">
                 <span id="lang-insert"></span>
             </div>
-            <div id="play-controls"><input type="button" class="other-btn btn" value="Run All" id="run-stop" onclick="run_stop();" /><span id="intpt-msg" class="interface">0 interpretations, 0 runnable</span></div>
-            <div class="interface"> Speed: <span id="additional-controls"> ms</span> <input type="checkbox" onchange="run_hide_progs();" id="hide_nonrun"> <label for="hide_nonrun">hide non-runnable</label></div>
+            <div id="play-controls"><input type="button" class="other-btn btn" value="Run All" id="run-stop" onclick="run_stop();" /><div style="display: inline-block;"><span id="intpt-msg" class="interface">0 interpretations, 0 runnable</span>&nbsp; <input type="checkbox" onchange="run_hide_progs();" id="hide_nonrun"> <label for="hide_nonrun">hide non-runnable</label></div></div></div>
+            <div class="interface">Speed: 
+                <select id="speed_select" onchange="setIntSpeed();">
+                    <option value="0">no delay</option>
+                    <option value="100">100 ms</option>
+                    <option value="500">500 ms</option>
+                    <option value="1000" selected="selected">1 sec</option>
+                    <option value="2000">2 sec</option>
+                    <option value="5000">5 sec</option>
+                    <option value="20000">20 sec</option>
+                </select>
+                 
         </div>
         <hr>
         <h3>Interpretations</h3>

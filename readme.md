@@ -15,9 +15,9 @@ There is no single line of Valence that isn't valid; any combination of the sign
 The parser is functional but not finalized. While testing continues, the grammar may change.
 
 IN PROGRESS: 
-* More complex / more representative sample programs
-* Interpreter with parallel execution
-* Transpile to JS instead of pseudo-code
+* Support for queue type in interpreter
+* Some valid readings in the Parser are not generated, mostly with heavy use of brackets
+* Bug fixes for casting
 
 ## Instructions
 
@@ -87,24 +87,24 @@ symbol | typed as | interpretation | type | params
 
 ```
 [𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐅻[𐆇𐆇]]]]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐅶[[𐅻[𐆇𐆋]]𐅶[𐆇𐅻]]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐅶[[𐅻[𐆇𐆇]]𐅶[𐆇𐆇]]
-[𐅶]𐅶[𐅾𐆋]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐅶[𐆇𐆋]
-[𐅶]𐅶[𐅾𐆋]
+[𐅶]𐆉[𐅾𐆋]
+[𐆋]𐅶[[𐅻[𐆇𐆋]]𐅶[𐆇𐅻]]
+[𐅶]𐅻[𐅾𐆋]
+[𐆋]𐅶[𐆇𐆁]
+[𐅶]𐅻[𐅾𐆋]
+[𐅶]𐅻[𐅾𐆋]
+[𐆋]𐅶[𐆇𐆋]
+[𐅶]𐅻[𐅾𐆋]
 [𐅾𐆉]𐆉[𐅻[𐆇𐆉]]
 [𐅶]𐅶[𐅾𐆉]
-[𐅾𐆁]𐆉[[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐅻[𐆇𐅾]]]𐅶[𐆇𐆁]]
-[𐅶]𐅶[𐅾𐆁]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐅶[𐆇𐆋]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐆇[[𐅻[𐆇𐆇]]𐅶[𐆇𐅾]]
-[𐅶]𐅶[𐅾𐆋]
-[𐅾𐆋]𐆇[𐅻[𐆇𐆇]]
-[𐅶]𐅶[𐅾𐆋]
+[𐆁]𐆉[[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐅻[𐆇𐅾]]]𐅶[𐆇𐆁]]
+[𐅶]𐅻[𐅾𐆁]
+[𐅶]𐅻[𐅾𐆋]
+[𐆋]𐅶[𐆇𐆋]
+[𐅶]𐅻[𐅾𐆋]
+[𐆋]𐅶[𐅶[𐆇[𐆊]]]
+[𐅶]𐅻[𐅾𐆋]
+[𐆋]𐅶[𐅶[𐅻[𐆇𐆇]]]
+[𐅶]𐅻[𐅾𐆋]
 𐆋[𐅾𐅶]
 ```

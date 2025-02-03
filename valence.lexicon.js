@@ -292,7 +292,7 @@ Valence.lexicon = {
             name: "bool",
             type: "type",
             params: [],
-            js: "char"
+            js: "bool"
         },
 
         // {

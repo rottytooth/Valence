@@ -23,7 +23,8 @@ const build_val_obj = (type, value) => {
         case "ratio":
             return new Ratio(Ratio.cast(value));
         case "queue":
-            return new Queue(Queue.cast(value));
+            // we don't cast for Queue, we build a new one from its value
+            return new Queue(value);
     }
 }
 
@@ -49,7 +50,7 @@ class Int {
             case "bool":
                 return value.value > 0 ? 1 : 0;
             case "string":
-                return parseInt(value.value);
+                return value.value.charCodeAt(0);
             case "ratio":
                 return Math.round(value.value.num / value.value.den);
             case "queue":
@@ -221,16 +222,18 @@ class Bool {
     };
     // no change for sub, mul, div
     sub(value) {
-        return new Bool(value);
+        return new Bool(value - this.value);
     };
     mul(value) {
-        return new Bool(value);
+        // mul does nothing (for now)
+        return new Bool(this.value);
     };
     div(value) {
-        return new Bool(value);
+        // div does nothing (for now)
+        return new Bool(this.value);
     };
     not() {
-        return new Bool(value);
+        return new Bool(!this.value);
     }
     equals(value) {
         return new Bool(this.value == Bool.cast(value));
@@ -328,6 +331,58 @@ class Ratio {
     };
     append(value) {
         return this.add(value);
+    }
+}
+
+class Queue {
+    constructor(initial_value) {
+        this.value = [initial_value];
+        this.type = "queue";
+    }
+
+    static cast(value) {
+        switch (value.type) {
+            case "int":
+            case "bool":
+            case "char":
+            case "ratio":
+            case "string":
+                return new Queue([value]);
+            case "queue":
+                return value;
+        }
+    }
+
+    toString() {
+        // hmmmm
+        return `[${this.value.map((v) => v.toDisplay()).join(", ")}]`;
+    }
+    toDisplay() {
+        return `[${this.value.map((v) => v.toDisplay()).join(", ")}]`;
+    }
+
+    add(value) {
+        // add to every value in the queue
+        return new Queue(this.value.map((v) => v.add(value)));
+    };
+    sub(value) {
+        return new Queue(this.value.map((v) => v.sub(value)));
+    };
+    mul(value) {
+        return new Queue(this.value.map((v) => v.mul(value)));
+    };
+    div(value) {
+        return new Queue(this.value.map((v) => v.div(value)));
+    };
+    not() {
+        return new Queue(this.value.map((v) => v.not(value)));
+    }
+    equals(value) {
+        return new Bool(this.value[0] == build_val_obj(this.value[0].type, value));
+    };
+
+    append(value) {
+        return new Queue(this.value.concat([value]));
     }
 }
 

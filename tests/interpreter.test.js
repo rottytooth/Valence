@@ -357,3 +357,110 @@ test('if/else: basic', async () => {
     expect(n).toBe(1);
     expect(y).toBe(1);
 });
+
+test('assign: cast to var', async () => {
+    // cast(4,𐅻) = 7
+    // This should cast 𐅻 to a string type, then resolve that to an int that is 𐅻 and assign it 7
+    let program = `[[𐆇𐆉]𐆉[𐅾𐅻]]𐆉[𐆇𐆁]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[5].value).toBe(7);
+});
+
+test('assign: var as exp', async () => {
+    // 𐆇 = 0
+    // &𐆇 = 7
+    let program = `[𐆇]𐆉[𐆇𐅶]
+[𐅾𐆇]𐆉[𐆇𐆁]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[1].value).toBe(0);
+    expect(final_state[0].value).toBe(7);
+});
+
+test('assign: var as exp, add and mult', async () => {
+    let program = `[[[𐅾𐆇]𐆁[𐆇𐆋]]𐅶[𐆇𐆋]]𐆉[𐆇𐆁]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[6].value).toBe(7);
+});
+
+test('assign: var as exp, add and mult', async () => {
+    // ((𐆇 * 4) + (3 + !(5))) = 7
+    // This should resolve to (1 * 4) + (3 - 5), which equals 2
+    let program = `[[[𐅾𐆇]𐆁[𐆇𐆉]]𐅶[[𐆇𐆋]𐅶[𐅶[𐆇𐅻]]]]𐆉[𐆇𐆁]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[2].value).toBe(7);
+});
+
+test('cast: not bool', async () => {
+    let program = `[𐅶]𐆉[𐅶[[𐆊]𐆉[𐆇𐆇]]]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[0].value).toBe(false);
+});
+
+test('queue: initialize int', async () => {
+    // 𐅶 = cast(queue,1)
+    let program = `[𐅶]𐆉[[𐆋]𐆉[𐆇𐆇]]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[0].type).toBe("queue");
+    expect(final_state[0].value[0].type).toBe("int");
+    expect(final_state[0].value[0].value).toBe(1);
+});

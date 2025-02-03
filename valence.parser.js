@@ -388,10 +388,6 @@ const parser = (function() {
             throw {name: "SyntaxError", message:`No valid reading for this use of ${node.symbol}`};
         }
 
-        for (let i = 0; i < node.params.length; i++) {
-            interpret_node(line, ast, node.params[i], false, original_idx);
-        }
-
         // filter by number of params
         if (Array.isArray(node.reading)) {
             node.reading = node.reading.filter(
@@ -401,6 +397,10 @@ const parser = (function() {
             if (node.reading.length === 1) {
                 node.reading = node.reading[0];
             }
+        }
+        
+        for (let i = 0; i < node.params.length; i++) {
+            interpret_node(line, ast, node.params[i], false, original_idx);
         }
 
         if (node.reading.length === 0) {

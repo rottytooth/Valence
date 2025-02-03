@@ -187,8 +187,15 @@ Valence.interpreter = (function() {
         }
 
         // if we get this far, it is an expression
-        let type_node = new v.Int(evaluate(node, state)).value % 8;
-        return Valence.lexicon[idx_to_key(type_node)].filter(x => x.type).name;
+        let type_node = new v.Int(evaluate_exp(node, state)).value % 8;
+        let type_reading = Valence.lexicon[idx_to_key(type_node)].filter(x => x.type == "type");
+        if (type_reading.length == 1) {
+            type_reading = type_reading[0];
+        } else {
+            // FIXME: we should default to the existing type here instead of erroring out
+            throw {name: "TypeError", message: `could not determine type`};
+        }
+        return type_reading.name;
     }
 
     const evaluate_exp = (node, state) => {

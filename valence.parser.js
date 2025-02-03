@@ -218,7 +218,7 @@ const parser = (function() {
 
                     // need to restart, as everything in the array has shifted
                     open_bracket = -1;
-                    i = 0;
+                    i = -1;
                     break;
                 case "symbol":
                     if (!Object.hasOwn(line.tokens[i], 'id')) {

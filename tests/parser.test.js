@@ -269,10 +269,16 @@ test('parse: correct set of asts', () => {
     let program = "𐆋𐅻𐆉𐆊";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBeGreaterThan(4);
-}); // test here for the char interpretation
+}); // FIXME: test here for the char interpretation
 
 test('parse: double peaked expression', () => {
     let program = "𐆋𐅻𐆉𐅶[[[𐆇𐆉]𐅶[𐆇𐆇]]𐆇[𐅾𐆊]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+});
+
+test('parse_brackets_and_id_nodes: bug fix for programs that start with bracket', () => {
+    let program = "[[[𐅻]𐆋[𐆁]]𐆁[𐆉]]𐅻[𐆇[𐆉]]";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).not.toBe(0);
 });

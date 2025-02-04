@@ -24,7 +24,7 @@ const build_val_obj = (type, value) => {
             return new Ratio(Ratio.cast(value));
         case "queue":
             // we don't cast for Queue, we build a new one from its value
-            return new Queue(value);
+            return new Queue([value]);
     }
 }
 
@@ -336,7 +336,7 @@ class Ratio {
 
 class Queue {
     constructor(initial_value) {
-        this.value = [initial_value];
+        this.value = initial_value;
         this.type = "queue";
     }
 
@@ -355,7 +355,7 @@ class Queue {
 
     toString() {
         // hmmmm
-        return `[${this.value.map((v) => v.toDisplay()).join(", ")}]`;
+        return `[${this.value.map((v) => v.toString()).join(", ")}]`;
     }
     toDisplay() {
         return `[${this.value.map((v) => v.toDisplay()).join(", ")}]`;

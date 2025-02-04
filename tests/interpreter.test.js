@@ -464,3 +464,26 @@ test('queue: initialize int', async () => {
     expect(final_state[0].value[0].type).toBe("int");
     expect(final_state[0].value[0].value).toBe(1);
 });
+
+test('queue: mul_assign with char and int', async () => {
+    // 𐅶 = cast(queue,1)
+    let program = `[𐅶]𐆉[[𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐆇𐆇]]]]
+[𐅶]𐅻[𐆇𐆁]
+[𐅶]𐆁[𐆇𐅾]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[0].type).toBe("queue");
+    expect(final_state[0].value[0].type).toBe("char");
+    expect(final_state[0].value[0].value).toBe(130); // char 130 = ''
+    expect(final_state[0].value[1].type).toBe("int");
+    expect(final_state[0].value[1].value).toBe(14);
+});

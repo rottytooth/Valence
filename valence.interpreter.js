@@ -79,7 +79,7 @@ Valence.interpreter = (function() {
                 state[varname.value] = state[varname.value].add(evaluate_exp(node.params[1], state));
                 }
                 break;
-            case "mult_assign":{
+            case "mul_assign":{
                 let varname = evaluate_to_var(node.params[0], state);
                 state[varname.value] = state[varname].mul(evaluate_exp(node.params[1], state));
                 }

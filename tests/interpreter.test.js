@@ -487,3 +487,76 @@ test('queue: mul_assign with char and int', async () => {
     expect(final_state[0].value[1].type).toBe("int");
     expect(final_state[0].value[1].value).toBe(14);
 });
+
+test('while dequeue loop', async () => {
+    let program = `[𐅶]𐆉[[𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆇]]]𐅶[𐆇𐆇]]]]
+[𐅶]𐅻[𐆇𐆋]
+[𐅶]𐅻[𐅻[𐆇𐆊]]
+[𐅶]𐆇[𐆁]
+𐆋[𐅾𐆁]
+𐅾`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let output = "";
+    Valence.interpreter.print_callback = (id, print) => {
+        output += print.toString();
+    };
+
+    await Valence.interpreter.launch_all(progs, false, 0);
+
+    // test final_state    
+    expect(output).toBe("A348");
+});
+
+test('dequeue: simple dequeue', async () => {
+    let program = `[𐅶]𐆉[[𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆉]]]𐅶[𐆇𐆊]]]]
+[𐅶]𐅻[𐅻[𐆇𐆊]]
+[𐆉]𐆉[𐆁𐅶]`;
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[0].type).toBe("queue");
+    expect(final_state[0].value[0].type).toBe("int");
+    expect(final_state[0].value[0].value).toBe(48);
+    expect(final_state[4].type).toBe("char");
+    expect(final_state[4].toString()).toBe('Ć');
+});
+
+test('dequeue: on empty queue does not stop action', async () => {
+    let program = `[𐅶]𐆉[[𐆋]𐆉[[𐅻]𐆉[[𐅻[𐅻[𐆇𐆉]]]𐅶[𐆇𐆊]]]]
+[𐆉]𐆉[𐆁𐅶]
+[𐅾]𐆉[𐆁𐅶]
+𐆋[𐅾𐆉]`;
+/*
+    𐅶 = cast(queue,cast(char,(((4*8)*8) + 6)))
+    𐆉 = DEQUEUE (𐅶)
+    𐅾 = DEQUEUE (𐅶)
+    print(𐆉)
+*/
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+    output = "";
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    Valence.interpreter.print_callback = (id, print) => {
+        output += print.toString();
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(output).toBe("Ć");
+});

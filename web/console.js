@@ -388,7 +388,7 @@ const report = (progid, line, state) => {
         state_value.className = "status-item-value";
 
         // compare state to previous
-        if (Object.hasOwn(prev_state,progid) && typeof(prev_state[progid][st]) == typeof(state[st]) && prev_state[progid][st].toString() !== state[st].toString()) {
+        if (Object.hasOwn(prev_state,progid) && prev_state[progid][st] !== undefined && typeof(prev_state[progid][st]) == typeof(state[st]) && prev_state[progid][st].toString() !== state[st].toString()) {
             // state_value.className = "status-item-value-changed";
             state_item.classList.add("status-changed-outline");
         }

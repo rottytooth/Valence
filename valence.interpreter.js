@@ -59,6 +59,20 @@ Valence.interpreter = (function() {
         return curr_promise;
     };
 
+    const dequeue = (queue, state) => {
+        // dequeues and returns popped value
+        if (state[queue.value].type == "queue") {
+            if (state[queue.value].value.length == 0) {
+                return null;
+            }
+            return state[queue.value].value.shift();
+        } else {
+            let to_return = state[queue.value];
+            state[queue.value] = new v.Queue([]);
+            return to_return;
+        }
+    }
+
     const run_command = (program, state, ln) => {
         let node = program[ln];
         let next_line = ln + 1;
@@ -123,7 +137,18 @@ Valence.interpreter = (function() {
                     node.passed = true;
                 }
                 break;
-            case "while_queue":
+            case "while_queue": {
+                let queue_to_dequeue = evaluate_to_var(node.params[0], state);
+                let var_to_assign = evaluate_to_var(node.params[1], state);
+
+                let val = dequeue(queue_to_dequeue, state);
+
+                if (val != null) {
+                    state[var_to_assign.value] = val;
+                } else {
+                    next_line = node.end + 1;
+                }
+                }
                 break; // TODO
             case "else":
             case "else_if":
@@ -141,7 +166,7 @@ Valence.interpreter = (function() {
                 }
                 break;
             case "end_block":
-                if (program[node.start].reading.name === "while") {
+                if (['while','while_queue'].includes(program[node.start].reading.name)) {
                     next_line = node.start;
                 } else {
                     next_line = ln + 1;
@@ -235,7 +260,17 @@ Valence.interpreter = (function() {
             case "equals":
                 return evaluate_exp(node.params[0], state).equals(evaluate_exp(node.params[1], state));      
             case "int_or_floor":
-                return new v.Int(v.Int.cast(evaluate_exp(node.params[0], state)));          
+                return new v.Int(v.Int.cast(evaluate_exp(node.params[0], state)));
+            case "dequeue": {
+                let queue_to_dequeue = evaluate_to_var(node.params[0], state);
+                let val = dequeue(queue_to_dequeue, state);
+
+                if (val != null) {
+                    return val;
+                }
+                // FIXME: Better way to handle this?
+                throw {name: "EmptyQueueError", message: `queue is empty`};
+                }
         }
     }
 
@@ -261,7 +296,14 @@ Valence.interpreter = (function() {
         }
 
         // actually run the line of code
-        let next_line = run_command(program, state, line);
+        let next_line = null;
+        try {
+            next_line = run_command(program, state, line);
+        } catch(e) {
+            // by default, skip
+            console.error(e);
+            next_line = line + 1;
+        }
 
         // update output
         if (callback) callback(program.id, line, state);

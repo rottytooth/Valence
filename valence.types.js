@@ -384,6 +384,14 @@ class Queue {
     append(value) {
         return new Queue(this.value.concat([value]));
     }
+
+    // FIXME: This is confusing, but basically this dequeue() should only be used here in types. The dequeue() function in the interpreter works for ALL types. This one is specific to Queue
+    dequeue() {
+        if (this.value.length == 0) {
+            return null;
+        }
+        return this.value.shift();    
+    }
 }
 
 
@@ -393,6 +401,8 @@ if (typeof module !== 'undefined' && module.exports) {
         Char: Char,
         String: v_String,
         Bool: Bool,
+        Ratio: Ratio,
+        Queue: Queue,
         build_val_obj: build_val_obj
     }
 } else {
@@ -402,5 +412,7 @@ if (typeof module !== 'undefined' && module.exports) {
     v.Char = Char,
     v.String = v_String,
     v.Bool = Bool,
+    v.Ratio = Ratio,
+    v.Queue = Queue,
     v.build_val_obj = build_val_obj    
 }

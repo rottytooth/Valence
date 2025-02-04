@@ -591,8 +591,9 @@ const parser = (function() {
                             interpret_node(program[i], program[i].asts[j], program[i].asts[j], true, j);
                         } catch (e) {
                             if (Object.hasOwn(e, "name"))  {
-                                console.error(`${e.name}: ${e.message}`);
-
+                                if (DEBUG) {
+                                    console.error(`${e.name}: ${e.message}`);
+                                }
                                 // clear its top node's reading so it will be wiped
                                 program[i].asts[j].reading = [];
                             } else

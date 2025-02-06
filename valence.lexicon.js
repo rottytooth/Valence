@@ -318,12 +318,12 @@ Valence.lexicon = {
             type: "cmd",
             params: [{type: "exp"}],
             js: "} else if ({exp}) {"
-        },
-        {
-            name: "assign",
-            type: "cmd",
-            params: [{type: "var"},{type: "exp"}],
-            js: "{var} = {exp}"
+        // },
+        // {
+        //     name: "assign",
+        //     type: "cmd",
+        //     params: [{type: "var"},{type: "exp"}],
+        //     js: "{var} = {exp}"
         }
     ],
     '𐆁': [

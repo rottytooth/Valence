@@ -302,10 +302,10 @@ test('hello world', async () => {
 });
 
 test('calc goto: two alternatives', async () => {
-    let program = `[𐅶]𐆊[𐆇𐆇]
-[𐆁]𐆊[𐅶]
+    let program = `[𐅶]𐆉[𐆇𐆇]
+[𐆁]𐆉[𐅶]
 𐅾[[𐆇𐅻]𐅶[𐅾𐆁]]
-[𐆊]𐆊[𐆇𐅶]
+[𐆊]𐆉[𐆇𐅶]
 𐆉𐅻
 [𐆉]𐅶[𐆇𐅾]
 𐆉𐆊

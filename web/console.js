@@ -183,6 +183,10 @@ function insertTextAtCursor(textareaId, text) {
     const textarea = document.getElementById(textareaId);
     const startPos = textarea.selectionStart;
     const endPos = textarea.selectionEnd;
+
+    if (text == '↵') {
+        text = '\n';
+    }
   
     // Insert the text
     textarea.value = textarea.value.substring(0, startPos) +

@@ -442,13 +442,13 @@ const parser = (function() {
                         break;
                     } else {
                         let start = stack.slice(-1)[0]; // peek
-                        let recent_start = start
+                        let recent_start = start; // most recent in chain of if / else_if
                         if (progs[i][start.line].elses.length > 0) {
                             recent_start = {line: progs[i][start.line].elses.slice(-1)[0]};
                         }
-                        progs[i][recent_start.line].end = ln;
-                        progs[i][ln].start = start.line;
-                        progs[i][start.line].elses.push(ln);
+                        progs[i][recent_start.line].end = ln; // most recent ends with this
+                        progs[i][ln].start = start.line; // this starts with the beginning of if chain
+                        progs[i][start.line].elses.push(ln); // that if has this added to it
                     }
                 }
                 else if (["end_block"].includes(progs[i][ln].reading.name)) {

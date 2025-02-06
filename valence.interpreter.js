@@ -256,7 +256,7 @@ Valence.interpreter = (function() {
             case "mult_by_eight":
                 return evaluate_exp(node.params[0], state).mul(new v.Int(8));
             case "cast":
-                return v.build_val_obj(evaluate_to_type(node.params[0]), evaluate_exp(node.params[1], state))
+                return v.build_val_obj(evaluate_to_type(node.params[0], state), evaluate_exp(node.params[1], state))
             case "equals":
                 return evaluate_exp(node.params[0], state).equals(evaluate_exp(node.params[1], state));      
             case "int_or_floor":

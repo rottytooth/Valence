@@ -181,12 +181,12 @@ Valence.interpreter = (function() {
                 }}
                 break;
 
-            // case "input":
-            //     if (!!Valence.interpreter.input_callback) {
-            //         let input = await Valence.interpreter.input_callback(program.id);
-            //         state[evaluate_to_type(node.params[0], state, "var", byref=true)] = input;
-            //     }
-            //     break;
+            case "input":
+                if (!!Valence.interpreter.input_callback) {
+                    let input = await Valence.interpreter.input_callback(program.id);
+                    state[evaluate_to_type(node.params[0], state, "var", byref=true)] = input;
+                }
+                break;
 
             default:
                 throw {name : "InternalError", message : `no handling for command ${node.reading.name}`};

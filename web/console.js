@@ -536,30 +536,30 @@ const run_stop = (force_start = false, force_end = false) => {
             output.appendChild(out_txt);
 
 
-            // let input = outArray[1];
-            // input.style.display = "block";
-            // input.innerHTML = "";
+            let input = outArray[1];
+            input.style.display = "block";
+            input.innerHTML = "";
 
-            // let input_lbl = document.createElement("div");
-            // input_lbl.className = "output-label";
-            // input_lbl.innerText = "Input";
-            // input.appendChild(input_lbl);
+            let input_lbl = document.createElement("div");
+            input_lbl.className = "output-label";
+            input_lbl.innerText = "Input";
+            input.appendChild(input_lbl);
 
-            // let input_brk = document.createElement("br");
-            // input.appendChild(input_brk);
+            let input_brk = document.createElement("br");
+            input.appendChild(input_brk);
 
-            // let in_txt = document.createElement("input");
-            // in_txt.type = "text";
-            // in_txt.className = "input-text";
-            // in_txt.disabled = true;
-            // input.appendChild(in_txt);
+            let in_txt = document.createElement("input");
+            in_txt.type = "text";
+            in_txt.className = "input-text";
+            in_txt.disabled = true;
+            input.appendChild(in_txt);
 
-            // let in_btn = document.createElement("input");
-            // in_btn.type = "button";
-            // in_btn.className = "input-btn";
-            // in_btn.textContent = "&nbsp; &nbsp;";
-            // in_btn.disabled = true;
-            // input.appendChild(in_btn);
+            let in_btn = document.createElement("input");
+            in_btn.type = "button";
+            in_btn.className = "input-btn";
+            in_btn.textContent = "&nbsp; &nbsp;";
+            in_btn.disabled = true;
+            input.appendChild(in_btn);
         }    
     } else {
         document.getElementById("run-stop").value = "Run All";

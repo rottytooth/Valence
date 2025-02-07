@@ -73,7 +73,7 @@ Valence.interpreter = (function() {
         }
     }
 
-    const run_command = (program, state, ln) => {
+    const run_command = async (program, state, ln) => {
         let node = program[ln];
         let next_line = ln + 1;
         switch(node.reading.name) {
@@ -181,12 +181,11 @@ Valence.interpreter = (function() {
                 }}
                 break;
 
-
-
-
             // case "input":
-            //     if (!!Valence.interpreter.input_callback)
-            //         state[evaluate_to_type(node.params[0], state, "var", byref=true)] = Valence.interpreter.input_callback(program.id);
+            //     if (!!Valence.interpreter.input_callback) {
+            //         let input = await Valence.interpreter.input_callback(program.id);
+            //         state[evaluate_to_type(node.params[0], state, "var", byref=true)] = input;
+            //     }
             //     break;
 
             default:
@@ -203,7 +202,11 @@ Valence.interpreter = (function() {
         }
 
         // if we get this far, it is an expression
-        return new v.Int(v.Int.cast(evaluate_exp(node, state)) % 8);
+        let as_var = new v.Int(v.Int.cast(evaluate_exp(node, state)) % 8);
+        if (as_var.value < 0) {
+            as_var.value = 0 - as_var.value;
+        }
+        return as_var;
     }
 
     const evaluate_to_type = (node, state) => {

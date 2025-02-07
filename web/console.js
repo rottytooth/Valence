@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', function() {
     Valence.interpreter.print_callback = print_callback;
     Valence.interpreter.input_callback = input_callback;
 
-    // open first menu item on left
-    document.querySelectorAll(".menu-item")[4].classList.add("open");
+    // We now start with all of them open
+    // document.querySelectorAll(".menu-item")[4].classList.add("open");
 
     // document.getElementById("additional-controls").innerText = Valence.interpreter.node_delay;
 }, false);
@@ -106,6 +106,8 @@ const generateInterpretations = () => {
 
     intpt_msg.innerText = `${gen_programs.length} interpretation${gen_programs.length === 1 ? "" : "s"}, ${runnable} runnable`;
 
+    let indent_lvl = 0;
+
     for (let r = 0; r < gen_programs.length; r++) {
         let bigrun = document.createElement("div");
         bigrun.classList += "outer-code-block";
@@ -139,11 +141,38 @@ const generateInterpretations = () => {
             }
 
             reading_node = document.createElement("div");
-            reading_node.innerText = line.reading.pseudo;
+
+            if (line.reading.name == "end_block") {
+                indent_lvl--;
+            }
+
+            let char_block = document.createElement("span");
+            char_block.style.marginLeft += indent_lvl * 35 + "px";
+
+            for (let j = 0; j < line.reading.pseudo.length; j++) {
+                if (line.reading.pseudo.charCodeAt(j) > 50000) {
+                    // we can assume is a Valence character
+                    reading_node.appendChild(char_block);
+                    let val_block = document.createElement("span");
+                    val_block.innerText += line.reading.pseudo[j];
+                    val_block.className = "valence-char";
+                    reading_node.appendChild(val_block);
+                    char_block = document.createElement("span");
+                } else {
+                    char_block.innerText += line.reading.pseudo[j];
+                }
+            }
+            reading_node.appendChild(char_block);
+            // reading_node.innerText = line.reading.pseudo;
             reading_node.className = "js-code";
             code_row.appendChild(reading_node);
 
             run.appendChild(code_row);
+
+            if (["while","if","while_queue"].includes(line.reading.name)) {
+                indent_lvl++;
+            }
+
         }
 
         if (add_run) {
@@ -155,6 +184,12 @@ const generateInterpretations = () => {
             output.innerText = "Output";
             output.style.width = (run.offsetWidth - 16) + "px";
             bigrun.appendChild(output);
+
+            let input = document.createElement("div");
+            input.className = "output";
+            input.innerText = "Input";
+            input.style.width = (run.offsetWidth - 16) + "px";
+            bigrun.appendChild(input);
 
             let status = document.createElement("div");
             status.className = "status";
@@ -251,6 +286,7 @@ const buildLeftControl = (term, typedas, values) => {
 
     let lexNode = document.createElement("li");
     lexNode.className = "menu-item";
+    lexNode.classList.add("open"); // NOTE: for now, starting with ALL open
     lexNode.textContent = term;
     lexNode.onclick = openSubMenu;
 
@@ -412,17 +448,46 @@ const print_callback = (progid, content) => {
     let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
     let out_txt = Array.from(outArray[0].children).filter(x => x.classList.contains("output-text"));
     if (out_txt.length == 0) {
-        console.error(`InterfaceError: Could not find output text program ${progid}`);
+        console.error(`InterfaceError: Could not find output for program ${progid}`);
     } else {
         out_txt[0].innerText += content;
     }
 }
 
-const input_callback = (id) => {
-    // TODO    
+var ret_val = [];
+
+const input_callback = async (progid) => {
+    let outerCodeBlock = document.getElementById(`prog-${progid}`).parentElement;
+    let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
+    let in_txt = Array.from(outArray[1].children).filter(x => x.classList.contains("input-text"));
+    if (in_txt.length == 0) {
+        console.error(`InterfaceError: Could not find input for program ${progid}`);
+    } else {
+        let in_btn = Array.from(outArray[1].children).filter(x => x.classList.contains("input-btn"));
+        in_txt.disabled = false;
+        in_btn.disabled = false;
+        in_txt.onkeydown = (e) => {
+            if(e.key === 'Enter') {
+                in_btn.click();
+            }
+        };
+
+        const timeout = async ms => new Promise(res => setTimeout(res, ms));
+        ret_val = false;
+        in_btn.onclick = async () => {
+            in_txt.disabled = true;
+            in_btn.disabled = true;
+            ret_val[progid] = in_txt.value;
+            in_txt.value = "";
+        }
+        await waitUserInput(timeout, ret_val);
+        return ret_val;
+    }
 }
 
-
+const waitUserInput = async (timeout, ret_val) => {
+    while (ret_val === false) await timeout(50); // pauses script
+}
 
 // run or stop running programs
 const run_stop = (force_start = false, force_end = false) => {
@@ -469,6 +534,32 @@ const run_stop = (force_start = false, force_end = false) => {
             let out_txt = document.createElement("pre");
             out_txt.className = "output-text";
             output.appendChild(out_txt);
+
+
+            // let input = outArray[1];
+            // input.style.display = "block";
+            // input.innerHTML = "";
+
+            // let input_lbl = document.createElement("div");
+            // input_lbl.className = "output-label";
+            // input_lbl.innerText = "Input";
+            // input.appendChild(input_lbl);
+
+            // let input_brk = document.createElement("br");
+            // input.appendChild(input_brk);
+
+            // let in_txt = document.createElement("input");
+            // in_txt.type = "text";
+            // in_txt.className = "input-text";
+            // in_txt.disabled = true;
+            // input.appendChild(in_txt);
+
+            // let in_btn = document.createElement("input");
+            // in_btn.type = "button";
+            // in_btn.className = "input-btn";
+            // in_btn.textContent = "&nbsp; &nbsp;";
+            // in_btn.disabled = true;
+            // input.appendChild(in_btn);
         }    
     } else {
         document.getElementById("run-stop").value = "Run All";

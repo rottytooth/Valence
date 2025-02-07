@@ -138,6 +138,15 @@ body {
 .output-text {
     padding-left: 4px;
 }
+.input-text {
+    width: calc(100% - 80px);
+    margin-top: 10px;
+}
+.input-btn {
+    width: 60px;
+    margin-left: 10px;
+    color: #333;
+}
 .output-label {
     background-color: var(--code-back);
     display: inline-block;
@@ -219,6 +228,9 @@ body {
     margin-left: 5px;
     padding-left: 10px;
     border-left: 1px solid var(--split); 
+}
+.valence-char {
+    font-family: "Symbola";
 }
 .js-code:before {
     height: 70%;

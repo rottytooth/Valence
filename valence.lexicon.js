@@ -218,7 +218,7 @@ Valence.lexicon = {
             name: "label",
             type: "cmd",
             params: [{type: "var"}],
-            js: "set_label(label, {var});",
+            js: "set_label(label, {var})",
             pseudo: "set_label({var})"
         },
         {
@@ -271,7 +271,7 @@ Valence.lexicon = {
             name: "append",
             type: "cmd",
             params: [{type: "var"},{type: "exp"}],
-            js: "{var} APPEND {exp};"
+            js: "{var} APPEND {exp}"
         }
     ],
     '𐆊': [

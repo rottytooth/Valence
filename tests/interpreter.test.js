@@ -560,3 +560,19 @@ test('dequeue: on empty queue does not stop action', async () => {
 
     expect(output).toBe("Ć");
 });
+ 
+test('var: negative var number should get abs()', async () => {
+    let program = `[𐅶[𐆇[𐆋]]]𐆉[𐆇𐆁]`; // !(3) = 7
+
+    let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+
+    let final_state = [];
+
+    const callback = (id, ln, state) => {
+        final_state = state;
+    };
+
+    await Valence.interpreter.launch_all(progs, callback, 0);
+
+    expect(final_state[3].value == 7);
+});

@@ -73,7 +73,7 @@ Valence.interpreter = (function() {
         }
     }
 
-    const run_command = async (program, state, ln) => {
+    const run_command = (program, state, ln) => {
         let node = program[ln];
         let next_line = ln + 1;
         switch(node.reading.name) {

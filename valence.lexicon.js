@@ -174,12 +174,6 @@ Valence.lexicon = {
             type: "cmd",
             params: [{type: "exp"}],
             js: "print({exp})"
-        // },
-        // {
-        //     name: "queue_value",
-        //     type: "cmd",
-        //     params: [{type: "var"},{type: "exp"}],
-        //     js: "{var} QUEUE {exp}"
         }
     ],
     '𐆉': [
@@ -294,13 +288,6 @@ Valence.lexicon = {
             params: [],
             js: "bool"
         },
-
-        // {
-        //     name: "get_element",
-        //     type: "exp",
-        //     params: [{type: "exp"}],
-        //     js: "get_z_element({exp})"
-        // },
         {
             name: "or",
             type: "exp",

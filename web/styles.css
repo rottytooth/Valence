@@ -108,6 +108,7 @@ body {
 }
 .status-item-var {
     color: var(--var);
+    font-family: "Symbola";
 }
 
 /* .status-item-value-changed */

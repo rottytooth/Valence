@@ -106,9 +106,9 @@ const generateInterpretations = () => {
 
     intpt_msg.innerText = `${gen_programs.length} interpretation${gen_programs.length === 1 ? "" : "s"}, ${runnable} runnable`;
 
-    let indent_lvl = 0;
-
     for (let r = 0; r < gen_programs.length; r++) {
+        let indent_lvl = 0;
+        
         let bigrun = document.createElement("div");
         bigrun.classList += "outer-code-block";
 

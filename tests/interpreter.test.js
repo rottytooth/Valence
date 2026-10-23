@@ -95,51 +95,165 @@ test('label: all', async () => {
     expect(final_state[7].value).toBe(5);
 });
 
-test('line order: label, goto, jump', async () => {
-    let program = `𐆉𐆉
-𐅻[𐅾𐅾]
-𐅾[𐅾𐆉]
-𐆉𐆋`;
-
+// runs each reading of the program, returning the lines visited by each
+const run_lines = async (program) => {
     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
 
-    const expected_lines = [0, 1, 3];
-    let curr_line = 0;
+    let lines = progs.map(() => []);
 
     const callback = (id, ln, state) => {
         if (ln == -1) return;
-        expect(ln).toBe(expected_lines[curr_line]);
-        curr_line++;
+        lines[id].push(ln);
     };
 
     await Valence.interpreter.launch_all(progs, callback, 0);
+    return lines;
+}
 
+test('line order: label, goto', async () => {
+    let program = `𐅾[𐆇𐆋]
+𐆉𐆉
+𐅾[𐆇𐅻]
+𐆉𐆋
+𐅾[𐅾𐆉]
+𐆉𐅻`;
+
+    /*
+    goto(3)
+    set_label(S)
+    goto(5)
+    set_label(A)
+    goto(S)
+    set_label(D)
+    */
+
+    expect(await run_lines(program)).toStrictEqual([[0, 3, 4, 1, 2, 5]]);
 });
 
+test('goto: variable goes to the line it holds, digit goes to where its label is written', async () => {
+    let program = `[𐆉]𐆉[𐆇𐆊]
+𐅾[𐆉]
+[𐅶]𐅶[𐆇𐆇]
+𐆉𐆉
+[𐆇]𐅶[𐆇𐆇]
+[𐅾]𐅶[𐆇𐆇]
+[𐆋]𐅶[𐆇𐆇]`;
 
-// FIXME: needs to be reworked for the new Value types
-// test('state: label, goto, jump', async () => {
-//     let program = `𐆉𐆉
-// 𐅻[𐅾𐅾]
-// 𐅾[𐅾𐆉]
-// 𐆉𐆋`;
+    /*
+    S = 6
+    goto(S) | goto(4)
+    Q += 1
+    set_label(S)
+    W += 1
+    E += 1
+    A += 1
+    */
 
-//     let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+    expect(await run_lines(program)).toStrictEqual([[0, 1, 6], [0, 1, 3, 4, 5, 6]]);
+});
 
-//     const expected_states = [
-//         [0, 1, 2, 3, 0, 5, 6, 7], 
-//         [0, 1, 2, 3, 0, 5, 6, 7], 
-//         [0, 1, 2, 3, 0, 5, 6, 7]];
-//     let curr_line = 0;
+test('goto: expressions go to the label of the var they resolve to', async () => {
+    let program = `𐅾[[𐅾𐆉]𐅶[𐆇𐆇]]
+[𐅶]𐅶[𐆇𐆇]
+𐆉𐅻
+[𐆇]𐅶[𐆇𐆇]
+𐆉𐆉`;
 
-//     const callback = (id, ln, state) => {
-//         if (ln == -1) return;
-//         expect(state).toStrictEqual(expected_states[curr_line]);
-//         curr_line++;
-//     };
+    /*
+    goto(S + 1)
+    Q += 1
+    set_label(D)
+    W += 1
+    set_label(S)
+    */
 
-//     await Valence.interpreter.launch_all(progs, callback);
-// });
+    // S is labeled at line 4, so S + 1 = 5 goes to the label of D
+    expect(await run_lines(program)).toStrictEqual([[0, 2, 3, 4]]);
+});
+
+test('goto: nearest label above, otherwise first label below', async () => {
+    let program = `𐅾[𐆇𐆋]
+𐆉𐆉
+𐅾[𐆇𐆊]
+𐆉𐆋
+𐅾[𐆇𐆉]
+𐆉𐆉
+𐆉𐆋
+𐆉𐆊`;
+
+    /*
+    goto(3)
+    set_label(S)
+    goto(6)
+    set_label(A)
+    goto(4)
+    set_label(S)
+    set_label(A)
+    set_label(Z)
+    */
+
+    expect(await run_lines(program)).toStrictEqual([[0, 3, 4, 1, 2, 7]]);
+});
+
+test('goto: no label for the var continues to the next line', async () => {
+    let program = `𐅾[𐆇𐆋]
+[𐅶]𐅶[𐆇𐆇]`;
+
+    /*
+    goto(3)
+    Q += 1
+    */
+
+    expect(await run_lines(program)).toStrictEqual([[0, 1]]);
+});
+
+test('goto: values round to the closest int and wrap to a var', async () => {
+    const labels = `
+𐆉𐅾
+𐆉𐆋
+𐆉𐆉`;
+
+    // 5 / 2 = 2.5, rounded to 3 (A)
+    expect(await run_lines(`𐅾[[𐆇𐅻]𐅾[𐆇𐅾]]` + labels)).toStrictEqual([[0, 2, 3]]);
+
+    // ratio 7/2 = 3.5, rounded to 4 (S)
+    expect(await run_lines(`𐅾[[[𐆁]𐆉[𐆇𐆁]]𐅾[𐆇𐅾]]` + labels)).toStrictEqual([[0, 3]]);
+
+    // ratio 7/3 = 2.33, rounded to 2 (E)
+    expect(await run_lines(`𐅾[[[𐆁]𐆉[𐆇𐆁]]𐅾[𐆇𐆋]]` + labels)).toStrictEqual([[0, 1, 2, 3]]);
+
+    // 5 + 5 = 10, wraps to 2 (E)
+    expect(await run_lines(`𐅾[[𐆇𐅻]𐅶[𐆇𐅻]]` + labels)).toStrictEqual([[0, 1, 2, 3]]);
+
+    // 0 - 3 = -3, wraps to 3 (A)
+    expect(await run_lines(`𐅾[[𐆇𐅶]𐆇[𐆇𐆋]]` + labels)).toStrictEqual([[0, 2, 3]]);
+});
+
+test('goto: variable holding a ratio rounds to the closest line', async () => {
+    let program = `[𐆉]𐆉[[[𐆁]𐆉[𐆇𐆁]]𐅾[𐆇𐅾]]
+𐅾[𐅾𐆉]
+[𐅶]𐅶[𐆇𐆇]
+[𐅶]𐅶[𐆇𐆇]
+[𐆇]𐅶[𐆇𐆇]`;
+
+    /*
+    S = cast(ratio, 7) / 2
+    goto(S)
+    Q += 1
+    Q += 1
+    W += 1
+    */
+
+    // S = 3.5, rounded to 4
+    expect(await run_lines(program)).toStrictEqual([[0, 1, 4]]);
+});
+
+test('goto: non-int values are cast to int', async () => {
+    // cast(bool, 3) = true, cast to 1 (W)
+    expect(await run_lines(`𐅾[[𐆊]𐆉[𐆇𐆋]]
+𐆉𐅾
+𐆉𐆇`)).toStrictEqual([[0, 2]]);
+});
 
 
 test('state: assignment and addition', async () => {

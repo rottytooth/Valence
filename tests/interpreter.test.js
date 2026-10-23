@@ -1133,10 +1133,17 @@ describe('queues within queues', () => {
 describe('append to a non-queue', () => {
     test('casts it to a queue as the first element', () => {
         expect(new v.Int(3).append(new v.Int(4)).toDisplay()).toBe("[3, 4]");
-        expect(new v.Char(72).append(new v.Char(105)).toDisplay()).toBe("['H', 'i']");
-        expect(new v.String("ab").append(new v.Bool(true)).toDisplay()).toBe('["ab", true]');
         expect(new v.Bool(false).append(new v.Int(1)).toDisplay()).toBe("[false, 1]");
         expect(new v.Ratio({num: 1, den: 2}).append(new v.Int(1)).toDisplay()).toBe("[1/2, 1]");
+    });
+
+    test('a string or char appends as text', () => {
+        expect(new v.String("ab").append(new v.String("cd")).toDisplay()).toBe('"abcd"');
+        expect(new v.String("H").append(new v.Char(105)).toDisplay()).toBe('"Hi"');
+        expect(new v.Char(72).append(new v.Char(105)).toDisplay()).toBe('"Hi"');
+        expect(new v.Char(72).append(new v.String("ello")).toDisplay()).toBe('"Hello"');
+        expect(new v.Char(72).append(new v.Int(105)).toDisplay()).toBe('"Hi"');
+        expect(new v.Char(65).append(new v.Bool(true)).toDisplay()).toBe('"Atrue"');
     });
 
     test('appending a queue nests it after the value', () => {

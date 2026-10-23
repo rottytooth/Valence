@@ -123,6 +123,10 @@ class Char extends Int {
     equals(value) {
         return new Bool(this.value == Bool.cast(value));
     };
+    append(value) {
+        // chars append as text, like strings
+        return new v_String(this.toString()).append(value);
+    }
 }
 
 class v_String {
@@ -175,8 +179,8 @@ class v_String {
         return new Bool(this.value == v_String.cast(value));
     };
     append(value) {
-        // appending to a non-queue first casts it to a queue, as its first element
-        return build_val_obj("queue", this).append(value);
+        // strings append as text
+        return this.add(value);
     }
 }
 

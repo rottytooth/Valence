@@ -54,7 +54,8 @@ class Int {
             case "ratio":
                 return Math.round(value.value.num / value.value.den);
             case "queue":
-                return Int.cast(value.dequeue());
+                // a queue casts as its front element, without removing it
+                return value.value.length > 0 ? Int.cast(value.value[0]) : 0;
         }
     }
 
@@ -84,7 +85,8 @@ class Int {
         return new Bool(this.value == Int.cast(value));
     };
     append(value) {
-        return this.add(value);
+        // appending to a non-queue first casts it to a queue, as its first element
+        return build_val_obj("queue", this).append(value);
     }
 }
 
@@ -121,17 +123,6 @@ class Char extends Int {
     equals(value) {
         return new Bool(this.value == Bool.cast(value));
     };
-    append(value) {
-        if (value.type == "char" || value.type == "int") {
-            return new v_String(
-                String.fromCharCode(this.value) + 
-                String.fromCharCode(value.value));
-        }
-        if (value.type == "string") {
-            return new v_String(
-                String.fromCharCode(this.value) + value.value);
-        }
-    }
 }
 
 class v_String {
@@ -151,7 +142,8 @@ class v_String {
             case "string":
                 return value.value;
             case "queue":
-                return value.dequeue().toString();
+                // the whole queue, in the same format as queue input
+                return value.value.map((v) => v.toString()).join(", ");
         }
     }
 
@@ -183,7 +175,8 @@ class v_String {
         return new Bool(this.value == v_String.cast(value));
     };
     append(value) {
-        return this.add(value);
+        // appending to a non-queue first casts it to a queue, as its first element
+        return build_val_obj("queue", this).append(value);
     }
 }
 
@@ -198,15 +191,16 @@ class Bool {
             case "int":
                 return value.value > 0;
             case "char":
-                return value.value.charCodeAt(0) > 0;
+                return value.value > 0;
             case "bool":
                 return value.value;
             case "string":
-                return value.value.toLower().trim() == "true";
+                return value.value.trim().toLowerCase() == "true";
             case "ratio":
                 return value.value.num / value.value.den > 0;
             case "queue":
-                return Int.cast(value.dequeue()).value > 0;
+                // true if the queue has anything in it
+                return value.value.length > 0;
         }
     }
 
@@ -239,7 +233,8 @@ class Bool {
         return new Bool(this.value == Bool.cast(value));
     };
     append(value) {
-        return this.add(value);
+        // appending to a non-queue first casts it to a queue, as its first element
+        return build_val_obj("queue", this).append(value);
     }
 }
 
@@ -254,20 +249,19 @@ class Ratio {
             case "int":
                 return {"num": value.value, "den": 1};
             case "char":
-                return {"num": value.value.charCodeAt(0), "den": 1};
+                return {"num": value.value, "den": 1};
             case "bool":
                 return {"num": value.value ? 1 : 0, "den": 1};
-            case "string":
-                try {
-                    let split = value.split('/');
-                    return {"num": parseInt(split[0].trim()), "den": parseInt(split[1].trim())};
-                } catch {
-                    return {"num": 0, "den": 1};
-                }
+            case "string": {
+                // same formats as ratio input (see input_formats.json)
+                let ratio = parse_ratio(value.value.trim());
+                return ratio ? ratio.value : {"num": 0, "den": 1};
+            }
             case "ratio":
                 return {"num": value.value.num, "den": value.value.den}
             case "queue":
-                return Ratio.cast(value.dequeue()).value;
+                // a queue casts as its front element, without removing it
+                return value.value.length > 0 ? Ratio.cast(value.value[0]) : {"num": 0, "den": 1};
         }
     }
 
@@ -330,7 +324,8 @@ class Ratio {
         return new Bool(this.value.num == compvals.num && this.value.den == compvals.den);
     };
     append(value) {
-        return this.add(value);
+        // appending to a non-queue first casts it to a queue, as its first element
+        return build_val_obj("queue", this).append(value);
     }
 }
 
@@ -375,7 +370,7 @@ class Queue {
         return new Queue(this.value.map((v) => v.div(value)));
     };
     not() {
-        return new Queue(this.value.map((v) => v.not(value)));
+        return new Queue(this.value.map((v) => v.not()));
     }
     equals(value) {
         return new Bool(this.value[0] == build_val_obj(this.value[0].type, value));
@@ -384,19 +379,81 @@ class Queue {
     append(value) {
         return new Queue(this.value.concat([value]));
     }
+}
 
-    // FIXME: This is confusing, but basically this dequeue() should only be used here in types. The dequeue() function in the interpreter works for ALL types. This one is specific to Queue
-    dequeue() {
-        if (this.value.length == 0) {
-            return null;
-        }
-        return this.value.shift();    
+
+// converts text typed in by the user into a value of the given type
+// the formats are documented (with examples, which are also tested) in input_formats.json
+const int_pattern = /^[+-]?\d+$/;
+const decimal_pattern = /^[+-]?\d*\.\d+$/;
+const fraction_pattern = /^([+-]?\d+)\s*\/\s*([+-]?\d+)$/;
+
+const make_ratio = (num, den) => {
+    // reduce, keeping the sign on the numerator
+    const gcd = (a, b) => b ? gcd(b, a % b) : a;
+    let div = gcd(Math.abs(num), Math.abs(den)) || 1;
+    if (den < 0) div = -div;
+    return new Ratio({"num": num / div, "den": den / div});
+}
+
+const parse_ratio = (text) => {
+    if (int_pattern.test(text)) {
+        return make_ratio(parseInt(text, 10), 1);
     }
+    if (decimal_pattern.test(text)) {
+        // build from the digits rather than a float, to avoid rounding error
+        let [whole, frac] = text.split(".");
+        let sign = whole.startsWith("-") ? -1 : 1;
+        let num = parseInt(whole.replace(/^[+-]/, "") + frac, 10) * sign;
+        return make_ratio(num, Math.pow(10, frac.length));
+    }
+    let match = text.match(fraction_pattern);
+    if (match && parseInt(match[2], 10) != 0) {
+        return make_ratio(parseInt(match[1], 10), parseInt(match[2], 10));
+    }
+    return null;
+}
+
+// for queue elements: the most specific type the text matches
+const infer_input = (text) => {
+    if (int_pattern.test(text)) return new Int(parseInt(text, 10));
+    if (/^(true|false)$/i.test(text)) return new Bool(text.toLowerCase() == "true");
+    let ratio = parse_ratio(text);
+    if (ratio !== null) return ratio;
+    return new v_String(text);
+}
+
+const parse_input = (type, text) => {
+    let trimmed = text.trim();
+    switch (type) {
+        case "int":
+            if (int_pattern.test(trimmed) || decimal_pattern.test(trimmed)) {
+                return new Int(Math.round(parseFloat(trimmed)));
+            }
+            return new Int(trimmed.length > 0 ? trimmed.charCodeAt(0) : 0);
+        case "char":
+            return new Char(text.length > 0 ? text.charCodeAt(0) : 0);
+        case "string":
+            return new v_String(text);
+        case "bool":
+            if (/^true$/i.test(trimmed)) return new Bool(true);
+            if (int_pattern.test(trimmed) || decimal_pattern.test(trimmed)) {
+                return new Bool(parseFloat(trimmed) != 0);
+            }
+            return new Bool(false);
+        case "ratio":
+            return parse_ratio(trimmed) || make_ratio(0, 1);
+        case "queue":
+            if (trimmed.length == 0) return new Queue([]);
+            return new Queue(trimmed.split(",").map(x => infer_input(x.trim())));
+    }
+    return new v_String(text);
 }
 
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        parse_input: parse_input,
         Int: Int,
         Char: Char,
         String: v_String,
@@ -414,5 +471,6 @@ if (typeof module !== 'undefined' && module.exports) {
     v.Bool = Bool,
     v.Ratio = Ratio,
     v.Queue = Queue,
-    v.build_val_obj = build_val_obj    
+    v.build_val_obj = build_val_obj,
+    v.parse_input = parse_input
 }

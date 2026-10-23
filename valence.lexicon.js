@@ -174,6 +174,12 @@ Valence.lexicon = {
             type: "cmd",
             params: [{type: "exp"}],
             js: "print({exp})"
+        },
+        {
+            name: "input",
+            type: "cmd",
+            params: [{type: "var"},{type: "type"}],
+            js: "{var} = input({type})"
         }
     ],
     '𐆉': [
@@ -338,12 +344,6 @@ Valence.lexicon = {
             type: "exp",
             params: [{type: "exp"},{type: "exp", name:"exp2"}],
             js: "({exp} * {exp2})"
-        },
-        {
-            name: "input",
-            type: "cmd",
-            params: [{type: "var"}],
-            js: "{var} = input()"
         },
         {
             name: "mul_assign",

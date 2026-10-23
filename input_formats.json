@@ -1,0 +1,68 @@
+{
+    "int": {
+        "format": "A whole number in decimal, optionally negative. A number with a decimal point is rounded to the nearest whole number.",
+        "otherwise": "The character code of the first character (0 if empty).",
+        "examples": [
+            {"input": "42", "value": 42},
+            {"input": "-7", "value": -7},
+            {"input": "3.6", "value": 4},
+            {"input": " 12 ", "value": 12},
+            {"input": "abc", "value": 97},
+            {"input": "", "value": 0}
+        ]
+    },
+    "char": {
+        "format": "The first character typed.",
+        "otherwise": "Character code 0 if empty.",
+        "examples": [
+            {"input": "h", "value": "h"},
+            {"input": "hello", "value": "h"},
+            {"input": "7", "value": "7"}
+        ]
+    },
+    "string": {
+        "format": "Exactly what was typed, including spaces.",
+        "otherwise": "Every input is a valid string.",
+        "examples": [
+            {"input": "hello world", "value": "hello world"},
+            {"input": "42", "value": "42"},
+            {"input": "", "value": ""}
+        ]
+    },
+    "bool": {
+        "format": "true or false (any capitalization), or a number: 0 is false, anything else is true.",
+        "otherwise": "false.",
+        "examples": [
+            {"input": "true", "value": true},
+            {"input": "FALSE", "value": false},
+            {"input": "1", "value": true},
+            {"input": "0", "value": false},
+            {"input": "yes", "value": false}
+        ]
+    },
+    "ratio": {
+        "format": "A fraction (num/den), a whole number, or a decimal. The result is reduced.",
+        "otherwise": "0/1 (also for a denominator of 0).",
+        "examples": [
+            {"input": "3/4", "value": "3/4"},
+            {"input": "6 / 8", "value": "3/4"},
+            {"input": "-1/2", "value": "-1/2"},
+            {"input": "1/-2", "value": "-1/2"},
+            {"input": "5", "value": "5/1"},
+            {"input": "0.75", "value": "3/4"},
+            {"input": "-1.5", "value": "-3/2"},
+            {"input": "1/0", "value": "0/1"},
+            {"input": "abc", "value": "0/1"}
+        ]
+    },
+    "queue": {
+        "format": "Comma-separated values. Each element becomes an int if it's a whole number, a bool if it's true or false, a ratio if it's a fraction or decimal, and otherwise a string. Spaces around each element are removed.",
+        "otherwise": "Empty input is an empty queue; input without commas is a queue of one element.",
+        "examples": [
+            {"input": "1, 2, 3", "value": [{"type": "int", "value": 1}, {"type": "int", "value": 2}, {"type": "int", "value": 3}]},
+            {"input": "1/2, 0.25, true, hi", "value": [{"type": "ratio", "value": "1/2"}, {"type": "ratio", "value": "1/4"}, {"type": "bool", "value": true}, {"type": "string", "value": "hi"}]},
+            {"input": "hello", "value": [{"type": "string", "value": "hello"}]},
+            {"input": "", "value": []}
+        ]
+    }
+}

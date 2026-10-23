@@ -16,7 +16,8 @@
         <h1>Valence</h1>
         <p>a language of homonymy && structural ambiguity</p>
         <p><a href="https://danieltemkin.com">Daniel Temkin</a>, 2024</p>
-        <p>part of <a href="https://www.penguinrandomhouse.com/books/798086/forty-four-esolangs-by-daniel-temkin-foreword-by-allison-parrish/">Forty-Four Esolangs</a>, to be published Sept 2025</p>
+        <p><a href="/Esolangs/Valence/About">About Valence</a></p>
+        <p>part of <a href="https://danieltemkin.com/Esolangs/">Forty-Four Esolangs</a></p>
     </div>
     <div id="left-menu"></div>
     <div id="main-content">
@@ -27,7 +28,9 @@
             <div id="top-row">
                 <span id="lang-insert"></span>
             </div>
-            <div id="play-controls"><input type="button" class="other-btn btn" value="Run All" id="run-stop" onclick="run_stop();" /><div style="display: inline-block;"><span id="intpt-msg" class="interface">0 interpretations, 0 runnable</span>&nbsp; <input type="checkbox" onchange="run_hide_progs();" id="hide_nonrun"> <label for="hide_nonrun">hide non-runnable</label></div></div></div>
+            <div id="play-controls"><input type="button" class="other-btn btn" value="Run All" id="run-stop" onclick="run_stop();" /><div style="display: inline-block;"><span id="intpt-msg" class="interface">0 interpretations, 0 runnable</span>&nbsp; <input type="checkbox" onchange="run_hide_progs();" id="hide_nonrun"> <label for="hide_nonrun">hide non-runnable</label></div>
+                <div id="input-all"><input type="text" id="input-all-text" class="input-text" placeholder="no programs waiting for input" disabled><input type="button" id="input-all-btn" class="input-btn" value="Enter" disabled></div>
+            </div></div>
             <div class="interface">Speed: 
                 <select id="speed_select" onchange="setIntSpeed();">
                     <option value="0">no delay</option>

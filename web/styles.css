@@ -8,22 +8,27 @@
     --type: #ccc;
     --meta-exp: #24d6dd;
 
-    --btn: #333;
-    --btn-txt-light: #757575;
+    --btn: #2f3138;
+    --btn-txt-light: #4b5161;
     --btn-front: #ccc;
+    --border: #555a68;
+    --border-dim: #3c404c;
 
     --code-back: #0d1020;
     --code-lit: #202258;
     --code-run-back: #303841;
-    --output-back: #181818;
-    --state-back: #333; /* 303841 */
+    --output-back: #19191b;
+    --state-back: #2e2f34; /* 303841 */
     --failed-back: #361117;
     --failed-line: #5f2327;
     --split: #22283b;
 
-    --body-back: #1f1f1f; /* #4c4c4c; */
+    --body-back: #222222; /* #4c4c4c; */
 
-    --title-height: 220px;
+    --title-height: 252px;
+}
+::selection {
+    background-color: var(--code-lit);
 }
 @font-face {
     font-family: 'Symbola';
@@ -49,9 +54,12 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    height: var(--title-height);
+    /* ends where the left menu begins: the height includes the padding, less the top margin */
+    box-sizing: border-box;
+    height: calc(var(--title-height) - 8px);
     text-align: center;
-    width: 192px;
+    width: 200px;
+    border-radius: 30px 0 0 0;
     /* font-weight: bold; */
     background-color: var(--code-back);
     /* background-color: var(--output-back); */
@@ -76,8 +84,9 @@ body {
 }
 
 .outer-code-block {
-    float: left;
-    margin: 5px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .status {
@@ -86,7 +95,7 @@ body {
     min-height: 20px;
     border-radius: 0 0 10px 10px;
     width: calc(100% - 16px);
-    padding: 0px 8px 3px 8px;
+    padding: 8px 8px 2px 8px;
     line-height: 120%;
 }
 .status-item {
@@ -99,6 +108,9 @@ body {
     color: var(--exp);
     font-size: 16pt;
     vertical-align: bottom;
+}
+.outer-code-block:has(.failed) .status {
+    display: none;
 }
 .status-changed-outline {
     background-color: var(--failed-back);
@@ -113,16 +125,48 @@ body {
 
 /* .status-item-value-changed */
 
-.status-label {
-    background-color: var(--code-back);
-    display: inline-block;
-    padding: 8px 10px 10px 10px;
-    margin-bottom: 10px;
-    border-radius: 0 0 5px 5px;
+/* label tabs: each sticks out from the edge of its own pane, in that pane's color,
+   with folder-like curves where it meets the pane. They rise up by default. */
+.status-label, .output-label {
+    --tab-color: var(--code-back);
+    --tab-r: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 8px;
+    box-sizing: border-box;
+    width: 72px;
+    padding: 6px 0 4px 0;
+    background-color: var(--tab-color);
+    border-radius: var(--tab-r) var(--tab-r) 0 0;
     color: var(--exp);
-    margin-right: 10px;
-    width: 70px;
     text-align: center;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 11pt;
+    letter-spacing: .05em;
+}
+.status-label::before, .status-label::after,
+.output-label::before, .output-label::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: var(--tab-r);
+    height: var(--tab-r);
+}
+.status-label::before, .output-label::before {
+    left: calc(-1 * var(--tab-r));
+    background: radial-gradient(circle at 0 0, transparent calc(var(--tab-r) - .5px), var(--tab-color) var(--tab-r));
+}
+.status-label::after, .output-label::after {
+    right: calc(-1 * var(--tab-r));
+    background: radial-gradient(circle at 100% 0, transparent calc(var(--tab-r) - .5px), var(--tab-color) var(--tab-r));
+}
+/* State rises into the input pane on the left */
+.status {
+    position: relative;
+}
+.status-label {
+    --tab-color: var(--state-back);
 }
 .output {
     display: none;
@@ -130,7 +174,6 @@ body {
     color: #999;
     padding: 8px;
     min-height: 32px;
-    border-bottom: 8px solid var(--code-back);
     padding-top: 5px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 14pt;
@@ -138,28 +181,144 @@ body {
 }
 .output-text {
     padding-left: 4px;
+    margin: 4px 0 0 0;
+    overflow-x: auto;
+}
+.input-text, #speed_select {
+    background-color: var(--code-back);
+    color: #ccc;
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 12pt;
 }
 .input-text {
+    box-sizing: border-box;
+    vertical-align: middle;
     width: calc(100% - 80px);
     margin-top: 10px;
+}
+.input-text::placeholder {
+    color: var(--exp);
+}
+.input-text:disabled {
+    background-color: var(--output-back);
+    border-color: var(--btn);
+}
+.input-text:focus, #speed_select:focus, #program-text:focus {
+    outline: 1px solid var(--exp);
+    outline-offset: 0;
+}
+#speed_select {
+    padding: 2px 6px;
+    cursor: pointer;
+}
+input[type=checkbox] {
+    accent-color: var(--exp);
+}
+#input-all {
+    /* new block formatting context, so it fits beside the floated editor */
+    overflow: hidden;
+    box-sizing: border-box;
+    max-width: 600px;
+    margin-right: 10px;
+    /* styled like the input pane of each interpretation */
+    padding: 8px;
+    border-radius: 8px;
+    background-color: var(--code-back);
+}
+/* Speed row, just below the input-all panel */
+#control-menu + .interface {
+    padding-top: 8px;
+}
+/* between output and input: the Input tab rises from the input pane on the left,
+   and the Output tab hangs from the output pane on the right */
+.output-pane {
+    position: relative;
+    overflow: visible;
+    /* room for the Input tab rising into it */
+    padding-bottom: 32px;
+}
+.output-pane .output-label {
+    --tab-color: var(--output-back);
+    bottom: auto;
+    top: 100%;
+    left: auto;
+    right: 8px;
+    padding: 4px 0 6px 0;
+    border-radius: 0 0 var(--tab-r) var(--tab-r);
+}
+.output-pane .output-label::before, .output-pane .output-label::after {
+    bottom: auto;
+    top: 0;
+}
+.output-pane .output-label::before {
+    background: radial-gradient(circle at 0 100%, transparent calc(var(--tab-r) - .5px), var(--tab-color) var(--tab-r));
+}
+.output-pane .output-label::after {
+    background: radial-gradient(circle at 100% 100%, transparent calc(var(--tab-r) - .5px), var(--tab-color) var(--tab-r));
+}
+/* the input pane flips the output pane's colors */
+.input-pane {
+    position: relative;
+    overflow: visible;
+    align-items: center;
+    padding: 8px;
+    background-color: var(--code-back);
+}
+.input-pane .input-text, #input-all .input-text {
+    background-color: var(--output-back);
+}
+.input-pane .input-text:disabled, #input-all .input-text:disabled {
+    background-color: transparent;
+    border-color: var(--border-dim);
+}
+.input-row {
+    display: flex;
+    flex: 1 1 260px;
+    min-width: 0;
+    align-items: center;
+}
+.input-pane .input-row {
+    /* room for the State tab rising on the left and the Output tab hanging on the right */
+    margin: 0 88px;
+}
+.input-row .input-text {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    margin-top: 0;
+}
+#input-all .input-text {
+    margin-top: 0;
 }
 .input-btn {
     width: 60px;
     margin-left: 10px;
-    color: #333;
+    padding: 4px 0;
+    vertical-align: middle;
+    background-color: var(--btn);
+    color: var(--btn-front);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 12pt;
+    transition: background-color .15s;
 }
-.output-label {
-    background-color: var(--code-back);
-    display: inline-block;
-    padding: 8px 10px 10px 10px;
-    margin-top: -5px;
-    border-radius: 0 0 5px 5px;
-    color: var(--exp);
-    width: 70px;
-    text-align: center;
+.input-btn:hover:enabled {
+    background-color: var(--btn-txt-light);
+}
+.input-btn:disabled {
+    color: #888;
+    border-color: var(--border-dim);
+    cursor: default;
 }
 .code-block {
     display: table;
+    /* wide enough to leave room for input between the tabs */
+    min-width: 420px;
     background-color: var(--code-back);
     color: var(--exp);
     padding: 10px;
@@ -246,7 +405,7 @@ body {
     margin: 0 5px 5px 5px;
     caret-color: #ec6e2d;
     width: 400px;
-    min-height: 196px;
+    min-height: 228px;
     background-color: var(--code-back);
     color: #999;
     line-height: 120%;
@@ -258,7 +417,9 @@ body {
 }
 #text-holder span {
     padding-left: 8px;
-    color: #ccc;
+    color: #8b95ab;
+    font-size: 11pt;
+    letter-spacing: .05em;
 }
 .interface {
     margin-left: 18px;
@@ -285,6 +446,8 @@ body {
     height: calc(100% - var(--title-height));
     /* width: 200px; */
     padding-right: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-dim) transparent;
 }
 .menu-item {
     background-color: var(--btn);
@@ -395,11 +558,18 @@ body {
     background-color: var(--btn);
     border-radius: 12px;
     color: var(--btn-front);
-    border: 1px solid #666;
+    border: 1px solid var(--border);
     height: 45px;
+}
+.btn {
+    transition: background-color .15s;
 }
 .btn:hover {
     background-color: var(--btn-txt-light);
+}
+.btn:focus-visible, .input-btn:focus-visible {
+    outline: 1px solid #ccc;
+    outline-offset: 1px;
 }
 .add-btn {
     width: 40px;
@@ -451,7 +621,7 @@ h3 {
 }
 hr {
     clear: both;
-    padding-top: 20px;
+    padding-top: 4px;
     padding-left: 8px;
     display: block;
     height: 1px;
@@ -462,4 +632,9 @@ hr {
 }
 #programs-running {
     clear: both;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    padding-left: 5px;
 }

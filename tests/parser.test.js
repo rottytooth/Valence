@@ -91,7 +91,7 @@ test('int: first node is cmd', () => {
 });
 
 test('int: first node is cmd, example 2', () => {
-    let program = "𐅻𐅾";
+    let program = "𐆋𐅾";
     let tree = Valence.parser.parse(program, false);
     expect(tree[0].asts.length).toBe(2);
     expect(tree[0].asts[0].reading.type).toBe("cmd");

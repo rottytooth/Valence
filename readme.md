@@ -62,7 +62,6 @@ symbol | typed as | interpretation | type | params
   |  |  | char | type | 0
   |  |  | mult_by_eight | exp | 1 (exp) 
   |  |  | get_element (from queue) | exp | 2 (exp, exp)
-  |  |  | jump | cmd | 1 (exp)
   |  |  | append | cmd | 2 (var, exp)
 𐆊 | z | 6 | octal digit | 0
   |  |  | 𐆊 | var | 0

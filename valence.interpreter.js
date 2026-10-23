@@ -37,14 +37,19 @@ Valence.interpreter = (function() {
         // find initial state of all variables
         let state = initial_state();
 
-        // evaluate all labels at launch in case there are jump-forwards
+        // evaluate all labels at launch in case there are goto-forwards
         // (these will be re-evaluated when we hit the label)
+        // and record the lines where each var's labels are written, for goto by value
+        program.labels = state.map(() => []);
         for (let ln= 0; ln < program.length; ln++) {
             if (program[ln].reading.name === "label") {
-                // FIXME: this needs to be added once the label command is evaluable
-
-                // does not do callback or delay for pre-loading labels
-                let loc = interpret_line(program, ln, state, null, null, false, true);
+                try {
+                    let varname = evaluate_to_var(program[ln].params[0], state);
+                    state[varname.value] = new v.Int(ln);
+                    program.labels[varname.value].push(ln);
+                } catch(e) {
+                    console.error(e);
+                }
             }
         }
 
@@ -105,15 +110,24 @@ Valence.interpreter = (function() {
                 break;
             
             // flow control
-            case "goto":
-                // we go to whatever line that variable is set to
-                let val = evaluate_exp(node.params[0], state).value;
-                if (val < 0) val = 0 - val;
-                if (val > 7) val = val % 8;
-                next_line = state[val].value;
-                break;
-            case "jump":
-                next_line = ln + new v.Int(v.Int.cast(evaluate_exp(node.params[0], state))).value;
+            case "goto": {
+                let param = node.params[0];
+                if (param.reading.type == "var" || param.reading.name == "read_as_var") {
+                    // a var: go to the line it currently holds, rounded to the nearest int
+                    next_line = new v.Int(v.Int.cast(evaluate_exp(param, state))).value;
+                } else {
+                    // a value: go to where the label for the var at that index is written:
+                    // the nearest one above, otherwise the first one below (if none, continue)
+                    let labels = program.labels[evaluate_to_var(param, state).value];
+                    let above = labels.filter(l => l <= ln);
+                    let below = labels.filter(l => l > ln);
+                    if (above.length > 0) {
+                        next_line = above[above.length - 1];
+                    } else if (below.length > 0) {
+                        next_line = below[0];
+                    }
+                }
+                }
                 break;
             case "while":
             case "if":

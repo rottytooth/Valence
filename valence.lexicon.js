@@ -255,12 +255,6 @@ Valence.lexicon = {
             js: "{var}[{exp}]"
         },
         {
-            name: "jump",
-            type: "cmd",
-            params: [{type: "exp"}],
-            js: "jmp({exp})"
-        },
-        {
             // must also turn variable into a list if it isn't yet
             name: "append",
             type: "cmd",

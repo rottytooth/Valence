@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
     Valence.interpreter.print_callback = print_callback;
     Valence.interpreter.input_callback = input_callback;
 
+    document.getElementById("input-all-btn").onclick = input_all;
+    document.getElementById("input-all-text").onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            input_all();
+        }
+    };
+
     // We now start with all of them open
     // document.querySelectorAll(".menu-item")[4].classList.add("open");
 
@@ -149,17 +156,19 @@ const generateInterpretations = () => {
             let char_block = document.createElement("span");
             char_block.style.marginLeft += indent_lvl * 35 + "px";
 
-            for (let j = 0; j < line.reading.pseudo.length; j++) {
-                if (line.reading.pseudo.charCodeAt(j) > 50000) {
+            // iterate by character, not by UTF-16 unit, so each Valence character
+            // (outside the BMP, stored as a surrogate pair) stays whole in one span
+            for (const ch of line.reading.pseudo) {
+                if (ch.codePointAt(0) > 0xFFFF) {
                     // we can assume is a Valence character
                     reading_node.appendChild(char_block);
                     let val_block = document.createElement("span");
-                    val_block.innerText += line.reading.pseudo[j];
+                    val_block.innerText = ch;
                     val_block.className = "valence-char";
                     reading_node.appendChild(val_block);
                     char_block = document.createElement("span");
                 } else {
-                    char_block.innerText += line.reading.pseudo[j];
+                    char_block.innerText += ch;
                 }
             }
             reading_node.appendChild(char_block);
@@ -234,7 +243,32 @@ function insertTextAtCursor(textareaId, text) {
     textarea.focus();
   }
 
-const buildButton = (term, typedas) => {
+// delete the selection, or the character before the cursor
+function deleteBeforeCursor(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    let startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+
+    if (startPos === endPos) {
+        if (startPos === 0) {
+            textarea.focus();
+            return;
+        }
+        // Valence characters are surrogate pairs: step back over both halves
+        const code = textarea.value.charCodeAt(startPos - 1);
+        startPos -= (code >= 0xDC00 && code <= 0xDFFF && startPos > 1) ? 2 : 1;
+    }
+
+    textarea.value = textarea.value.substring(0, startPos) +
+      textarea.value.substring(endPos, textarea.value.length);
+
+    textarea.selectionStart = startPos;
+    textarea.selectionEnd = startPos;
+    textarea.focus();
+}
+
+// action, if given, replaces inserting the term (e.g. for backspace)
+const buildButton = (term, typedas, action = null) => {
     let controlList = document.getElementById("lang-insert");
 
     let addBtn = document.createElement("button");
@@ -266,7 +300,11 @@ const buildButton = (term, typedas) => {
         addBtn.className += " control-btn";
     }
     addBtn.onclick = (e) => {
-        insertTextAtCursor("program-text", term);
+        if (action) {
+            action();
+        } else {
+            insertTextAtCursor("program-text", term);
+        }
         updateInput();
     }
 
@@ -359,6 +397,7 @@ const buildControlList = () => {
     buildButton("[", null);
     buildButton("]", null);
     buildButton("\u21B5", null);
+    buildButton("\u2190", null, () => deleteBeforeCursor("program-text"));
 }
 
 const run_hide_progs = () => {
@@ -380,6 +419,10 @@ const report = (progid, line, state) => {
     if (gen_programs === undefined || gen_programs === null) {
         console.error("InterfaceError: No program to report on");
         run_stop(false, true);
+        return;
+    }
+    // the program may have been edited away while it was running
+    if (document.getElementById(`prog-${progid}`) === null) {
         return;
     }
     // highlight the currently running line of the program and add to output
@@ -454,47 +497,104 @@ const print_callback = (progid, content) => {
     }
 }
 
-var ret_val = [];
+// for each program waiting on input, the function that finishes its input, and the type it expects
+var pending_input = {};
+var pending_type = {};
 
-const input_callback = async (progid) => {
+const input_callback = (progid, type) => {
     let outerCodeBlock = document.getElementById(`prog-${progid}`).parentElement;
     let outArray = Array.from(outerCodeBlock.children).filter(x => x.classList.contains("output"));
-    let in_txt = Array.from(outArray[1].children).filter(x => x.classList.contains("input-text"));
-    if (in_txt.length == 0) {
+    let in_txt = outArray.length > 1 ? outArray[1].querySelector(".input-text") : null;
+    let in_btn = outArray.length > 1 ? outArray[1].querySelector(".input-btn") : null;
+    if (!in_txt || !in_btn) {
         console.error(`InterfaceError: Could not find input for program ${progid}`);
-    } else {
-        let in_btn = Array.from(outArray[1].children).filter(x => x.classList.contains("input-btn"));
-        in_txt.disabled = false;
-        in_btn.disabled = false;
-        in_txt.onkeydown = (e) => {
-            if(e.key === 'Enter') {
-                in_btn.click();
-            }
-        };
+        return Promise.resolve(null);
+    }
 
-        const timeout = async ms => new Promise(res => setTimeout(res, ms));
-        ret_val = false;
-        in_btn.onclick = async () => {
+    return new Promise(resolve => {
+        // resolves with the typed value, or null if cancelled
+        const finish = (val) => {
             in_txt.disabled = true;
             in_btn.disabled = true;
-            ret_val[progid] = in_txt.value;
             in_txt.value = "";
-        }
-        await waitUserInput(timeout, ret_val);
-        return ret_val;
+            in_txt.placeholder = "";
+            delete pending_input[progid];
+            delete pending_type[progid];
+            update_input_all();
+            resolve(val);
+        };
+        pending_input[progid] = finish;
+        pending_type[progid] = type;
+
+        // show which type is expected
+        in_txt.placeholder = type;
+        in_txt.disabled = false;
+        in_btn.disabled = false;
+        update_input_all();
+        focus_input(in_txt);
+        in_btn.onclick = () => finish(in_txt.value);
+        in_txt.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                finish(in_txt.value);
+            }
+        };
+    });
+}
+
+// cancel any programs waiting on input, so they can stop
+const cancel_inputs = () => {
+    Object.values(pending_input).forEach(finish => finish(null));
+}
+
+// send the same input to every program waiting right now (not ones that ask later)
+const input_all = () => {
+    let all_txt = document.getElementById("input-all-text");
+    let val = all_txt.value;
+    all_txt.value = "";
+    Object.values(pending_input).forEach(finish => finish(val));
+}
+
+// enable the input-all bar only while a program is waiting, and show who is waiting
+const update_input_all = () => {
+    let all_txt = document.getElementById("input-all-text");
+    let all_btn = document.getElementById("input-all-btn");
+    let types = Object.values(pending_type);
+    all_txt.disabled = types.length == 0;
+    all_btn.disabled = types.length == 0;
+    if (types.length == 0) {
+        all_txt.placeholder = "no programs waiting for input";
+    } else {
+        let unique_types = [...new Set(types)].join(", ");
+        all_txt.placeholder = `send to ${types.length} waiting (${unique_types})`;
     }
 }
 
-const waitUserInput = async (timeout, ret_val) => {
-    while (ret_val === false) await timeout(50); // pauses script
+// move focus to where input is needed, unless the user has started typing in an input box
+const focus_input = (in_txt) => {
+    let active = document.activeElement;
+    if (active && active.classList.contains("input-text") && !active.disabled && active.value.length > 0) {
+        return;
+    }
+    if (Object.keys(pending_input).length > 1) {
+        document.getElementById("input-all-text").focus();
+    } else {
+        in_txt.focus();
+    }
 }
 
 // run or stop running programs
 const run_stop = (force_start = false, force_end = false) => {
-    Valence.interpreter.is_playing = !Valence.interpreter.is_playing;
+    // toggle, unless told to start or stop
+    if (force_end) {
+        Valence.interpreter.is_playing = false;
+    } else if (force_start) {
+        Valence.interpreter.is_playing = true;
+    } else {
+        Valence.interpreter.is_playing = !Valence.interpreter.is_playing;
+    }
     prev_state = [];
 
-    if ((Valence.interpreter.is_playing && !force_end) || force_start) {
+    if (Valence.interpreter.is_playing) {
 
         if (gen_programs == null) {
             return;
@@ -524,6 +624,7 @@ const run_stop = (force_start = false, force_end = false) => {
             }
             let output = outArray[0];
             output.style.display = "block";
+            output.classList.add("output-pane");
             output.innerHTML = "";
 
             let output_lbl = document.createElement("div");
@@ -536,32 +637,36 @@ const run_stop = (force_start = false, force_end = false) => {
             output.appendChild(out_txt);
 
 
-            // let input = outArray[1];
-            // input.style.display = "block";
-            // input.innerHTML = "";
+            let input = outArray[1];
+            input.style.display = "flex";
+            input.classList.add("input-pane");
+            input.innerHTML = "";
 
-            // let input_lbl = document.createElement("div");
-            // input_lbl.className = "output-label";
-            // input_lbl.innerText = "Input";
-            // input.appendChild(input_lbl);
+            let input_lbl = document.createElement("div");
+            input_lbl.className = "output-label";
+            input_lbl.innerText = "Input";
+            input.appendChild(input_lbl);
 
-            // let input_brk = document.createElement("br");
-            // input.appendChild(input_brk);
+            // the field and button sit beside the label, and wrap below it together if there's no room
+            let input_row = document.createElement("div");
+            input_row.className = "input-row";
+            input.appendChild(input_row);
 
-            // let in_txt = document.createElement("input");
-            // in_txt.type = "text";
-            // in_txt.className = "input-text";
-            // in_txt.disabled = true;
-            // input.appendChild(in_txt);
+            let in_txt = document.createElement("input");
+            in_txt.type = "text";
+            in_txt.className = "input-text";
+            in_txt.disabled = true;
+            input_row.appendChild(in_txt);
 
-            // let in_btn = document.createElement("input");
-            // in_btn.type = "button";
-            // in_btn.className = "input-btn";
-            // in_btn.textContent = "&nbsp; &nbsp;";
-            // in_btn.disabled = true;
-            // input.appendChild(in_btn);
+            let in_btn = document.createElement("input");
+            in_btn.type = "button";
+            in_btn.className = "input-btn";
+            in_btn.value = "Enter";
+            in_btn.disabled = true;
+            input_row.appendChild(in_btn);
         }    
     } else {
+        cancel_inputs();
         document.getElementById("run-stop").value = "Run All";
     }
 }

@@ -37,9 +37,9 @@ Valence.interpreter = (function() {
         // find initial state of all variables
         let state = initial_state();
 
-        // evaluate all labels at launch in case there are goto-forwards
-        // (these will be re-evaluated when we hit the label)
-        // and record the lines where each var's labels are written, for goto by value
+        // labels are a pre-processor directive: they are all set here, before the program runs,
+        // and do nothing when reached. Each var holds the line of its last label,
+        // and we record the lines where each var's labels are written, for goto by value
         program.labels = state.map(() => []);
         for (let ln= 0; ln < program.length; ln++) {
             if (program[ln].reading.name === "label") {
@@ -70,7 +70,11 @@ Valence.interpreter = (function() {
             if (state[queue.value].value.length == 0) {
                 return null;
             }
-            return state[queue.value].value.shift();
+            // replace with a new queue rather than changing it in place,
+            // so other vars or queues holding the same queue are not affected
+            let [to_return, ...rest] = state[queue.value].value;
+            state[queue.value] = new v.Queue(rest);
+            return to_return;
         } else {
             let to_return = state[queue.value];
             state[queue.value] = new v.Queue([]);
@@ -78,7 +82,7 @@ Valence.interpreter = (function() {
         }
     }
 
-    const run_command = (program, state, ln) => {
+    const run_command = async (program, state, ln) => {
         let node = program[ln];
         let next_line = ln + 1;
         switch(node.reading.name) {
@@ -103,10 +107,8 @@ Valence.interpreter = (function() {
                 state[varname.value] = state[varname].mul(evaluate_exp(node.params[1], state));
                 }
                 break;
-            case "label": {
-                let varname = evaluate_to_var(node.params[0], state);
-                state[varname.value] = new v.Int(ln);        
-                }
+            case "label":
+                // labels are set at launch (see launch_interpreter), so there's nothing to do here
                 break;
             
             // flow control
@@ -117,14 +119,14 @@ Valence.interpreter = (function() {
                     next_line = new v.Int(v.Int.cast(evaluate_exp(param, state))).value;
                 } else {
                     // a value: go to where the label for the var at that index is written:
-                    // the nearest one above, otherwise the first one below (if none, continue)
+                    // the closest one, forward or back, going back on a tie (if none, continue)
                     let labels = program.labels[evaluate_to_var(param, state).value];
-                    let above = labels.filter(l => l <= ln);
-                    let below = labels.filter(l => l > ln);
-                    if (above.length > 0) {
-                        next_line = above[above.length - 1];
-                    } else if (below.length > 0) {
-                        next_line = below[0];
+                    if (labels.length > 0) {
+                        next_line = labels.reduce((best, l) => {
+                            let dist = Math.abs(l - ln);
+                            let best_dist = Math.abs(best - ln);
+                            return (dist < best_dist || (dist == best_dist && l < best)) ? l : best;
+                        });
                     }
                 }
                 }
@@ -195,12 +197,25 @@ Valence.interpreter = (function() {
                 }}
                 break;
 
-            // case "input":
-            //     if (!!Valence.interpreter.input_callback) {
-            //         let input = await Valence.interpreter.input_callback(program.id);
-            //         state[evaluate_to_type(node.params[0], state, "var", byref=true)] = input;
-            //     }
-            //     break;
+            case "input": {
+                // the text typed in is converted to the given type (formats in input_formats.json)
+                // a null input (e.g. cancelled by stopping the program) leaves the var unchanged
+                let varname = evaluate_to_var(node.params[0], state);
+                let type;
+                try {
+                    type = evaluate_to_type(node.params[1], state);
+                } catch(e) {
+                    // if the type can't be determined, keep the var's current type
+                    type = state[varname.value].type;
+                }
+                if (!!Valence.interpreter.input_callback) {
+                    let input = await Valence.interpreter.input_callback(program.id, type);
+                    if (input !== null && input !== undefined) {
+                        state[varname.value] = v.parse_input(type, input);
+                    }
+                }
+                }
+                break;
 
             default:
                 throw {name : "InternalError", message : `no handling for command ${node.reading.name}`};
@@ -315,7 +330,7 @@ Valence.interpreter = (function() {
         // actually run the line of code
         let next_line = null;
         try {
-            next_line = run_command(program, state, line);
+            next_line = await run_command(program, state, line);
         } catch(e) {
             // by default, skip
             console.error(e);

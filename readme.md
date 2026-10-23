@@ -14,11 +14,7 @@ There is no single line of Valence that isn't valid; any combination of the sign
 
 Feel free to open issues or add failing tests for anything not already there. Here are the major things still in progress.
 
-IN PROGRESS: 
-* INPUT (currently non-functional)
-* Support for TRADE OPERATION in the interpreter
-* Full testing of Queue and casting
-* Some display fixes
+
 
 ## Instructions
 
@@ -51,6 +47,7 @@ symbol | typed as | interpretation | type | params
   |  |  | queue | type | 0
   |  |  | equals | exp | 2 (exp, exp)
   |  |  | print | cmd | 1 (exp)
+  |  |  | input | cmd | 2 (var, type)
 𐆉 | s | 4 | octal digit | 0
   |  |  | string | type | 0
   |  |  | int_or_floor | exp | 1 (exp)
@@ -74,7 +71,6 @@ symbol | typed as | interpretation | type | params
   |  |  | ratio | type | 0
   |  |  | dequeue | var | 1
   |  |  | mul | exp | 2 (exp, exp)
-  |  |  | input | cmd | 1 (var)
   |  |  | mul_assign | cmd | 2 (var, exp)
 [ | [ | begin lexical group
 ] | ] | end lexical group

@@ -210,6 +210,57 @@ test('parse: syntax highlighting', () => {
     }
 });
 
+// the characters of the line marked 1 in line_written: those in the code as written, without the implied brackets
+const written_chars = (ast) => [...ast.line].filter((c, i) => ast.line_written[i] === '1').join('');
+
+test('parse: line_written is one per character of the line', () => {
+    let program = "𐆋𐆇𐆉";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).not.toBe(0);
+    for (let a = 0; a < tree[0].asts.length; a++) {
+        ast = tree[0].asts[a];
+        expect(ast.line_written.length).toBe([...ast.line].length);
+        expect(ast.line_written.length).toBe(ast.line_markers.length);
+    }
+});
+
+test('parse: line_written, no brackets', () => {
+    let program = "𐆋𐆇𐆉";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(2);
+    for (let a = 0; a < tree[0].asts.length; a++) {
+        ast = tree[0].asts[a];
+        expect(['1010100','0101010']).toContain(ast.line_written); // 𐆋[𐆇[𐆉]] or [𐆋]𐆇[𐆉]
+        expect(written_chars(ast)).toBe(program);
+    }
+});
+
+test('parse: line_written, all brackets', () => {
+    let program = "𐆋[𐅾[𐅻]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(1);
+    expect(tree[0].asts[0].line_written).toBe('1111111');
+});
+
+test('parse: line_written, some brackets', () => {
+    let program = "[𐆁]𐆉[𐆇𐆋]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(1);
+    ast = tree[0].asts[0];
+    expect(ast.line).toBe('[𐆁]𐆉[𐆇[𐆋]]');
+    expect(ast.line_written).toBe('1111110101');
+    expect(written_chars(ast)).toBe(program);
+    // the written closing bracket is the assignment's (cmd), not the implied one after 𐆋 (exp)
+    expect([...ast.line_markers].filter((c, i) => ast.line_written[i] === '1').join('')).toBe('cvcccedc');
+});
+
+test('parse: line_written, nested brackets', () => {
+    let program = "[[𐆇𐆊]𐆇[𐆇𐅶]]𐆉[[𐆇𐆇]𐆇[𐆇𐆁]]";
+    let tree = Valence.parser.parse(program, false);
+    expect(tree[0].asts.length).toBe(1);
+    expect(written_chars(tree[0].asts[0])).toBe(program);
+});
+
 // FIXME: For the moment, we are not throwing exception for this type of syntax error (which would block the creation of valid programs)
 
 // test('parse_to_proglist: invalid code, 2', () => {

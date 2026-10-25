@@ -1174,3 +1174,93 @@ describe('append to a non-queue', () => {
         final_states.forEach(state => expect(state[4].toDisplay()).toBe("[5, 3]"));
     });
 });
+
+describe('end and else with no open block do nothing', () => {
+    // runs each reading, returning what each printed
+    const run_prints = async (program) => {
+        let progs = Valence.parser.parse(program, true).filter(p => !(p.failed === true));
+        let printed = progs.map(() => []);
+        Valence.interpreter.print_callback = (id, print) => printed[id].push(String(print));
+        try {
+            await Valence.interpreter.launch_all(progs, false, 0);
+        } finally {
+            Valence.interpreter.print_callback = false;
+        }
+        return printed;
+    }
+
+    test('a stray end does not fail the reading', () => {
+        let progs = Valence.parser.parse(`𐆋[𐆇𐆇]
+𐅾`, true);
+        expect(progs.length).toBe(1);
+        expect(progs[0].failed).not.toBe(true);
+        expect(progs[0][1].stray).toBe(true);
+    });
+
+    test('a stray else does not fail the reading, an unclosed block still does', () => {
+        let progs = Valence.parser.parse(`𐆋[𐆇𐆇]
+𐆊`, true);
+        expect(progs[0].failed).not.toBe(true);
+        expect(progs[0][1].stray).toBe(true);
+
+        let unclosed = Valence.parser.parse(`𐅶[𐆇𐆇]
+𐆋[𐆇𐆇]`, true);
+        expect(unclosed.every(p => p.failed === true)).toBe(true);
+    });
+
+    test('an else inside a while (with no if) does nothing', async () => {
+        let program = `[𐅾]𐆉[𐆇𐆋]
+𐅶[𐅾𐅾]
+𐆋[𐅾𐅾]
+𐆊
+[𐅾]𐅶[[𐆇𐅶]𐆇[𐆇𐆇]]
+𐅾`;
+
+        /*
+        E = 3
+        while E:
+            print(E)
+            else            (does nothing)
+            E += (0 - 1)
+        end
+        */
+
+        expect(await run_prints(program)).toStrictEqual([["3", "2", "1"]]);
+    });
+
+    test('while swaps with an assignment: loop or run once', async () => {
+        let program = `[𐅾]𐆉[[𐆇𐅶]𐆇[𐆇𐆋]]
+𐅶𐅶𐅾
+𐆋[𐅾𐅾]
+[𐅾]𐅶[𐆇𐆇]
+𐅾`;
+
+        /*
+        E = 0 - 3
+        while not(E):   | while not(2):  | Q += E      | Q += 2
+            print(E)
+            E += 1
+        end             (for the assignments, does nothing)
+        */
+
+        expect(await run_prints(program)).toStrictEqual([["-3", "-2", "-1"], ["-3"], [], ["-3"]]);
+    });
+
+    test('if swaps with an assignment: one branch or both', async () => {
+        let program = `𐆇𐆉𐅶
+𐆋[𐆇𐆇]
+𐆊
+𐆋[𐆇𐅾]
+𐅾`;
+
+        /*
+        if int(Q):      | if int(0):     | W = Q       | W = 0
+            print(1)
+        else            (for the assignments, does nothing)
+            print(2)
+        end             (for the assignments, does nothing)
+        */
+
+        expect(await run_prints(program)).toStrictEqual([["2"], ["1", "2"], ["2"], ["1", "2"]]);
+    });
+});

@@ -441,9 +441,8 @@ const parser = (function() {
                 }
                 else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
                     if (stack.length === 0 || stack[stack.length-1].cmd !== "if") {
-                        progs[i].failed = true;
-                        progs[i].bad_line = ln;
-                        break;
+                        // with no open if for it to work on, it does nothing
+                        progs[i][ln].stray = true;
                     } else {
                         let start = stack.slice(-1)[0]; // peek
                         let recent_start = start; // most recent in chain of if / else_if
@@ -457,9 +456,8 @@ const parser = (function() {
                 }
                 else if (["end_block"].includes(progs[i][ln].reading.name)) {
                     if (stack.length === 0) {
-                        progs[i].failed = true;
-                        progs[i].bad_line = ln;
-                        break;
+                        // with no open block for it to close, it does nothing
+                        progs[i][ln].stray = true;
                     } else {
                         let start = stack.pop();
                         let recent_start = start;

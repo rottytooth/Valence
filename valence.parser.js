@@ -130,10 +130,13 @@ const parser = (function() {
             param_two_nodes = [];
         }
 
-        if (param_one_nodes.length == 1 && param_one_nodes[0].symbol == "[") {
+        // a param in brackets written in the code (rather than implied) is a single bracket node
+        const param_one_written = param_one_nodes.length == 1 && param_one_nodes[0].symbol == "[";
+        const param_two_written = param_two_nodes.length == 1 && param_two_nodes[0].symbol == "[";
+        if (param_one_written) {
             param_one_nodes = param_one_nodes[0].children;
         }
-        if (param_two_nodes.length == 1 && param_two_nodes[0].symbol == "[") {
+        if (param_two_written) {
             param_two_nodes = param_two_nodes[0].children;
         }
 
@@ -144,6 +147,7 @@ const parser = (function() {
             tree = JSON.parse(JSON.stringify(tree));
             parentnode = find_child_in_tree(tree, parentnode.id);
             parentnode.params = [];
+            parentnode.written_brackets = [param_one_written, param_two_written];
 
             parentnode.params.push(param_one_nodes[i]);
 
@@ -437,9 +441,8 @@ const parser = (function() {
                 }
                 else if (["else_if", "else"].includes(progs[i][ln].reading.name)) {
                     if (stack.length === 0 || stack[stack.length-1].cmd !== "if") {
-                        progs[i].failed = true;
-                        progs[i].bad_line = ln;
-                        break;
+                        // with no open if for it to work on, it does nothing
+                        progs[i][ln].stray = true;
                     } else {
                         let start = stack.slice(-1)[0]; // peek
                         let recent_start = start; // most recent in chain of if / else_if
@@ -453,9 +456,8 @@ const parser = (function() {
                 }
                 else if (["end_block"].includes(progs[i][ln].reading.name)) {
                     if (stack.length === 0) {
-                        progs[i].failed = true;
-                        progs[i].bad_line = ln;
-                        break;
+                        // with no open block for it to close, it does nothing
+                        progs[i][ln].stray = true;
                     } else {
                         let start = stack.pop();
                         let recent_start = start;
@@ -495,6 +497,8 @@ const parser = (function() {
 
             let retstr = "";
             let retmarkers = "";
+            let retwritten = "";
+            const written = (n) => ast.written_brackets && ast.written_brackets[n] ? "1" : "0";
 
             if (Array.isArray(ast.reading)) {
                 throw {name: "InternalError", message: "reading is an array"};
@@ -506,21 +510,25 @@ const parser = (function() {
                 let nd = this.print_ast(ast.params[0], true);
                 retstr += `[${nd[0]}]`;
                 retmarkers += `${code}${nd[1]}${code}`
+                retwritten += `${written(0)}${nd[2]}${written(0)}`;
             }
             retstr += ast.symbol;
             retmarkers += code;
+            retwritten += "1";
             if (ast.params.length == 1) {
                 let nd = this.print_ast(ast.params[0], true);
                 retstr += `[${nd[0]}]`;
                 retmarkers += `${code}${nd[1]}${code}`
+                retwritten += `${written(0)}${nd[2]}${written(0)}`;
             }
             if (ast.params.length == 2) {
                 let nd = this.print_ast(ast.params[1], true);
                 retstr += `[${nd[0]}]`;
                 retmarkers += `${code}${nd[1]}${code}`
+                retwritten += `${written(1)}${nd[2]}${written(1)}`;
             }
             if (inc_markers) {
-                return [retstr, retmarkers];
+                return [retstr, retmarkers, retwritten];
             }
             return retstr;
         }
@@ -611,6 +619,7 @@ const parser = (function() {
                             }
                             program[i].asts[j].line = retset[0];
                             program[i].asts[j].line_markers = retset[1];
+                            program[i].asts[j].line_written = retset[2];
                         }
 
                         // debug: print the tree

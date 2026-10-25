@@ -168,6 +168,8 @@ Valence.interpreter = (function() {
                 break; // TODO
             case "else":
             case "else_if":
+                // an else with no if to work on does nothing
+                if (node.stray) break;
                 let already_ran = program[node.start].passed;
                 // find beginning of if
                 program[node.start].elses.forEach(element => {
@@ -182,6 +184,8 @@ Valence.interpreter = (function() {
                 }
                 break;
             case "end_block":
+                // an end with no block to close does nothing
+                if (node.stray) break;
                 if (['while','while_queue'].includes(program[node.start].reading.name)) {
                     next_line = node.start;
                 } else {
